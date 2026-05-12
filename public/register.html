@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | RiderID</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container animate-fade-in" style="max-width: 500px;">
+        <header>
+            <a href="index.html" style="text-decoration: none; color: var(--primary); font-weight: 800; font-size: 0.875rem;">&larr; BACK TO SEARCH</a>
+            <div class="logo" style="margin-top: 1.5rem;">REGISTRATION</div>
+            <p>Step 1: Basic Information</p>
+        </header>
+
+        <main>
+            <div class="glass-card" style="padding: 2rem;">
+                <form id="registrationForm">
+                    <div class="input-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="name" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="08012345678" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="plateNumber">Plate Number</label>
+                        <input type="text" id="plateNumber" name="plateNumber" placeholder="ABC-123-XY" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="union">Union Affiliation</label>
+                        <select id="union" name="union" required>
+                            <option value="">Select Union</option>
+                            <option value="none">Independent</option>
+                            <option value="ANR">Amalgamated Network Riders</option>
+                            <option value="MRON">Motorcycle Riders Association of Nigeria</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 0.75rem; margin: 2rem 0; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
+                        <p style="font-size: 1rem; color: var(--primary-light); font-weight: 700;">
+                            Subscription: ₦2,000 / 3 Months
+                        </p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Proceed to Payment</button>
+                </form>
+            </div>
+        </main>
+
+        <footer style="margin-top: 2rem; padding: 2rem 0; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
+            Secure payment powered by Monnify. Documents are uploaded after payment.
+        </footer>
+    </div>
+
+    <script src="https://sdk.monnify.com/plugin/monnify.js"></script>
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    MonnifySDK.initialize({
+                        amount: 2000,
+                        currency: "NGN",
+                        reference: result.reference,
+                        customerFullName: data.name,
+                        customerEmail: data.phone + "@riderid.com",
+                        apiKey: result.monnifyApiKey,
+                        contractCode: result.monnifyContractCode,
+                        paymentDescription: "Rider ID Subscription",
+                        onComplete: function(response) {
+                            window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}`;
+                        },
+                        onClose: function(data) {
+                            alert('Transaction cancelled.');
+                            btn.disabled = false;
+                            btn.textContent = 'Proceed to Payment';
+                        }
+                    });
+                } else {
+                    alert('Error: ' + result.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Proceed to Payment';
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection error.');
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
