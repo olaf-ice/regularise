@@ -5,15 +5,65 @@ const path = require('path');
 const axios = require('axios');
 const qrcode = require('qrcode');
 const multer = require('multer');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
+const RIDERS_FILE = path.join(__dirname, 'riders.json');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Load riders from file
+let riders = [];
+try {
+    if (fs.existsSync(RIDERS_FILE)) {
+        riders = JSON.parse(fs.readFileSync(RIDERS_FILE, 'utf8'));
+    }
+} catch (err) {
+    console.error('Error loading riders.json:', err);
+}
+
+function saveRiders() {
+    try {
+        fs.writeFileSync(RIDERS_FILE, JSON.stringify(riders, null, 2));
+    } catch (err) {
+        console.error('Error saving riders.json:', err);
+    }
+}
+
+// Monnify Auth Helper
+async function getMonnifyToken() {
+    const auth = Buffer.from(`${process.env.MONNIFY_API_KEY}:${process.env.MONNIFY_SECRET_KEY}`).toString('base64');
+    try {
+        const response = await axios.post('https://sandbox.monnify.com/api/v1/auth/login', {}, {
+            headers: { 'Authorization': `Basic ${auth}` }
+        });
+        return response.data.responseBody.accessToken;
+    } catch (err) {
+        console.error('Monnify Auth Error:', err.response ? err.response.data : err.message);
+        return null;
+    }
+}
+
+// Monnify Verification Helper
+async function verifyMonnifyPayment(reference) {
+    const token = await getMonnifyToken();
+    if (!token) return false;
+
+    try {
+        const response = await axios.get(`https://sandbox.monnify.com/api/v1/merchant/transactions/query?paymentReference=${reference}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data.responseBody.paymentStatus === 'PAID';
+    } catch (err) {
+        console.error('Monnify Verify Error:', err.response ? err.response.data : err.message);
+        return false;
+    }
+}
 
 // DEBUG: Log every single request
 app.use((req, res, next) => {
@@ -37,8 +87,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-let riders = [];
-
 // Helper to save rider to Google Sheets (NON-BLOCKING)
 async function saveToGoogleSheets(rider) {
     const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
@@ -55,9 +103,9 @@ async function saveToGoogleSheets(rider) {
             status: rider.status,
             reference: rider.reference,
             expiryDate: rider.expiryDate || '',
-            passportUrl: `http://127.0.0.1:3001${rider.documents.passportPhoto || ''}`,
-            licenseUrl: `http://127.0.0.1:3001${rider.documents.licenseDoc || ''}`,
-            bikePapersUrl: `http://127.0.0.1:3001${rider.documents.bikePapers || ''}`,
+            passportUrl: `http://127.0.0.1:${PORT}${rider.documents.passportPhoto || ''}`,
+            licenseUrl: `http://127.0.0.1:${PORT}${rider.documents.licenseDoc || ''}`,
+            bikePapersUrl: `http://127.0.0.1:${PORT}${rider.documents.bikePapers || ''}`,
             emergencyContact: `${rider.emergencyContact.name} (${rider.emergencyContact.phone})`
         };
 
@@ -92,6 +140,7 @@ app.post('/api/register', async (req, res) => {
             status: 'Pending', reference 
         };
         riders.push(newRider);
+        saveRiders();
         res.json({
             success: true, riderId, reference,
             monnifyApiKey: process.env.MONNIFY_API_KEY,
@@ -112,19 +161,23 @@ app.post('/api/rider/update', upload.fields([
     { name: 'ninDoc', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { riderId, emergencyName, emergencyPhone } = req.body;
+        const { riderId, reference, emergencyName, emergencyPhone } = req.body;
         const rider = riders.find(r => r.riderId === riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
 
+        // Verify payment before allowing update if not already active
+        if (rider.status !== 'Active') {
+            const isPaid = await verifyMonnifyPayment(reference || rider.reference);
+            if (!isPaid) {
+                return res.status(401).json({ success: false, message: 'Payment not verified. Please complete payment first.' });
+            }
+            rider.status = 'Active';
+            const expiry = new Date();
+            expiry.setMonth(expiry.getMonth() + 3);
+            rider.expiryDate = expiry.toISOString().split('T')[0];
+        }
+
         rider.emergencyContact = { name: emergencyName, phone: emergencyPhone };
-        
-        // Final Status check - usually set by /api/payment/verify
-        // If not set, we keep it as Pending or set to Active if payment was confirmed
-        // For now, let's assume if they reached here, they paid.
-        rider.status = 'Active';
-        const expiry = new Date();
-        expiry.setMonth(expiry.getMonth() + 3);
-        rider.expiryDate = expiry.toISOString().split('T')[0];
 
         const fieldNames = ['passportPhoto', 'licenseDoc', 'bikePapers', 'proofOfOwnership', 'insuranceDoc', 'ninDoc'];
         fieldNames.forEach(field => {
@@ -133,6 +186,7 @@ app.post('/api/rider/update', upload.fields([
             }
         });
 
+        saveRiders();
         saveToGoogleSheets(rider); 
 
         res.json({ success: true, message: 'Profile completed successfully' });
@@ -147,14 +201,18 @@ app.post('/api/payment/verify', async (req, res) => {
     const { reference, riderId } = req.body;
     try {
         const rider = riders.find(r => r.riderId === riderId || r.reference === reference);
-        if (rider) {
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+
+        const isPaid = await verifyMonnifyPayment(reference);
+        if (isPaid) {
             rider.status = 'Active';
             const expiry = new Date();
             expiry.setMonth(expiry.getMonth() + 3);
             rider.expiryDate = expiry.toISOString().split('T')[0];
+            saveRiders();
             res.json({ success: true, message: 'Payment verified' });
         } else {
-            res.status(404).json({ success: false, message: 'Rider not found' });
+            res.status(400).json({ success: false, message: 'Payment verification failed' });
         }
     } catch (error) {
         res.status(500).json({ success: false, message: 'Verification failed' });
@@ -165,3 +223,4 @@ app.post('/api/payment/verify', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://127.0.0.1:${PORT}`);
 });
+
