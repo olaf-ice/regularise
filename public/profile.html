@@ -121,7 +121,7 @@
 
                     // Passport Photo
                     if (rider.documents && rider.documents.passportPhoto) {
-                        document.getElementById('passportImg').src = 'http://localhost:3001' + rider.documents.passportPhoto;
+                        document.getElementById('passportImg').src = rider.documents.passportPhoto;
                     }
 
                     // Emergency Contact
@@ -163,7 +163,7 @@
                                 
                                 docDiv.innerHTML = `
                                     <span style="font-size: 0.8rem; font-weight: 500;">${docLabels[key]}</span>
-                                    <a href="http://localhost:3001${path}" target="_blank" style="color: var(--primary); font-size: 0.75rem; font-weight: 700; text-decoration: none; border: 1px solid var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">VIEW &rarr;</a>
+                                    <a href="${path}" target="_blank" style="color: var(--primary); font-size: 0.75rem; font-weight: 700; text-decoration: none; border: 1px solid var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">VIEW &rarr;</a>
                                 `;
                                 docList.appendChild(docDiv);
                             }

@@ -94,6 +94,7 @@ async function saveToGoogleSheets(rider) {
 
     try {
         console.log('Attempting to sync with Google Sheets...');
+        const baseUrl = process.env.BASE_URL || `http://127.0.0.1:${PORT}`;
         const payload = {
             riderId: rider.riderId,
             name: rider.name,
@@ -103,9 +104,9 @@ async function saveToGoogleSheets(rider) {
             status: rider.status,
             reference: rider.reference,
             expiryDate: rider.expiryDate || '',
-            passportUrl: `http://127.0.0.1:${PORT}${rider.documents.passportPhoto || ''}`,
-            licenseUrl: `http://127.0.0.1:${PORT}${rider.documents.licenseDoc || ''}`,
-            bikePapersUrl: `http://127.0.0.1:${PORT}${rider.documents.bikePapers || ''}`,
+            passportUrl: `${baseUrl}${rider.documents.passportPhoto || ''}`,
+            licenseUrl: `${baseUrl}${rider.documents.licenseDoc || ''}`,
+            bikePapersUrl: `${baseUrl}${rider.documents.bikePapers || ''}`,
             emergencyContact: `${rider.emergencyContact.name} (${rider.emergencyContact.phone})`
         };
 
