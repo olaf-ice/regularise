@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: regularise-riderid
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/server.js
+    disk:
+      name: rider-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONNIFY_API_KEY
+        sync: false
+      - key: MONNIFY_SECRET_KEY
+        sync: false
+      - key: MONNIFY_CONTRACT_CODE
+        sync: false
+      - key: GOOGLE_SCRIPT_URL
+        sync: false
+      - key: BASE_URL
+        fromContext: instance_url

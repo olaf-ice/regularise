@@ -10,7 +10,17 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const RIDERS_FILE = path.join(__dirname, 'riders.json');
+
+// Persistence Configuration for Render
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const DATA_DIR = IS_PRODUCTION ? '/data' : __dirname;
+const RIDERS_FILE = path.join(DATA_DIR, 'riders.json');
+const UPLOADS_DIR = IS_PRODUCTION ? path.join('/data', 'uploads') : path.join(__dirname, '../public/uploads');
+
+// Ensure directories exist
+if (!fs.existsSync(path.dirname(RIDERS_FILE))) fs.mkdirSync(path.dirname(RIDERS_FILE), { recursive: true });
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+if (!fs.existsSync(path.join(__dirname, '../public/uploads'))) fs.mkdirSync(path.join(__dirname, '../public/uploads'), { recursive: true });
 
 // Middleware
 app.use(cors());
@@ -72,12 +82,14 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, '../public')));
+// Serve uploads from the persistent directory in production, otherwise local
+app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Storage Configuration
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads/');
+        cb(null, UPLOADS_DIR);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
