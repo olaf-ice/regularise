@@ -15,19 +15,32 @@
         </header>
 
         <main>
-            <!-- Search Section -->
-            <div class="glass-card" style="padding: 2.5rem; text-align: center; margin-bottom: 3rem;">
-                <h1 style="font-size: 2rem; margin-bottom: 1rem; letter-spacing: -0.025em;">Verify a Rider</h1>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Enter Plate Number or Phone Number to verify documentation status.</p>
-                
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="e.g. ABC-123-XY">
-                    <button class="btn btn-primary" onclick="verifyRider()">Search</button>
+            <!-- Dual Mode: Officer Search + Rider Login -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 3rem;">
+
+                <!-- Officer Mode: Verify a Rider -->
+                <div class="glass-card" style="padding: 2rem; text-align: center;">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🛡️</div>
+                    <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Officer Verification</h2>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Search by plate number, phone, or Rider ID.</p>
+                    <input type="text" id="officerSearch" placeholder="e.g. ABC-123-XY" style="margin-bottom: 0.75rem;">
+                    <button class="btn btn-primary" id="officerSearchBtn" onclick="verifyRider()" style="padding: 0.75rem 1rem; font-size: 0.9rem;">Verify Rider</button>
                 </div>
-                
-                <div style="margin-top: 1.5rem;">
-                    <a href="register.html" style="color: var(--primary-light); font-size: 0.875rem; font-weight: 700; text-decoration: none;">New Rider? Register Here &rarr;</a>
+
+                <!-- Rider Mode: View My Profile -->
+                <div class="glass-card" style="padding: 2rem; text-align: center; border-color: rgba(16, 185, 129, 0.3);">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🏍️</div>
+                    <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">My Profile</h2>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Enter your phone and PIN to view your documents.</p>
+                    <input type="tel" id="riderPhone" placeholder="Phone e.g. 08012345678" style="margin-bottom: 0.75rem;">
+                    <input type="password" id="riderPin" placeholder="4-Digit PIN" pattern="\d{4}" style="margin-bottom: 0.75rem;">
+                    <button class="btn btn-primary" id="riderLoginBtn" onclick="riderLogin()" style="padding: 0.75rem 1rem; font-size: 0.9rem; background: var(--primary-dark);">View My Profile</button>
                 </div>
+            </div>
+
+            <!-- New Rider CTA -->
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <a href="register.html" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary-light); font-size: 0.875rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(16,185,129,0.3); padding: 0.75rem 1.5rem; border-radius: 0.75rem; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(16,185,129,0.1)'" onmouseout="this.style.background='transparent'">New Rider? Register Here &rarr;</a>
             </div>
 
             <!-- Services Section -->
@@ -75,19 +88,57 @@
 
     <script>
         function verifyRider() {
-            const query = document.getElementById('searchInput').value.trim();
+            const query = document.getElementById('officerSearch').value.trim();
             if (query) {
                 window.location.href = `profile.html?q=${encodeURIComponent(query)}`;
             } else {
-                alert('Please enter a plate number or phone number.');
+                alert('Please enter a plate number, phone, or Rider ID.');
             }
         }
 
-        // Allow "Enter" key to trigger search
-        document.getElementById('searchInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                verifyRider();
+        async function riderLogin() {
+            const phone = document.getElementById('riderPhone').value.trim();
+            const pin = document.getElementById('riderPin').value.trim();
+            const btn = document.getElementById('riderLoginBtn');
+            
+            if (phone && pin) {
+                btn.disabled = true;
+                btn.textContent = 'Logging in...';
+                try {
+                    const res = await fetch('/api/rider/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, pin })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        localStorage.setItem('riderToken', data.token);
+                        window.location.href = `profile.html?id=${encodeURIComponent(data.riderId)}`;
+                    } else {
+                        alert('Error: ' + data.message);
+                        btn.disabled = false;
+                        btn.textContent = 'View My Profile';
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Connection error. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'View My Profile';
+                }
+            } else {
+                alert('Please enter your registered phone number and PIN.');
             }
+        }
+
+        // Allow Enter key on both inputs
+        document.getElementById('officerSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyRider();
+        });
+        document.getElementById('riderPhone').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') riderLogin();
+        });
+        document.getElementById('riderPin').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') riderLogin();
         });
     </script>
 </body>

@@ -20,15 +20,120 @@
                     <input type="hidden" id="riderId" name="riderId">
                     <input type="hidden" id="reference" name="reference">
 
+                    <!-- SECTION 1: Rider Medical Info -->
                     <section>
-                        <h3 style="margin-bottom: 1.5rem; color: var(--primary-light); font-size: 1.1rem;">Emergency Contact</h3>
+                        <h3 style="margin-bottom: 0.4rem; color: var(--primary-light); font-size: 1.1rem;">🩺 Your Medical Info</h3>
+                        <p style="font-size: 0.75rem; margin-bottom: 1.25rem; color: var(--text-muted);">This is YOUR personal medical info — shown to first responders in an emergency.</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="riderBloodGroup">Blood Group</label>
+                                <select id="riderBloodGroup" name="riderBloodGroup" required>
+                                    <option value="">Select</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="riderGenotype">Genotype</label>
+                                <select id="riderGenotype" name="riderGenotype" required>
+                                    <option value="">Select</option>
+                                    <option value="AA">AA</option>
+                                    <option value="AS">AS</option>
+                                    <option value="SS">SS</option>
+                                    <option value="AC">AC</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="riderAllergies">Known Allergies (Optional)</label>
+                            <input type="text" id="riderAllergies" name="riderAllergies" placeholder="e.g. Penicillin, Latex, None">
+                        </div>
+                        <div class="input-group">
+                            <label for="riderHospital">Preferred Hospital (Optional)</label>
+                            <input type="text" id="riderHospital" name="riderHospital" placeholder="e.g. UCH Ibadan, Adeoyo Hospital">
+                        </div>
+                    </section>
+
+                    <!-- SECTION 2: Emergency Contact -->
+                    <section style="margin-top: 2.5rem;">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--primary-light); font-size: 1.1rem;">🚨 Emergency Contact</h3>
                         <div class="input-group">
                             <label for="emergencyName">Emergency Contact Name</label>
                             <input type="text" id="emergencyName" name="emergencyName" placeholder="Next of Kin Name" required>
                         </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="emergencyPhone">Emergency Phone</label>
+                                <input type="tel" id="emergencyPhone" name="emergencyPhone" placeholder="080XXXXXXXX" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="emergencyAltPhone">Secondary Phone</label>
+                                <input type="tel" id="emergencyAltPhone" name="emergencyAltPhone" placeholder="090XXXXXXXX">
+                            </div>
+                        </div>
                         <div class="input-group">
-                            <label for="emergencyPhone">Emergency Contact Phone</label>
-                            <input type="tel" id="emergencyPhone" name="emergencyPhone" placeholder="080XXXXXXXX" required>
+                            <label for="emergencyRel">Relationship</label>
+                            <input type="text" id="emergencyRel" name="emergencyRel" placeholder="e.g. Brother, Wife" required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="bloodGroup">Blood Group</label>
+                                <select id="bloodGroup" name="bloodGroup">
+                                    <option value="">Select</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="genotype">Genotype</label>
+                                <select id="genotype" name="genotype">
+                                    <option value="">Select</option>
+                                    <option value="AA">AA</option>
+                                    <option value="AS">AS</option>
+                                    <option value="SS">SS</option>
+                                    <option value="AC">AC</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section style="margin-top: 2.5rem;">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--primary-light); font-size: 1.1rem;">Bike Information</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="bikeBrand">Bike Brand</label>
+                                <input type="text" id="bikeBrand" name="bikeBrand" placeholder="e.g. Bajaj, TVS" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="bikeModel">Bike Model</label>
+                                <input type="text" id="bikeModel" name="bikeModel" placeholder="e.g. Pulsar, HLX" required>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="bikeColor">Bike Color</label>
+                                <input type="text" id="bikeColor" name="bikeColor" placeholder="e.g. Red, Black" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="ownershipType">Ownership Type</label>
+                                <select id="ownershipType" name="ownershipType" required>
+                                    <option value="owned">Owned</option>
+                                    <option value="rented">Rented</option>
+                                    <option value="financed">Financed</option>
+                                </select>
+                            </div>
                         </div>
                     </section>
 
@@ -40,9 +145,15 @@
                             <input type="file" id="passportPhoto" name="passportPhoto" accept="image/*" required>
                         </div>
 
-                        <div class="input-group">
-                            <label for="licenseDoc">Rider’s License</label>
-                            <input type="file" id="licenseDoc" name="licenseDoc" accept="image/*,.pdf">
+                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
+                            <div class="input-group">
+                                <label for="licenseDoc">Rider’s License</label>
+                                <input type="file" id="licenseDoc" name="licenseDoc" accept="image/*,.pdf">
+                            </div>
+                            <div class="input-group">
+                                <label for="licenseNumber">License Number</label>
+                                <input type="text" id="licenseNumber" name="licenseNumber" placeholder="DL-XXXX-XXXX">
+                            </div>
                         </div>
 
                         <div class="input-group">
@@ -55,14 +166,26 @@
                             <input type="file" id="proofOfOwnership" name="proofOfOwnership" accept="image/*,.pdf">
                         </div>
 
-                        <div class="input-group">
-                            <label for="insuranceDoc">Insurance Certificate</label>
-                            <input type="file" id="insuranceDoc" name="insuranceDoc" accept="image/*,.pdf">
+                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
+                            <div class="input-group">
+                                <label for="insuranceDoc">Insurance Certificate</label>
+                                <input type="file" id="insuranceDoc" name="insuranceDoc" accept="image/*,.pdf">
+                            </div>
+                            <div class="input-group">
+                                <label for="insuranceNumber">Policy Number</label>
+                                <input type="text" id="insuranceNumber" name="insuranceNumber" placeholder="POL-XXXX-XXXX">
+                            </div>
                         </div>
 
-                        <div class="input-group">
-                            <label for="ninDoc">NIN Slip / National ID</label>
-                            <input type="file" id="ninDoc" name="ninDoc" accept="image/*,.pdf">
+                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
+                            <div class="input-group">
+                                <label for="ninDoc">NIN Slip / National ID</label>
+                                <input type="file" id="ninDoc" name="ninDoc" accept="image/*,.pdf">
+                            </div>
+                            <div class="input-group">
+                                <label for="ninNumber">NIN Number</label>
+                                <input type="text" id="ninNumber" name="ninNumber" placeholder="XXXXXXXXXXX">
+                            </div>
                         </div>
                     </section>
 
@@ -92,8 +215,10 @@
             const formData = new FormData(this);
 
             try {
+                const token = localStorage.getItem('riderToken');
                 const response = await fetch('/api/rider/update', {
                     method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
 

@@ -3,7 +3,7 @@ services:
     name: regularise-riderid
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: node server/server.js
     disk:
       name: rider-data

@@ -1,14 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const axios = require('axios');
 const qrcode = require('qrcode');
 const multer = require('multer');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
+const dbHelpers = require('./db');
 
 const app = express();
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_key_change_in_prod';
 const PORT = process.env.PORT || 3001;
 
 // Persistence Configuration for Render
@@ -23,26 +30,39 @@ if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(path.join(__dirname, '../public/uploads'))) fs.mkdirSync(path.join(__dirname, '../public/uploads'), { recursive: true });
 
 // Middleware
+app.use(helmet({
+    contentSecurityPolicy: false, // Disabling CSP temporarily so as not to break inline scripts/styles in static frontend files
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Load riders from file
-let riders = [];
-try {
-    if (fs.existsSync(RIDERS_FILE)) {
-        riders = JSON.parse(fs.readFileSync(RIDERS_FILE, 'utf8'));
-    }
-} catch (err) {
-    console.error('Error loading riders.json:', err);
-}
+// Rate Limiters
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { success: false, message: 'Too many requests, please try again later.' }
+});
 
-function saveRiders() {
-    try {
-        fs.writeFileSync(RIDERS_FILE, JSON.stringify(riders, null, 2));
-    } catch (err) {
-        console.error('Error saving riders.json:', err);
-    }
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 15, // Limit each IP to 15 auth requests per windowMs
+    message: { success: false, message: 'Too many attempts, please try again later.' }
+});
+
+// Apply general rate limiter to all API routes
+app.use('/api/', apiLimiter);
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+        req.user = user;
+        next();
+    });
 }
 
 // Monnify Auth Helper
@@ -81,7 +101,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.static(path.join(__dirname, '../public')));
+const PUBLIC_DIR = IS_PRODUCTION && fs.existsSync(path.join(__dirname, '../dist/public')) ? path.join(__dirname, '../dist/public') : path.join(__dirname, '../public');
+app.use(express.static(PUBLIC_DIR));
 // Serve uploads from the persistent directory in production, otherwise local
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -97,7 +118,20 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp'];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG, WEBP, and PDF files are allowed.'), false);
+    }
+};
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit per file
+    fileFilter: fileFilter
+});
 
 // Helper to save rider to Google Sheets (NON-BLOCKING)
 async function saveToGoogleSheets(rider) {
@@ -111,15 +145,37 @@ async function saveToGoogleSheets(rider) {
             riderId: rider.riderId,
             name: rider.name,
             phone: rider.phone,
+            altPhone: rider.altPhone || '',
+            address: rider.address || '',
+            dob: rider.dob || '',
             plateNumber: rider.plateNumber,
             union: rider.union,
             status: rider.status,
             reference: rider.reference,
             expiryDate: rider.expiryDate || '',
-            passportUrl: `${baseUrl}${rider.documents.passportPhoto || ''}`,
-            licenseUrl: `${baseUrl}${rider.documents.licenseDoc || ''}`,
-            bikePapersUrl: `${baseUrl}${rider.documents.bikePapers || ''}`,
-            emergencyContact: `${rider.emergencyContact.name} (${rider.emergencyContact.phone})`
+            // Bike Info
+            bikeBrand: rider.bike?.brand || '',
+            bikeModel: rider.bike?.model || '',
+            bikeColor: rider.bike?.color || '',
+            ownershipType: rider.bike?.ownershipType || '',
+            // Documents
+            passportUrl: rider.documents.passportPhoto ? `${baseUrl}${rider.documents.passportPhoto.url}` : '',
+            licenseUrl: rider.documents.licenseDoc ? `${baseUrl}${rider.documents.licenseDoc.url}` : '',
+            licenseNumber: rider.documents.licenseDoc?.number || '',
+            bikePapersUrl: rider.documents.bikePapers ? `${baseUrl}${rider.documents.bikePapers.url}` : '',
+            insuranceUrl: rider.documents.insuranceDoc ? `${baseUrl}${rider.documents.insuranceDoc.url}` : '',
+            insuranceNumber: rider.documents.insuranceDoc?.number || '',
+            // Emergency
+            emergencyName: rider.emergencyContact?.name || '',
+            emergencyPhone: rider.emergencyContact?.phone || '',
+            emergencyRel: rider.emergencyContact?.relationship || '',
+            emergencyBloodGroup: rider.emergencyContact?.bloodGroup || '',
+            emergencyGenotype: rider.emergencyContact?.genotype || '',
+            // Rider Medical
+            riderBloodGroup: rider.medical?.bloodGroup || '',
+            riderGenotype: rider.medical?.genotype || '',
+            riderAllergies: rider.medical?.allergies || '',
+            riderHospital: rider.medical?.hospitalPreference || ''
         };
 
         await axios.post(scriptUrl, payload, { timeout: 10000 });
@@ -129,33 +185,92 @@ async function saveToGoogleSheets(rider) {
     }
 }
 
-// 1. Search/Verify
 app.get('/api/verify/:query', (req, res) => {
     const query = req.params.query.toLowerCase();
-    const rider = riders.find(r => 
-        r.riderId.toLowerCase() === query || 
-        r.plateNumber.toLowerCase() === query || 
-        r.phone === query
-    );
-    if (rider) res.json({ success: true, rider });
-    else res.json({ success: false, message: 'Rider not found' });
+    const rider = dbHelpers.findRiderByQuery(query);
+    if (rider) {
+        // Don't send the hashed pin to the client
+        const { pin, ...safeRiderData } = rider;
+        res.json({ success: true, rider: safeRiderData });
+    } else {
+        res.json({ success: false, message: 'Rider not found' });
+    }
+});
+
+// Rider Login Endpoint
+app.post('/api/rider/login', authLimiter, async (req, res) => {
+    const { phone, pin } = req.body;
+    
+    const rider = dbHelpers.getRiderByPhone(phone);
+    
+    if (!rider) {
+        return res.json({ success: false, message: 'Invalid phone number or PIN' });
+    }
+
+    if (!rider.pin) {
+        return res.json({ success: false, message: 'No PIN set for this account. Please register again.' });
+    }
+
+    try {
+        const isMatch = await bcrypt.compare(pin, rider.pin);
+        if (isMatch) {
+            const token = jwt.sign({ riderId: rider.riderId }, JWT_SECRET, { expiresIn: '24h' });
+            res.json({ success: true, riderId: rider.riderId, token });
+        } else {
+            res.json({ success: false, message: 'Invalid phone number or PIN' });
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
 });
 
 // 2. Register
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', authLimiter, [
+    body('name').trim().notEmpty().withMessage('Name is required').escape(),
+    body('phone').trim().isNumeric().withMessage('Phone must be numeric').isLength({ min: 10, max: 15 }).withMessage('Invalid phone length'),
+    body('pin').isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be exactly 4 digits'),
+    body('plateNumber').trim().notEmpty().withMessage('Plate number is required').escape()
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, message: errors.array()[0].msg });
+    }
+
     try {
-        const { name, phone, plateNumber, union } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, union, pin } = req.body;
+        
+        if (dbHelpers.getRiderByPhone(phone)) {
+            return res.status(400).json({ success: false, message: 'Phone number already registered' });
+        }
+
+        // Hash the PIN
+        const salt = await bcrypt.genSalt(10);
+        const hashedPin = await bcrypt.hash(pin, salt);
+
         const riderId = `RID-${Math.floor(10000 + Math.random() * 90000)}`;
         const reference = `PAY-${Date.now()}`;
         const newRider = {
-            riderId, name, phone, plateNumber, union,
-            documents: {}, emergencyContact: {},
-            status: 'Pending', reference 
+            riderId, name, phone, altPhone, address, dob, plateNumber, union,
+            pin: hashedPin,
+            registrationDate: new Date().toISOString().split('T')[0],
+            bike: {
+                plateNumber: plateNumber
+            },
+            documents: {}, 
+            emergencyContact: {},
+            safety: {
+                sosEnabled: false,
+                theftStatus: 'Safe'
+            },
+            status: 'Pending', 
+            reference 
         };
-        riders.push(newRider);
-        saveRiders();
+        dbHelpers.insertRider(newRider);
+        const token = jwt.sign({ riderId }, JWT_SECRET, { expiresIn: '24h' });
+
         res.json({
-            success: true, riderId, reference,
+            success: true, riderId, reference, token,
             monnifyApiKey: process.env.MONNIFY_API_KEY,
             monnifyContractCode: process.env.MONNIFY_CONTRACT_CODE
         });
@@ -165,7 +280,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // 3. Post-Payment Update
-app.post('/api/rider/update', upload.fields([
+app.post('/api/rider/update', authenticateToken, upload.fields([
     { name: 'passportPhoto', maxCount: 1 },
     { name: 'licenseDoc', maxCount: 1 },
     { name: 'bikePapers', maxCount: 1 },
@@ -174,12 +289,26 @@ app.post('/api/rider/update', upload.fields([
     { name: 'ninDoc', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { riderId, reference, emergencyName, emergencyPhone } = req.body;
-        const rider = riders.find(r => r.riderId === riderId);
+        const { 
+            reference, 
+            // Rider's own medical
+            riderBloodGroup, riderGenotype, riderAllergies, riderHospital,
+            // Emergency contact
+            emergencyName, emergencyPhone, emergencyRel, emergencyAltPhone,
+            bloodGroup, genotype,
+            // Bike
+            bikeBrand, bikeModel, bikeColor, ownershipType,
+            // Doc numbers
+            licenseNumber, insuranceNumber, ninNumber
+        } = req.body;
+        
+        // Use the authenticated riderId from JWT, NOT the request body
+        const riderId = req.user.riderId;
+        const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
 
         // Verify payment before allowing update if not already active
-        if (rider.status !== 'Active') {
+        if (rider.status !== 'Active' && process.env.BYPASS_PAYMENT !== 'true') {
             const isPaid = await verifyMonnifyPayment(reference || rider.reference);
             if (!isPaid) {
                 return res.status(401).json({ success: false, message: 'Payment not verified. Please complete payment first.' });
@@ -188,18 +317,60 @@ app.post('/api/rider/update', upload.fields([
             const expiry = new Date();
             expiry.setMonth(expiry.getMonth() + 3);
             rider.expiryDate = expiry.toISOString().split('T')[0];
+        } else if (rider.status !== 'Active' && process.env.BYPASS_PAYMENT === 'true') {
+            rider.status = 'Active';
+            rider.expiryDate = '2099-12-31';
         }
 
-        rider.emergencyContact = { name: emergencyName, phone: emergencyPhone };
+        // Update Rider's Own Medical Info
+        rider.medical = {
+            bloodGroup: riderBloodGroup,
+            genotype: riderGenotype,
+            allergies: riderAllergies || 'None',
+            hospitalPreference: riderHospital || ''
+        };
 
+        // Update Emergency Contact
+        rider.emergencyContact = { 
+            name: emergencyName, 
+            phone: emergencyPhone,
+            relationship: emergencyRel,
+            secondaryPhone: emergencyAltPhone,
+            bloodGroup,
+            genotype
+        };
+
+        // Update Bike Info
+        rider.bike = {
+            ...rider.bike,
+            brand: bikeBrand,
+            model: bikeModel,
+            color: bikeColor,
+            ownershipType: ownershipType
+        };
+
+        // Update Documents & Numbers
         const fieldNames = ['passportPhoto', 'licenseDoc', 'bikePapers', 'proofOfOwnership', 'insuranceDoc', 'ninDoc'];
+        const docNumbers = {
+            licenseDoc: licenseNumber,
+            insuranceDoc: insuranceNumber,
+            ninDoc: ninNumber
+        };
+
         fieldNames.forEach(field => {
             if (req.files && req.files[field]) {
-                rider.documents[field] = `/uploads/${req.files[field][0].filename}`;
+                rider.documents[field] = {
+                    url: `/uploads/${req.files[field][0].filename}`,
+                    number: docNumbers[field] || '',
+                    uploadDate: new Date().toISOString().split('T')[0]
+                };
+            } else if (docNumbers[field] && rider.documents[field]) {
+                // Update number even if file didn't change
+                rider.documents[field].number = docNumbers[field];
             }
         });
 
-        saveRiders();
+        dbHelpers.updateRider(riderId, rider);
         saveToGoogleSheets(rider); 
 
         res.json({ success: true, message: 'Profile completed successfully' });
@@ -213,7 +384,7 @@ app.post('/api/rider/update', upload.fields([
 app.post('/api/payment/verify', async (req, res) => {
     const { reference, riderId } = req.body;
     try {
-        const rider = riders.find(r => r.riderId === riderId || r.reference === reference);
+        const rider = dbHelpers.getRiderById(riderId) || dbHelpers.findByReference(reference);
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
 
         const isPaid = await verifyMonnifyPayment(reference);
@@ -222,7 +393,7 @@ app.post('/api/payment/verify', async (req, res) => {
             const expiry = new Date();
             expiry.setMonth(expiry.getMonth() + 3);
             rider.expiryDate = expiry.toISOString().split('T')[0];
-            saveRiders();
+            dbHelpers.updateRider(rider.riderId, rider);
             res.json({ success: true, message: 'Payment verified' });
         } else {
             res.status(400).json({ success: false, message: 'Payment verification failed' });

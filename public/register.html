@@ -29,6 +29,21 @@
                     </div>
 
                     <div class="input-group">
+                        <label for="altPhone">Alternative Phone (Optional)</label>
+                        <input type="tel" id="altPhone" name="altPhone" placeholder="090XXXXXXXX">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="address">Residential Address</label>
+                        <input type="text" id="address" name="address" placeholder="123 Ibadan Road, Oyo State" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="dob">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" required>
+                    </div>
+
+                    <div class="input-group">
                         <label for="plateNumber">Plate Number</label>
                         <input type="text" id="plateNumber" name="plateNumber" placeholder="ABC-123-XY" required>
                     </div>
@@ -42,6 +57,11 @@
                             <option value="MRON">Motorcycle Riders Association of Nigeria</option>
                             <option value="OTHER">Other</option>
                         </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="pin">Create 4-Digit Profile PIN</label>
+                        <input type="password" id="pin" name="pin" placeholder="e.g. 1234" pattern="\d{4}" title="Please enter a 4-digit PIN" required>
                     </div>
 
                     <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 0.75rem; margin: 2rem 0; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
@@ -81,6 +101,7 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    localStorage.setItem('riderToken', result.token);
                     MonnifySDK.initialize({
                         amount: 2000,
                         currency: "NGN",

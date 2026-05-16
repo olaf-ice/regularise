@@ -3,3 +3,8 @@ node_modules
 serviceAccountKey.json
 public/uploads/*
 !public/uploads/.gitkeep
+dist/
+riders.db
+server/riders.json.backup
+scratch/
+dummy.txt

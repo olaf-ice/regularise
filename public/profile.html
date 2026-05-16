@@ -55,12 +55,67 @@
                     </div>
                 </div>
 
-                <!-- Emergency Contact (Crucial for roadside accidents/checks) -->
+                <!-- Rider Medical Info Card -->
+                <div id="riderMedicalCard" style="text-align: left; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.25); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h5 style="color: var(--accent); font-size: 0.75rem; letter-spacing: 1px; margin: 0;">🩺 RIDER MEDICAL INFO</h5>
+                        <span id="riderMedBadge" style="font-size: 0.7rem; font-weight: 800; background: var(--accent); color: #0f172a; padding: 0.15rem 0.5rem; border-radius: 0.25rem;">---</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Blood Group</span>
+                            <span id="riderBloodGroup" style="font-weight: 800; font-size: 1rem; color: var(--accent);">---</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Genotype</span>
+                            <span id="riderGenotype" style="font-weight: 800; font-size: 1rem; color: var(--accent);">---</span>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Allergies</span>
+                            <span id="riderAllergies" style="font-weight: 600; font-size: 0.85rem;">---</span>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Preferred Hospital</span>
+                            <span id="riderHospital" style="font-weight: 600; font-size: 0.85rem;">---</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency & Contact Info -->
                 <div style="text-align: left; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
-                    <h5 style="color: var(--error); margin-bottom: 0.5rem; font-size: 0.75rem; letter-spacing: 1px;">EMERGENCY CONTACT</h5>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h5 style="color: var(--error); font-size: 0.75rem; letter-spacing: 1px; margin: 0;">🚨 EMERGENCY CONTACT</h5>
+                        <span id="medicalInfo" style="font-size: 0.7rem; font-weight: 800; background: var(--error); color: white; padding: 0.1rem 0.4rem; border-radius: 0.25rem;"></span>
+                    </div>
                     <div style="display: flex; justify-content: space-between;">
-                        <span id="emergencyName" style="font-weight: 700; font-size: 0.9rem;">---</span>
+                        <div>
+                            <span id="emergencyName" style="font-weight: 700; font-size: 0.9rem; display: block;">---</span>
+                            <span id="emergencyRel" style="font-size: 0.7rem; color: var(--text-muted);">---</span>
+                        </div>
                         <a id="emergencyCall" href="#" style="color: var(--error); font-weight: 800; text-decoration: none; font-size: 0.9rem;">CALL NOW</a>
+                    </div>
+                </div>
+
+                <!-- Bike Details -->
+                <div id="bikeSection" style="text-align: left; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">
+                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.75rem; letter-spacing: 1px;">BIKE INFORMATION</h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; display: block;">Brand/Model</span>
+                            <span id="bikeModel" style="font-weight: 600; font-size: 0.85rem;">---</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; display: block;">Color</span>
+                            <span id="bikeColor" style="font-weight: 600; font-size: 0.85rem;">---</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; display: block;">Ownership</span>
+                            <span id="bikeOwnership" style="font-weight: 600; font-size: 0.85rem; text-transform: capitalize;">---</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; display: block;">Status</span>
+                            <span id="theftStatus" style="font-weight: 800; font-size: 0.85rem; color: var(--success);">SECURE</span>
+                        </div>
                     </div>
                 </div>
 
@@ -73,9 +128,18 @@
                 </div>
             </div>
 
-            <div style="margin-top: 1.5rem; text-align: center; display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 3rem;">
-                <button class="btn btn-outline" onclick="window.print()" style="flex: 1;">PRINT ID</button>
-                <a href="index.html" class="btn btn-primary" style="flex: 1; text-decoration: none;">NEW SEARCH</a>
+            <div style="margin-top: 1.5rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 3rem;">
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-outline" onclick="window.print()" style="flex: 1;">PRINT ID</button>
+                    <a href="index.html" class="btn btn-primary" style="flex: 1; text-decoration: none;">NEW SEARCH</a>
+                </div>
+                <!-- Bookmark tip for riders -->
+                <div id="bookmarkTip" style="display: none; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 0.75rem; padding: 0.85rem 1rem; font-size: 0.78rem; color: var(--text-muted); text-align: left;">
+                    <span style="color: var(--primary-light); font-weight: 700;">💡 Tip for Riders:</span> Bookmark this page or save your profile link to view your documents anytime. You can also return to the homepage and enter your phone number under <strong style="color: var(--text);">"My Profile"</strong>.
+                    <div style="margin-top: 0.5rem;">
+                        <a id="profilePermalink" href="#" style="color: var(--primary); font-weight: 700; font-size: 0.78rem; word-break: break-all;"></a>
+                    </div>
+                </div>
             </div>
         </main>
 
@@ -119,16 +183,57 @@
                     document.getElementById('riderUnion').textContent = rider.union;
                     document.getElementById('riderExpiry').textContent = rider.expiryDate ? "VALID UNTIL " + rider.expiryDate : 'EXPIRED / INACTIVE';
 
+                    // Show bookmark tip with direct profile link
+                    const profileUrl = `${window.location.origin}/profile.html?q=${encodeURIComponent(rider.phone)}`;
+                    document.getElementById('bookmarkTip').style.display = 'block';
+                    const link = document.getElementById('profilePermalink');
+                    link.href = profileUrl;
+                    link.textContent = profileUrl;
+
                     // Passport Photo
                     if (rider.documents && rider.documents.passportPhoto) {
-                        document.getElementById('passportImg').src = rider.documents.passportPhoto;
+                        const photoSrc = rider.documents.passportPhoto.url || rider.documents.passportPhoto;
+                        document.getElementById('passportImg').src = photoSrc;
+                    }
+
+                    // Rider's own Medical Info
+                    if (rider.medical) {
+                        document.getElementById('riderBloodGroup').textContent = rider.medical.bloodGroup || '---';
+                        document.getElementById('riderGenotype').textContent = rider.medical.genotype || '---';
+                        document.getElementById('riderAllergies').textContent = rider.medical.allergies || 'None reported';
+                        document.getElementById('riderHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                        const bg = rider.medical.bloodGroup || '';
+                        const gt = rider.medical.genotype || '';
+                        document.getElementById('riderMedBadge').textContent = [bg, gt].filter(Boolean).join(' | ') || 'N/A';
+                    } else {
+                        document.getElementById('riderMedicalCard').style.display = 'none';
                     }
 
                     // Emergency Contact
                     if (rider.emergencyContact) {
-                        document.getElementById('emergencyName').textContent = rider.emergencyContact.name;
+                        document.getElementById('emergencyName').textContent = rider.emergencyContact.name || '---';
+                        document.getElementById('emergencyRel').textContent = rider.emergencyContact.relationship || 'Next of Kin';
                         document.getElementById('emergencyCall').href = 'tel:' + rider.emergencyContact.phone;
                         document.getElementById('emergencyCall').textContent = rider.emergencyContact.phone;
+                        // Show contact's own blood group/genotype if available
+                        const ctcMedical = [];
+                        if (rider.emergencyContact.bloodGroup) ctcMedical.push(rider.emergencyContact.bloodGroup);
+                        if (rider.emergencyContact.genotype) ctcMedical.push(rider.emergencyContact.genotype);
+                        document.getElementById('medicalInfo').textContent = ctcMedical.join(' | ');
+                    }
+
+                    // Bike Details
+                    if (rider.bike) {
+                        document.getElementById('bikeModel').textContent = `${rider.bike.brand || ''} ${rider.bike.model || ''}`.trim() || '---';
+                        document.getElementById('bikeColor').textContent = rider.bike.color || '---';
+                        document.getElementById('bikeOwnership').textContent = rider.bike.ownershipType || '---';
+                    }
+
+                    // Safety Status
+                    if (rider.safety) {
+                        const safetyEl = document.getElementById('theftStatus');
+                        safetyEl.textContent = rider.safety.theftStatus.toUpperCase();
+                        safetyEl.style.color = rider.safety.theftStatus === 'Safe' ? 'var(--success)' : 'var(--error)';
                     }
 
                     const badge = document.getElementById('statusBadge');
@@ -161,9 +266,12 @@
                                 docDiv.style.justifyContent = 'space-between';
                                 docDiv.style.alignItems = 'center';
                                 
-                                docDiv.innerHTML = `
-                                    <span style="font-size: 0.8rem; font-weight: 500;">${docLabels[key]}</span>
-                                    <a href="${path}" target="_blank" style="color: var(--primary); font-size: 0.75rem; font-weight: 700; text-decoration: none; border: 1px solid var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">VIEW &rarr;</a>
+                                 docDiv.innerHTML = `
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span style="font-size: 0.8rem; font-weight: 500;">${docLabels[key]}</span>
+                                        <span style="font-size: 0.6rem; color: var(--text-muted);">${path.number || 'No ID recorded'}</span>
+                                    </div>
+                                    <a href="${path.url}" target="_blank" style="color: var(--primary); font-size: 0.75rem; font-weight: 700; text-decoration: none; border: 1px solid var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">VIEW &rarr;</a>
                                 `;
                                 docList.appendChild(docDiv);
                             }
