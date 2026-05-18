@@ -5,6 +5,8 @@ services:
     plan: free
     buildCommand: npm install && npm run build
     startCommand: node server/server.js
+    domains:
+      - myvault.com.ng
     disk:
       name: rider-data
       mountPath: /data
@@ -26,4 +28,4 @@ services:
         sync: false
         generateValue: true
       - key: BASE_URL
-        fromContext: instance_url
+        value: https://myvault.com.ng
