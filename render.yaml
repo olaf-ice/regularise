@@ -25,7 +25,6 @@ services:
       - key: GOOGLE_SCRIPT_URL
         sync: false
       - key: JWT_SECRET
-        sync: false
         generateValue: true
       - key: BASE_URL
         value: https://myvault.com.ng
