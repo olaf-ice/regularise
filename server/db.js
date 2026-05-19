@@ -67,13 +67,15 @@ const dbHelpers = {
         return row ? JSON.parse(row.data) : null;
     },
     findRiderByQuery: (query) => {
-        const q = query.toLowerCase();
+        const q = query.toLowerCase().replace(/[\s-]/g, '');
         const stmt = db.prepare('SELECT * FROM riders');
         for (const row of stmt.iterate()) {
             const data = JSON.parse(row.data);
-            if (data.riderId.toLowerCase() === q || 
-                (data.plateNumber && data.plateNumber.toLowerCase() === q) ||
-                (data.phone && data.phone.toLowerCase() === q)) {
+            const rId = data.riderId ? data.riderId.toLowerCase().replace(/[\s-]/g, '') : '';
+            const pNum = data.plateNumber ? data.plateNumber.toLowerCase().replace(/[\s-]/g, '') : '';
+            const ph = data.phone ? data.phone.toLowerCase().replace(/[\s-]/g, '') : '';
+            
+            if (rId === q || pNum === q || ph === q) {
                 return data;
             }
         }
