@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | MyVault</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .admin-table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .admin-table th, .admin-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .admin-table th {
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--primary-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.8rem;
+        }
+        .admin-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-active { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .status-suspended { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .status-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-light);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            margin-right: 0.5rem;
+        }
+        .action-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .action-btn.suspend:hover {
+            border-color: #ef4444; color: #ef4444;
+        }
+        .action-btn.activate:hover {
+            border-color: #10b981; color: #10b981;
+        }
+        .action-btn.view:hover {
+            border-color: var(--primary-light); color: var(--primary-light);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .metric-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-light);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Login Modal Override */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        #dashboardContent {
+            display: none;
+            padding: 2rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="glow-bg">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+
+    <!-- Login Overlay -->
+    <div id="loginOverlay">
+        <div class="glass-card login-card animate-fade-in" style="width: 100%; max-width: 400px;">
+            <div style="font-size: 2.25rem; margin-bottom: 1rem; text-align:center;">🛡️</div>
+            <h2 style="text-align:center;">Admin Portal</h2>
+            <p style="color: var(--text-muted); text-align:center; margin-bottom: 2rem;">Authorized Personnel Only</p>
+            
+            <div class="form-input-container">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label>Username</label>
+                    <input type="text" id="adminUsername" placeholder="Enter Admin Username">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label>Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="loginBtn" onclick="adminLogin()" style="margin-top: 1rem;">Access Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (Hidden until auth) -->
+    <div id="dashboardContent" class="animate-fade-in">
+        <header class="nav-bar" style="margin-bottom: 2rem; padding: 1rem 0;">
+            <div class="nav-logo">
+                <span class="nav-logo-icon">🛡️</span>
+                <span>MYVAULT ADMIN</span>
+            </div>
+            <button onclick="logout()" class="action-btn">Log Out</button>
+        </header>
+
+        <div>
+            <h1 style="margin-bottom: 0.5rem;">System Overview</h1>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage riders, drivers, and compliance statuses across the ecosystem.</p>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="metricTotal">0</div>
+                    <div class="metric-label">Total Operators</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="metricActive" style="color: #34d399;">0</div>
+                    <div class="metric-label">Active Subscriptions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="metricCars" style="color: #60a5fa;">0</div>
+                    <div class="metric-label">Registered Cars</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="metricBikes" style="color: #fbbf24;">0</div>
+                    <div class="metric-label">Registered Motorcycles</div>
+                </div>
+            </div>
+
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Operator ID</th>
+                            <th>Name</th>
+                            <th>Type / Vehicle</th>
+                            <th>Phone</th>
+                            <th>Date Reg.</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ridersTableBody">
+                        <!-- Populated via JS -->
+                        <tr><td colspan="7" style="text-align: center;">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminToken = localStorage.getItem('adminToken');
+
+        // Check auth on load
+        if (adminToken) {
+            showDashboard();
+        }
+
+        async function adminLogin() {
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+            const btn = document.getElementById('loginBtn');
+
+            if (!username || !password) return alert('Enter username and password');
+
+            btn.disabled = true;
+            btn.textContent = 'Authenticating...';
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    adminToken = data.token;
+                    localStorage.setItem('adminToken', adminToken);
+                    showDashboard();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Access Dashboard';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            adminToken = null;
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+            fetchRiders();
+        }
+
+        async function fetchRiders() {
+            try {
+                const res = await fetch('/api/admin/riders', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    renderTable(data.riders);
+                    updateMetrics(data.riders);
+                } else {
+                    if (res.status === 401 || res.status === 403) logout();
+                    alert(data.message);
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('ridersTableBody').innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Failed to load data</td></tr>`;
+            }
+        }
+
+        function updateMetrics(riders) {
+            document.getElementById('metricTotal').textContent = riders.length;
+            document.getElementById('metricActive').textContent = riders.filter(r => r.status === 'Active').length;
+            document.getElementById('metricCars').textContent = riders.filter(r => r.vehicleType && r.vehicleType.toLowerCase() === 'car').length;
+            
+            // Bikes are either explicitly "motorcycle" or missing vehicleType (legacy)
+            document.getElementById('metricBikes').textContent = riders.filter(r => !r.vehicleType || r.vehicleType.toLowerCase() === 'motorcycle').length;
+        }
+
+        function renderTable(riders) {
+            const tbody = document.getElementById('ridersTableBody');
+            tbody.innerHTML = '';
+
+            if (riders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No operators found.</td></tr>`;
+                return;
+            }
+
+            // Sort by registration date descending
+            riders.sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
+
+            riders.forEach(r => {
+                const tr = document.createElement('tr');
+                
+                let badgeClass = 'status-pending';
+                if (r.status === 'Active') badgeClass = 'status-active';
+                if (r.status === 'Suspended') badgeClass = 'status-suspended';
+
+                const vType = r.vehicleType ? r.vehicleType.toUpperCase() : 'MOTORCYCLE';
+                const pNum = r.plateNumber || 'N/A';
+
+                const toggleAction = r.status === 'Suspended' 
+                    ? `<button class="action-btn activate" onclick="toggleStatus('${r.riderId}', 'Active')">Activate</button>`
+                    : `<button class="action-btn suspend" onclick="toggleStatus('${r.riderId}', 'Suspended')">Suspend</button>`;
+
+                tr.innerHTML = `
+                    <td><strong>${r.riderId}</strong></td>
+                    <td>${r.name}</td>
+                    <td>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${vType}</div>
+                        <div>${pNum}</div>
+                    </td>
+                    <td>${r.phone}</td>
+                    <td>${r.registrationDate}</td>
+                    <td><span class="status-badge ${badgeClass}">${r.status}</span></td>
+                    <td>
+                        <button class="action-btn view" onclick="window.open('profile.html?id=${r.riderId}', '_blank')">View Profile</button>
+                        ${toggleAction}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function toggleStatus(riderId, newStatus) {
+            if (!confirm(`Are you sure you want to change ${riderId} to ${newStatus}?`)) return;
+
+            try {
+                const res = await fetch('/api/admin/rider/status', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ riderId, status: newStatus })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchRiders(); // Refresh
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+    </script>
+</body>
+</html>
