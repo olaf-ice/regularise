@@ -44,6 +44,14 @@
                     </div>
 
                     <div class="input-group">
+                        <label for="vehicleType">Vehicle Type</label>
+                        <select id="vehicleType" name="vehicleType" required>
+                            <option value="motorcycle">Motorcycle 🏍️</option>
+                            <option value="car">Car / Automobile 🚗</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
                         <label for="plateNumber">Plate Number</label>
                         <input type="text" id="plateNumber" name="plateNumber" placeholder="ABC-123-XY" required>
                     </div>
@@ -66,7 +74,7 @@
 
                     <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 0.75rem; margin: 2rem 0; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
                         <p style="font-size: 1rem; color: var(--primary-light); font-weight: 700;">
-                            Subscription: ₦2,000 / 3 Months
+                            Subscription: ₦3,000 / 1 Year
                         </p>
                     </div>
 
@@ -103,7 +111,7 @@
                 if (result.success) {
                     localStorage.setItem('riderToken', result.token);
                     MonnifySDK.initialize({
-                        amount: 2000,
+                        amount: 3000,
                         currency: "NGN",
                         reference: result.reference,
                         customerFullName: data.name,
@@ -112,7 +120,7 @@
                         contractCode: result.monnifyContractCode,
                         paymentDescription: "Rider ID Subscription",
                         onComplete: function(response) {
-                            window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}`;
+                            window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}&type=${data.vehicleType}`;
                         },
                         onClose: function(data) {
                             alert('Transaction cancelled.');

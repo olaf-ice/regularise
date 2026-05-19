@@ -19,6 +19,7 @@
                 <form id="uploadForm" enctype="multipart/form-data">
                     <input type="hidden" id="riderId" name="riderId">
                     <input type="hidden" id="reference" name="reference">
+                    <input type="hidden" id="vehicleType" name="vehicleType">
 
                     <!-- SECTION 1: Rider Medical Info -->
                     <section>
@@ -110,20 +111,20 @@
                     </section>
 
                     <section style="margin-top: 2.5rem;">
-                        <h3 style="margin-bottom: 1.5rem; color: var(--primary-light); font-size: 1.1rem;">Bike Information</h3>
+                        <h3 style="margin-bottom: 1.5rem; color: var(--primary-light); font-size: 1.1rem;" id="vehicleSectionHeader">Bike Information</h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="input-group">
-                                <label for="bikeBrand">Bike Brand</label>
+                                <label for="bikeBrand" id="brandLabel">Bike Brand</label>
                                 <input type="text" id="bikeBrand" name="bikeBrand" placeholder="e.g. Bajaj, TVS" required>
                             </div>
                             <div class="input-group">
-                                <label for="bikeModel">Bike Model</label>
+                                <label for="bikeModel" id="modelLabel">Bike Model</label>
                                 <input type="text" id="bikeModel" name="bikeModel" placeholder="e.g. Pulsar, HLX" required>
                             </div>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="input-group">
-                                <label for="bikeColor">Bike Color</label>
+                                <label for="bikeColor" id="colorLabel">Bike Color</label>
                                 <input type="text" id="bikeColor" name="bikeColor" placeholder="e.g. Red, Black" required>
                             </div>
                             <div class="input-group">
@@ -147,17 +148,23 @@
 
                         <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
                             <div class="input-group">
-                                <label for="licenseDoc">Rider’s License</label>
+                                <label for="licenseDoc" id="licenseLabel">Rider’s License</label>
                                 <input type="file" id="licenseDoc" name="licenseDoc" accept="image/*,.pdf">
                             </div>
-                            <div class="input-group">
-                                <label for="licenseNumber">License Number</label>
-                                <input type="text" id="licenseNumber" name="licenseNumber" placeholder="DL-XXXX-XXXX">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="input-group">
+                                    <label for="licenseNumber">License Number</label>
+                                    <input type="text" id="licenseNumber" name="licenseNumber" placeholder="DL-XXXX-XXXX">
+                                </div>
+                                <div class="input-group">
+                                    <label for="licenseExpiry">Expiration Date</label>
+                                    <input type="date" id="licenseExpiry" name="licenseExpiry">
+                                </div>
                             </div>
                         </div>
 
                         <div class="input-group">
-                            <label for="bikePapers">Motorcycle Registration Papers</label>
+                            <label for="bikePapers" id="regPapersLabel">Motorcycle Registration Papers</label>
                             <input type="file" id="bikePapers" name="bikePapers" accept="image/*,.pdf">
                         </div>
 
@@ -171,9 +178,15 @@
                                 <label for="insuranceDoc">Insurance Certificate</label>
                                 <input type="file" id="insuranceDoc" name="insuranceDoc" accept="image/*,.pdf">
                             </div>
-                            <div class="input-group">
-                                <label for="insuranceNumber">Policy Number</label>
-                                <input type="text" id="insuranceNumber" name="insuranceNumber" placeholder="POL-XXXX-XXXX">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="input-group">
+                                    <label for="insuranceNumber">Policy Number</label>
+                                    <input type="text" id="insuranceNumber" name="insuranceNumber" placeholder="POL-XXXX-XXXX">
+                                </div>
+                                <div class="input-group">
+                                    <label for="insuranceExpiry">Expiration Date</label>
+                                    <input type="date" id="insuranceExpiry" name="insuranceExpiry">
+                                </div>
                             </div>
                         </div>
 
@@ -187,6 +200,14 @@
                                 <input type="text" id="ninNumber" name="ninNumber" placeholder="XXXXXXXXXXX">
                             </div>
                         </div>
+
+                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
+                            <h4 style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: var(--primary-light);">Transport Union Compliance</h4>
+                            <div class="input-group">
+                                <label for="unionDuesExpiry">Union Dues / Card Validity Expiry</label>
+                                <input type="date" id="unionDuesExpiry" name="unionDuesExpiry">
+                            </div>
+                        </div>
                     </section>
 
                     <button type="submit" class="btn btn-primary" id="saveBtn" style="margin-top: 2rem;">Save & View Profile</button>
@@ -196,15 +217,30 @@
     </div>
 
     <script>
-        // Get Rider ID and Reference from URL
+        // Get Rider ID, Reference and Vehicle Type from URL
         const urlParams = new URLSearchParams(window.location.search);
         const riderId = urlParams.get('id');
         const reference = urlParams.get('ref');
+        const vehicleType = urlParams.get('type') || 'motorcycle';
 
         if (!riderId) { window.location.href = 'index.html'; }
         
         document.getElementById('riderId').value = riderId;
         document.getElementById('reference').value = reference;
+        document.getElementById('vehicleType').value = vehicleType;
+
+        // Dynamically Adapt UI
+        if (vehicleType === 'car') {
+            document.getElementById('vehicleSectionHeader').textContent = 'Car Information';
+            document.getElementById('brandLabel').textContent = 'Car Brand';
+            document.getElementById('bikeBrand').placeholder = 'e.g. Toyota, Honda';
+            document.getElementById('modelLabel').textContent = 'Car Model';
+            document.getElementById('bikeModel').placeholder = 'e.g. Corolla, Civic';
+            document.getElementById('colorLabel').textContent = 'Car Color';
+            document.getElementById('bikeColor').placeholder = 'e.g. Silver, Black';
+            document.getElementById('licenseLabel').textContent = 'Driver’s License';
+            document.getElementById('regPapersLabel').textContent = 'Car Registration Papers';
+        }
 
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();

@@ -71,7 +71,9 @@ const dbHelpers = {
         const stmt = db.prepare('SELECT * FROM riders');
         for (const row of stmt.iterate()) {
             const data = JSON.parse(row.data);
-            if (data.riderId.toLowerCase() === q || (data.plateNumber && data.plateNumber.toLowerCase() === q)) {
+            if (data.riderId.toLowerCase() === q || 
+                (data.plateNumber && data.plateNumber.toLowerCase() === q) ||
+                (data.phone && data.phone.toLowerCase() === q)) {
                 return data;
             }
         }

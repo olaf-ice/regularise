@@ -153,11 +153,12 @@ async function saveToGoogleSheets(rider) {
             status: rider.status,
             reference: rider.reference,
             expiryDate: rider.expiryDate || '',
-            // Bike Info
-            bikeBrand: rider.bike?.brand || '',
-            bikeModel: rider.bike?.model || '',
-            bikeColor: rider.bike?.color || '',
-            ownershipType: rider.bike?.ownershipType || '',
+            vehicleType: rider.vehicleType || 'motorcycle',
+            // Bike / Vehicle Info
+            bikeBrand: rider.vehicle?.brand || rider.bike?.brand || '',
+            bikeModel: rider.vehicle?.model || rider.bike?.model || '',
+            bikeColor: rider.vehicle?.color || rider.bike?.color || '',
+            ownershipType: rider.vehicle?.ownershipType || rider.bike?.ownershipType || '',
             // Documents
             passportUrl: rider.documents.passportPhoto ? `${baseUrl}${rider.documents.passportPhoto.url}` : '',
             licenseUrl: rider.documents.licenseDoc ? `${baseUrl}${rider.documents.licenseDoc.url}` : '',
@@ -238,7 +239,7 @@ app.post('/api/register', authLimiter, [
     }
 
     try {
-        const { name, phone, altPhone, address, dob, plateNumber, union, pin } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, union, pin, vehicleType } = req.body;
         
         if (dbHelpers.getRiderByPhone(phone)) {
             return res.status(400).json({ success: false, message: 'Phone number already registered' });
@@ -254,7 +255,12 @@ app.post('/api/register', authLimiter, [
             riderId, name, phone, altPhone, address, dob, plateNumber, union,
             pin: hashedPin,
             registrationDate: new Date().toISOString().split('T')[0],
+            vehicleType: vehicleType || 'motorcycle',
             bike: {
+                plateNumber: plateNumber
+            },
+            vehicle: {
+                type: vehicleType || 'motorcycle',
                 plateNumber: plateNumber
             },
             documents: {}, 
@@ -308,18 +314,15 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
 
         // Verify payment before allowing update if not already active
-        if (rider.status !== 'Active' && process.env.BYPASS_PAYMENT !== 'true') {
+        if (rider.status !== 'Active') {
             const isPaid = await verifyMonnifyPayment(reference || rider.reference);
             if (!isPaid) {
                 return res.status(401).json({ success: false, message: 'Payment not verified. Please complete payment first.' });
             }
             rider.status = 'Active';
             const expiry = new Date();
-            expiry.setMonth(expiry.getMonth() + 3);
+            expiry.setMonth(expiry.getMonth() + 12);
             rider.expiryDate = expiry.toISOString().split('T')[0];
-        } else if (rider.status !== 'Active' && process.env.BYPASS_PAYMENT === 'true') {
-            rider.status = 'Active';
-            rider.expiryDate = '2099-12-31';
         }
 
         // Update Rider's Own Medical Info
@@ -340,13 +343,22 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
             genotype
         };
 
-        // Update Bike Info
+        // Update Vehicle Info
+        rider.vehicleType = req.body.vehicleType || req.body.type || rider.vehicleType || 'motorcycle';
+        rider.vehicle = {
+            type: rider.vehicleType,
+            brand: bikeBrand || '',
+            model: bikeModel || '',
+            color: bikeColor || '',
+            ownershipType: ownershipType || ''
+        };
+        // Backward compatibility mapping
         rider.bike = {
-            ...rider.bike,
-            brand: bikeBrand,
-            model: bikeModel,
-            color: bikeColor,
-            ownershipType: ownershipType
+            brand: rider.vehicle.brand,
+            model: rider.vehicle.model,
+            color: rider.vehicle.color,
+            ownershipType: rider.vehicle.ownershipType,
+            plateNumber: rider.plateNumber
         };
 
         // Update Documents & Numbers
@@ -356,19 +368,28 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
             insuranceDoc: insuranceNumber,
             ninDoc: ninNumber
         };
+        const docExpirations = {
+            licenseDoc: req.body.licenseExpiry,
+            insuranceDoc: req.body.insuranceExpiry
+        };
 
         fieldNames.forEach(field => {
             if (req.files && req.files[field]) {
                 rider.documents[field] = {
                     url: `/uploads/${req.files[field][0].filename}`,
                     number: docNumbers[field] || '',
-                    uploadDate: new Date().toISOString().split('T')[0]
+                    uploadDate: new Date().toISOString().split('T')[0],
+                    expiryDate: docExpirations[field] || ''
                 };
-            } else if (docNumbers[field] && rider.documents[field]) {
-                // Update number even if file didn't change
-                rider.documents[field].number = docNumbers[field];
+            } else if (rider.documents[field]) {
+                if (docNumbers[field] !== undefined) rider.documents[field].number = docNumbers[field];
+                if (docExpirations[field] !== undefined) rider.documents[field].expiryDate = docExpirations[field];
             }
         });
+
+        if (req.body.unionDuesExpiry) {
+            rider.unionDuesExpiry = req.body.unionDuesExpiry;
+        }
 
         dbHelpers.updateRider(riderId, rider);
         saveToGoogleSheets(rider); 
@@ -391,7 +412,7 @@ app.post('/api/payment/verify', async (req, res) => {
         if (isPaid) {
             rider.status = 'Active';
             const expiry = new Date();
-            expiry.setMonth(expiry.getMonth() + 3);
+            expiry.setMonth(expiry.getMonth() + 12);
             rider.expiryDate = expiry.toISOString().split('T')[0];
             dbHelpers.updateRider(rider.riderId, rider);
             res.json({ success: true, message: 'Payment verified' });
