@@ -3,86 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RiderID | Digital Documentation & Verification</title>
+    <title>MyVault | Digital Document Wallet & Rider Identity</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="container animate-fade-in">
-        <header>
-            <div class="logo">RIDERID</div>
-            <p>The Digital Identity & Document Wallet for Modern Riders</p>
+<body class="glow-bg">
+    <!-- Glowing background elements -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+
+    <div class="landing-container animate-fade-in">
+        <!-- Modern Premium Navigation -->
+        <header class="nav-bar">
+            <div class="nav-logo">
+                <span class="nav-logo-icon">🔒</span>
+                <span>MYVAULT</span>
+            </div>
+            <div class="badge-secure">
+                <span class="dot"></span>
+                <span>Secure Live Connection</span>
+            </div>
         </header>
 
         <main>
-            <!-- Dual Mode: Officer Search + Rider Login -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 3rem;">
-
-                <!-- Officer Mode: Verify a Rider -->
-                <div class="glass-card" style="padding: 2rem; text-align: center;">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🛡️</div>
-                    <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Officer Verification</h2>
-                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Search by plate number, phone, or Rider ID.</p>
-                    <input type="text" id="officerSearch" placeholder="e.g. ABC-123-XY" style="margin-bottom: 0.75rem;">
-                    <button class="btn btn-primary" id="officerSearchBtn" onclick="verifyRider()" style="padding: 0.75rem 1rem; font-size: 0.9rem;">Verify Rider</button>
-                </div>
-
-                <!-- Rider Mode: View My Profile -->
-                <div class="glass-card" style="padding: 2rem; text-align: center; border-color: rgba(16, 185, 129, 0.3);">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🏍️</div>
-                    <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">My Profile</h2>
-                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Enter your phone and PIN to view your documents.</p>
-                    <input type="tel" id="riderPhone" placeholder="Phone e.g. 08012345678" style="margin-bottom: 0.75rem;">
-                    <input type="password" id="riderPin" placeholder="4-Digit PIN" pattern="\d{4}" style="margin-bottom: 0.75rem;">
-                    <button class="btn btn-primary" id="riderLoginBtn" onclick="riderLogin()" style="padding: 0.75rem 1rem; font-size: 0.9rem; background: var(--primary-dark);">View My Profile</button>
-                </div>
-            </div>
-
-            <!-- New Rider CTA -->
-            <div style="text-align: center; margin-bottom: 3rem;">
-                <a href="register.html" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary-light); font-size: 0.875rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(16,185,129,0.3); padding: 0.75rem 1.5rem; border-radius: 0.75rem; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(16,185,129,0.1)'" onmouseout="this.style.background='transparent'">New Rider? Register Here &rarr;</a>
-            </div>
-
-            <!-- Services Section -->
-            <div style="margin-bottom: 4rem;">
-                <h2 style="text-align: center; margin-bottom: 2rem; font-size: 1.5rem; color: var(--primary-light);">Our Core Services</h2>
+            <!-- Hero Grid: 2-Column Split Layout -->
+            <div class="hero-grid">
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <!-- Left Column: Hero Text & Officer Search -->
+                <div class="hero-text">
+                    <h1>The Digital Document Wallet for <span>Modern Riders</span></h1>
+                    <p class="subtitle">Securely store, manage, and instantly verify your rider credentials, licenses, and insurance documents. Keep your paperless verification in one secure locker.</p>
                     
-                    <!-- Service 1: Digital Wallet -->
-                    <div class="glass-card" style="padding: 1.5rem;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">📁</div>
-                        <h3 style="margin-bottom: 0.75rem;">Document Wallet</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">Securely store your Rider's License, Insurance, and Bike Registration. Never worry about losing physical papers again.</p>
+                    <!-- Officer Verification Hub -->
+                    <div style="margin-top: 2rem;">
+                        <h2 style="font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary-light); margin-bottom: 0.75rem;">🛡️ Law Enforcement & Union Search</h2>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Instantly verify active riders by Plate Number, Phone, or Rider ID.</p>
+                        <div class="search-wrapper">
+                            <input type="text" id="officerSearch" placeholder="Enter Plate No. (e.g. ABC-123-XY) or Rider ID">
+                            <button class="search-icon-btn" id="officerSearchBtn" onclick="verifyRider()" aria-label="Search Rider">🔍</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Rider Profile Access Card -->
+                <div class="glass-card login-card">
+                    <div style="font-size: 2.25rem; margin-bottom: 1rem;">🏍️</div>
+                    <h2>Rider Dashboard</h2>
+                    <p style="color: var(--text-muted);">Access your digital credentials wallet and secure QR code instantly.</p>
+                    
+                    <div class="form-input-container">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <input type="tel" id="riderPhone" placeholder="Registered Phone Number (e.g. 080...)">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <input type="password" id="riderPin" placeholder="Enter 4-Digit Security PIN" pattern="\d{4}">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="riderLoginBtn" onclick="riderLogin()" style="margin-bottom: 1.25rem;">Open My Vault</button>
+                    
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">New Rider? </span>
+                        <a href="register.html" style="font-size: 0.85rem; color: var(--primary-light); text-decoration: none; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Register Here &rarr;</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Features Grid Section -->
+            <div style="margin-bottom: 6rem; position: relative; z-index: 2;">
+                <h2 style="text-align: center; margin-bottom: 0.75rem; font-size: 2rem; font-weight: 800;">Our Core Credentials Platform</h2>
+                <p style="text-align: center; color: var(--text-muted); max-width: 600px; margin: 0 auto 3rem auto; font-size: 0.95rem;">A trusted ecosystem built for riders, law enforcement agencies, and union partners across Nigeria.</p>
+                
+                <div class="premium-feature-grid">
+                    
+                    <!-- Feature 1: Digital Wallet -->
+                    <div class="premium-feature-card">
+                        <div class="icon-box">📁</div>
+                        <h3>Document Wallet</h3>
+                        <p>Securely store your Rider's License, Monnify receipts, Bike Insurance, and Proof of Ownership in your encrypted local locker.</p>
                     </div>
 
-                    <!-- Service 2: Instant Verification -->
-                    <div class="glass-card" style="padding: 1.5rem;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">🛡️</div>
-                        <h3 style="margin-bottom: 0.75rem;">Instant Verification</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">Quickly prove your identity and document validity to Police, FRSC, or Unions using your unique QR code profile.</p>
+                    <!-- Feature 2: Instant Verification -->
+                    <div class="premium-feature-card">
+                        <div class="icon-box">🛡️</div>
+                        <h3>Instant Verification</h3>
+                        <p>Generate a unique offline-capable QR code to instantly verify your identity and document validity to law enforcement officers.</p>
                     </div>
 
-                    <!-- Service 3: Emergency Support -->
-                    <div class="glass-card" style="padding: 1.5rem;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">🆘</div>
-                        <h3 style="margin-bottom: 0.75rem;">Emergency Backup</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">Access crucial emergency contact information instantly. One-click help for roadside incidents or accidents.</p>
+                    <!-- Feature 3: Emergency Support -->
+                    <div class="premium-feature-card">
+                        <div class="icon-box">🆘</div>
+                        <h3>Emergency Wallet</h3>
+                        <p>Securely present medical metadata (genotype, blood group) and emergency contact cards to first responders in case of incidents.</p>
                     </div>
 
-                    <!-- Service 4: Union Integration -->
-                    <div class="glass-card" style="padding: 1.5rem;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">🤝</div>
-                        <h3 style="margin-bottom: 0.75rem;">Union Management</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">Helping rider unions digitize their records, simplify dues management, and improve identification of their members.</p>
+                    <!-- Feature 4: Union Integration -->
+                    <div class="premium-feature-card">
+                        <div class="icon-box">🤝</div>
+                        <h3>Union Administration</h3>
+                        <p>Connect with local union branches to simplify dues collection, verify member status, and manage centralized rider registers.</p>
                     </div>
 
                 </div>
             </div>
         </main>
 
-        <footer style="text-align: center; padding: 2rem 0; font-size: 0.875rem; color: var(--text-muted); border-top: 1px solid var(--glass-border);">
-            &copy; 2026 RiderID Verification System. All rights reserved.
+        <footer style="text-align: center; padding: 2.5rem 0; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--glass-border); position: relative; z-index: 2;">
+            &copy; 2026 MyVault Verification Ecosystem. All rights reserved.
         </footer>
     </div>
 
@@ -103,7 +132,7 @@
             
             if (phone && pin) {
                 btn.disabled = true;
-                btn.textContent = 'Logging in...';
+                btn.textContent = 'Opening Vault...';
                 try {
                     const res = await fetch('/api/rider/login', {
                         method: 'POST',
@@ -117,13 +146,13 @@
                     } else {
                         alert('Error: ' + data.message);
                         btn.disabled = false;
-                        btn.textContent = 'View My Profile';
+                        btn.textContent = 'Open My Vault';
                     }
                 } catch (error) {
                     console.error(error);
                     alert('Connection error. Please try again.');
                     btn.disabled = false;
-                    btn.textContent = 'View My Profile';
+                    btn.textContent = 'Open My Vault';
                 }
             } else {
                 alert('Please enter your registered phone number and PIN.');
