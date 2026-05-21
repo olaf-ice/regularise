@@ -90,6 +90,26 @@ const dbHelpers = {
             }
         }
         return null;
+    },
+    getAllRiders: () => {
+        const stmt = db.prepare('SELECT data FROM riders');
+        const riders = [];
+        for (const row of stmt.iterate()) {
+            riders.push(JSON.parse(row.data));
+        }
+        return riders;
+    },
+    updateRiderStatus: (riderId, newStatus) => {
+        const stmt = db.prepare('SELECT data, pin FROM riders WHERE riderId = ?');
+        const row = stmt.get(riderId);
+        if (row) {
+            const data = JSON.parse(row.data);
+            data.status = newStatus;
+            const updateStmt = db.prepare('UPDATE riders SET data = ? WHERE riderId = ?');
+            updateStmt.run(JSON.stringify(data), riderId);
+            return data;
+        }
+        return null;
     }
 };
 

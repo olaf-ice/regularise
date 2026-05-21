@@ -65,6 +65,18 @@ function authenticateToken(req, res, next) {
     });
 }
 
+function authenticateAdminToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, message: 'Admin access denied. No token provided.' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err || user.role !== 'admin') return res.status(403).json({ success: false, message: 'Invalid or expired admin token.' });
+        req.user = user;
+        next();
+    });
+}
+
 // Monnify Auth Helper
 async function getMonnifyToken() {
     const auth = Buffer.from(`${process.env.MONNIFY_API_KEY}:${process.env.MONNIFY_SECRET_KEY}`).toString('base64');
@@ -185,6 +197,59 @@ async function saveToGoogleSheets(rider) {
         console.error('Google Sheets Sync Failed:', err.message);
     }
 }
+
+// ---------------------------------------------------------
+// ADMIN ROUTES
+// ---------------------------------------------------------
+
+// Admin Login
+app.post('/api/admin/login', authLimiter, (req, res) => {
+    const { username, password } = req.body;
+    const adminUser = process.env.ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.ADMIN_PASSWORD || 'adminpass123';
+
+    if (username === adminUser && password === adminPass) {
+        const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '12h' });
+        res.json({ success: true, token });
+    } else {
+        res.status(401).json({ success: false, message: 'Invalid admin credentials' });
+    }
+});
+
+// Get All Riders (Admin)
+app.get('/api/admin/riders', authenticateAdminToken, (req, res) => {
+    try {
+        const riders = dbHelpers.getAllRiders();
+        // Remove pin from payloads before sending
+        const safeRiders = riders.map(({ pin, ...safeData }) => safeData);
+        res.json({ success: true, riders: safeRiders });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch riders' });
+    }
+});
+
+// Update Rider Status (Admin)
+app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
+    const { riderId, status } = req.body;
+    if (!riderId || !status) return res.status(400).json({ success: false, message: 'Rider ID and Status required' });
+
+    try {
+        const updated = dbHelpers.updateRiderStatus(riderId, status);
+        if (updated) {
+            // Also attempt to sync the new status to Google Sheets so the external sheet is updated
+            saveToGoogleSheets(updated);
+            res.json({ success: true, message: `Rider ${riderId} status updated to ${status}` });
+        } else {
+            res.status(404).json({ success: false, message: 'Rider not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to update status' });
+    }
+});
+
+// ---------------------------------------------------------
+// PUBLIC / RIDER ROUTES
+// ---------------------------------------------------------
 
 app.get('/api/verify/:query', (req, res) => {
     const query = req.params.query.toLowerCase();
