@@ -28,3 +28,7 @@ services:
         generateValue: true
       - key: BASE_URL
         value: https://myvault.com.ng
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
