@@ -176,6 +176,12 @@
                 </div>
             </div>
 
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1rem; color: var(--text-muted); margin: 0;">All Registered Operators</h3>
+                <button onclick="exportCSV()" class="action-btn" style="border-color: #34d399; color: #34d399; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700;">
+                    &#11123; Export to Excel / CSV
+                </button>
+            </div>
             <div class="admin-table-container">
                 <table class="admin-table">
                     <thead>
@@ -347,6 +353,84 @@
             } catch (err) {
                 alert('Connection error');
             }
+        }
+
+        function exportCSV() {
+            const res = fetch('/api/admin/riders', {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.riders.length) {
+                    alert('No rider data to export.');
+                    return;
+                }
+
+                const headers = [
+                    'Operator ID', 'Full Name', 'Phone', 'Alt Phone', 'Address',
+                    'Date of Birth', 'Vehicle Type', 'Plate Number', 'Union Branch',
+                    'Registration Date', 'Expiry Date', 'Status',
+                    'Bike Brand', 'Bike Model', 'Bike Color', 'Ownership Type',
+                    'Blood Group', 'Genotype', 'Allergies', 'Preferred Hospital',
+                    'Emergency Contact Name', 'Emergency Contact Phone', 'Emergency Relationship',
+                    'License Number', 'License Expiry',
+                    'Insurance Number', 'Insurance Expiry',
+                    'Has Advance Directive (No Blood)'
+                ];
+
+                const rows = data.riders.map(r => {
+                    const v = r.vehicle || r.bike || {};
+                    const m = r.medical || {};
+                    const e = r.emergencyContact || {};
+                    const d = r.documents || {};
+                    return [
+                        r.riderId,
+                        r.name,
+                        r.phone,
+                        r.altPhone || '',
+                        (r.address || '').replace(/,/g, ';'),
+                        r.dob || '',
+                        r.vehicleType || 'motorcycle',
+                        r.plateNumber || '',
+                        r.union || '',
+                        r.registrationDate || '',
+                        r.expiryDate || '',
+                        r.status,
+                        v.brand || '',
+                        v.model || '',
+                        v.color || '',
+                        v.ownershipType || '',
+                        m.bloodGroup || '',
+                        m.genotype || '',
+                        m.allergies || '',
+                        m.hospitalPreference || '',
+                        e.name || '',
+                        e.phone || '',
+                        e.relationship || '',
+                        d.licenseDoc ? (d.licenseDoc.number || '') : '',
+                        d.licenseDoc ? (d.licenseDoc.expiryDate || '') : '',
+                        d.insuranceDoc ? (d.insuranceDoc.number || '') : '',
+                        d.insuranceDoc ? (d.insuranceDoc.expiryDate || '') : '',
+                        d.medicalDirectiveDoc ? 'YES' : 'NO'
+                    ];
+                });
+
+                const csvContent = [headers, ...rows]
+                    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+                    .join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                const today = new Date().toISOString().split('T')[0];
+                link.href = url;
+                link.download = `MyVault_Riders_Export_${today}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            })
+            .catch(() => alert('Failed to export data. Please try again.'));
         }
     </script>
 

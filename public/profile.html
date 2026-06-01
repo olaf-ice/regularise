@@ -130,13 +130,15 @@
                 </div>
 
                 <!-- Next of Kin Primary Call Button -->
-                <div style="background: rgba(239, 68, 68, 0.12); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.25); display: flex; align-items: center; justify-content: space-between;">
+                <div style="background: rgba(239, 68, 68, 0.12); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.25); display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
                     <div style="text-align: left;">
                         <span id="iceKinName" style="font-weight: 800; font-size: 0.9rem; color: var(--text); display: block;">---</span>
                         <span id="iceKinRel" style="font-size: 0.68rem; color: var(--text-muted);">---</span>
                     </div>
                     <a id="iceKinCallBtn" href="#" class="btn btn-primary" style="background: var(--error); border-color: var(--error); padding: 0.4rem 0.85rem; font-size: 0.78rem; text-decoration: none; border-radius: 0.35rem; font-weight: 700; box-shadow: none; display: inline-flex; align-items: center; gap: 0.25rem;">📞 CALL NOW</a>
                 </div>
+                <!-- SOS SMS Button -->
+                <button id="iceSosBtn" onclick="triggerSOS()" class="btn btn-primary" style="width: 100%; background: var(--error); border-color: var(--error); color: white; padding: 0.6rem; font-size: 0.85rem; font-weight: 800; border-radius: 0.35rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">🚨 SEND EMERGENCY SOS ALERT</button>
             </div>
 
             <!-- Profile Wallet Card -->
@@ -341,6 +343,32 @@
             }
         }
 
+        let currentRiderId = null;
+
+        async function triggerSOS() {
+            if (!currentRiderId) return;
+            const btn = document.getElementById('iceSosBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Sending...';
+            try {
+                const response = await fetch(`/api/sos/${currentRiderId}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    btn.innerHTML = '✅ SOS SENT TO KIN';
+                    btn.style.background = 'var(--success)';
+                    btn.style.borderColor = 'var(--success)';
+                } else {
+                    alert('Error: ' + result.message);
+                    btn.disabled = false;
+                    btn.innerHTML = '🚨 SEND EMERGENCY SOS ALERT';
+                }
+            } catch (err) {
+                alert('Connection error');
+                btn.disabled = false;
+                btn.innerHTML = '🚨 SEND EMERGENCY SOS ALERT';
+            }
+        }
+
         async function fetchProfile() {
             const urlParams = new URLSearchParams(window.location.search);
             const query = urlParams.get('q') || urlParams.get('id');
@@ -363,6 +391,7 @@
 
                 if (data.success) {
                     const rider = data.rider;
+                    currentRiderId = rider.riderId;
                     const isCar = rider.vehicleType === 'car';
                     const vehicleInfo = rider.vehicle || rider.bike || {};
 

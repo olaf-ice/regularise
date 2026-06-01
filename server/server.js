@@ -181,6 +181,54 @@ async function saveToGoogleSheets(rider) {
     }
 }
 
+// --- SMS SERVICE MOCK ---
+async function sendSMS(phone, message) {
+    // In the future, integrate Termii, Twilio, or Africa's Talking here.
+    console.log(`\n=====================================`);
+    console.log(`📱 MOCK SMS SENT TO: ${phone}`);
+    console.log(`✉️ MESSAGE: ${message}`);
+    console.log(`=====================================\n`);
+    return true;
+}
+
+// --- DOCUMENT EXPIRY CRON JOB ---
+// Runs every 24 hours to check for documents expiring in exactly 14 days
+const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+setInterval(() => {
+    try {
+        console.log('[CRON] Running daily document expiry check...');
+        const riders = dbHelpers.getAllRiders();
+        const today = new Date();
+        const warningTarget = new Date(today);
+        warningTarget.setDate(today.getDate() + 14);
+        const targetDateStr = warningTarget.toISOString().split('T')[0];
+
+        riders.forEach(rider => {
+            if (rider.status !== 'Active' || !rider.documents) return;
+            
+            const docsToCheck = [
+                { name: 'Driver License', doc: rider.documents.licenseDoc },
+                { name: 'Vehicle Insurance', doc: rider.documents.insuranceDoc }
+            ];
+
+            // Also check Union Dues if we have an expiry date for it
+            if (rider.unionDuesExpiry === targetDateStr) {
+                sendSMS(rider.phone, `Hello ${rider.name}, your Union Dues will expire in 14 days (${targetDateStr}). Please renew to stay compliant.`);
+            }
+
+            docsToCheck.forEach(item => {
+                if (item.doc && item.doc.expiryDate === targetDateStr) {
+                    sendSMS(rider.phone, `Hello ${rider.name}, your ${item.name} expires in 14 days (${targetDateStr}). Please upload a new copy to your MyVault to remain compliant.`);
+                }
+            });
+        });
+    } catch (err) {
+        console.error('[CRON] Error running expiry check:', err);
+    }
+}, TWENTY_FOUR_HOURS);
+// Run once on startup just to verify it boots
+setTimeout(() => console.log('[CRON] Expiry reminder job initialized.'), 1000);
+
 // ---------------------------------------------------------
 // ADMIN ROUTES
 // ---------------------------------------------------------
@@ -233,6 +281,33 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
 // ---------------------------------------------------------
 // PUBLIC / RIDER ROUTES
 // ---------------------------------------------------------
+
+// Emergency SOS Endpoint
+app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
+    try {
+        const riderId = req.params.riderId;
+        const rider = dbHelpers.getRiderById(riderId);
+        
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+        
+        if (!rider.emergencyContact || !rider.emergencyContact.phone) {
+            return res.status(400).json({ success: false, message: 'No emergency contact on file for this rider.' });
+        }
+
+        const message = `URGENT: Someone has just accessed the Emergency Medical Profile for ${rider.name}. If this is unexpected, please try contacting them immediately.`;
+        await sendSMS(rider.emergencyContact.phone, message);
+        
+        // Optionally text secondary contact if available
+        if (rider.emergencyContact.secondaryPhone) {
+            await sendSMS(rider.emergencyContact.secondaryPhone, message);
+        }
+
+        res.json({ success: true, message: 'Emergency SOS sent successfully.' });
+    } catch (err) {
+        console.error('SOS Error:', err);
+        res.status(500).json({ success: false, message: 'Failed to send SOS' });
+    }
+});
 
 app.get('/api/verify/:query', (req, res) => {
     const query = req.params.query.toLowerCase();
