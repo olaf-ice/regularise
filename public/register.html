@@ -88,11 +88,11 @@
         </main>
 
         <footer style="margin-top: 2rem; padding: 2rem 0; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
-            Secure payment powered by Monnify. Documents are uploaded after payment.
+            Secure payment powered by Paystack. Documents are uploaded after payment.
         </footer>
     </div>
 
-    <script src="https://sdk.monnify.com/plugin/monnify.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script>
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -114,24 +114,29 @@
 
                 if (result.success) {
                     localStorage.setItem('riderToken', result.token);
-                    MonnifySDK.initialize({
-                        amount: 3000,
-                        currency: "NGN",
-                        reference: result.reference,
-                        customerFullName: data.name,
-                        customerEmail: data.phone + "@riderid.com",
-                        apiKey: result.monnifyApiKey,
-                        contractCode: result.monnifyContractCode,
-                        paymentDescription: "Rider ID Subscription",
-                        onComplete: function(response) {
+                    
+                    const handler = PaystackPop.setup({
+                        key: result.paystackPublicKey,
+                        email: data.phone + "@riderid.com",
+                        amount: 3000 * 100, // Paystack amount is in kobo
+                        currency: 'NGN',
+                        ref: result.reference,
+                        metadata: {
+                            custom_fields: [
+                                { display_name: "Name", variable_name: "name", value: data.name },
+                                { display_name: "Phone", variable_name: "phone", value: data.phone }
+                            ]
+                        },
+                        callback: function(response) {
                             window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}&type=${data.vehicleType}`;
                         },
-                        onClose: function(data) {
+                        onClose: function() {
                             alert('Transaction cancelled.');
                             btn.disabled = false;
                             btn.textContent = 'Proceed to Payment';
                         }
                     });
+                    handler.openIframe();
                 } else {
                     alert('Error: ' + result.message);
                     btn.disabled = false;
@@ -144,5 +149,19 @@
             }
         });
     </script>
+
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6a1da712f961bc1c2ff57452/1jq1t989h';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
 </body>
 </html>

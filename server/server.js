@@ -77,32 +77,15 @@ function authenticateAdminToken(req, res, next) {
     });
 }
 
-// Monnify Auth Helper
-async function getMonnifyToken() {
-    const auth = Buffer.from(`${process.env.MONNIFY_API_KEY}:${process.env.MONNIFY_SECRET_KEY}`).toString('base64');
+// Paystack Verification Helper
+async function verifyPaystackPayment(reference) {
     try {
-        const response = await axios.post('https://sandbox.monnify.com/api/v1/auth/login', {}, {
-            headers: { 'Authorization': `Basic ${auth}` }
+        const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
+            headers: { 'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }
         });
-        return response.data.responseBody.accessToken;
+        return response.data.status === true && response.data.data.status === 'success';
     } catch (err) {
-        console.error('Monnify Auth Error:', err.response ? err.response.data : err.message);
-        return null;
-    }
-}
-
-// Monnify Verification Helper
-async function verifyMonnifyPayment(reference) {
-    const token = await getMonnifyToken();
-    if (!token) return false;
-
-    try {
-        const response = await axios.get(`https://sandbox.monnify.com/api/v1/merchant/transactions/query?paymentReference=${reference}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        return response.data.responseBody.paymentStatus === 'PAID';
-    } catch (err) {
-        console.error('Monnify Verify Error:', err.response ? err.response.data : err.message);
+        console.error('Paystack Verify Error:', err.response ? err.response.data : err.message);
         return false;
     }
 }
@@ -342,8 +325,7 @@ app.post('/api/register', authLimiter, [
 
         res.json({
             success: true, riderId, reference, token,
-            monnifyApiKey: process.env.MONNIFY_API_KEY,
-            monnifyContractCode: process.env.MONNIFY_CONTRACT_CODE
+            paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY
         });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Registration failed' });
@@ -380,7 +362,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
 
         // Verify payment before allowing update if not already active
         if (rider.status !== 'Active') {
-            const isPaid = await verifyMonnifyPayment(reference || rider.reference);
+            const isPaid = await verifyPaystackPayment(reference || rider.reference);
             if (!isPaid) {
                 return res.status(401).json({ success: false, message: 'Payment not verified. Please complete payment first.' });
             }
@@ -473,7 +455,7 @@ app.post('/api/payment/verify', async (req, res) => {
         const rider = dbHelpers.getRiderById(riderId) || dbHelpers.findByReference(reference);
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
 
-        const isPaid = await verifyMonnifyPayment(reference);
+        const isPaid = await verifyPaystackPayment(reference);
         if (isPaid) {
             rider.status = 'Active';
             const expiry = new Date();
