@@ -123,6 +123,10 @@
                         <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Preferred Rescue Hospital</span>
                         <span id="iceHospital" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span>
                     </div>
+                    <div id="iceMedicalDirectiveBlock" style="grid-column: span 2; display: none; background: rgba(239, 68, 68, 0.15); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--error); margin-top: 0.5rem;">
+                        <span style="color: var(--error); font-size: 0.7rem; text-transform: uppercase; display: block; font-weight: 800; margin-bottom: 0.3rem;">⚠️ ADVANCE DIRECTIVE (NO BLOOD)</span>
+                        <a id="iceMedicalDirectiveBtn" href="#" target="_blank" class="btn btn-outline" style="border-color: var(--error); color: var(--error); padding: 0.3rem 0.6rem; font-size: 0.7rem; width: 100%;">View Uploaded Document</a>
+                    </div>
                 </div>
 
                 <!-- Next of Kin Primary Call Button -->
@@ -414,6 +418,14 @@
                         document.getElementById('iceMedicalSummaryBadge').textContent = `${bg} | ${gt}`;
                         document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None reported';
                         document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                        
+                        // Advance Directive Check
+                        if (rider.documents && rider.documents.medicalDirectiveDoc) {
+                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
+                            document.getElementById('iceMedicalDirectiveBtn').href = rider.documents.medicalDirectiveDoc.url;
+                        } else {
+                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'none';
+                        }
                     } else {
                         document.getElementById('emergencyIceHub').style.display = 'none';
                     }

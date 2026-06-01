@@ -339,7 +339,8 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
     { name: 'bikePapers', maxCount: 1 },
     { name: 'proofOfOwnership', maxCount: 1 },
     { name: 'insuranceDoc', maxCount: 1 },
-    { name: 'ninDoc', maxCount: 1 }
+    { name: 'ninDoc', maxCount: 1 },
+    { name: 'medicalDirectiveDoc', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const { 
@@ -409,7 +410,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
         };
 
         // Update Documents & Numbers
-        const fieldNames = ['passportPhoto', 'licenseDoc', 'bikePapers', 'proofOfOwnership', 'insuranceDoc', 'ninDoc'];
+        const fieldNames = ['passportPhoto', 'licenseDoc', 'bikePapers', 'proofOfOwnership', 'insuranceDoc', 'ninDoc', 'medicalDirectiveDoc'];
         const docNumbers = {
             licenseDoc: licenseNumber,
             insuranceDoc: insuranceNumber,
