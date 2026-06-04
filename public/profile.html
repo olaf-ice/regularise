@@ -335,11 +335,11 @@
                 <p id="stickerDescriptionText" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1.25rem;">Get print-ready assets to connect your bike, helmet, or physical wristband directly to MyVault.</p>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <!-- Helmet Sticker Preview -->
+                    <!-- Circular Helmet Sticker Preview -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
                         <!-- QR sticker visual -->
-                        <div style="width: 90px; height: 90px; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; margin-bottom: 0.5rem; overflow: hidden; border-radius: 4px;">
-                            <div id="qrStickerPreview" style="width: 78px; height: 78px;"></div>
+                        <div style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--primary); background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; margin-bottom: 0.5rem; overflow: hidden;">
+                            <div id="qrStickerPreview" style="width: 60px; height: 60px;"></div>
                         </div>
                         <span id="stickerTitleLabel" style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">Helmet QR Sticker</span>
                         <button class="btn btn-outline" onclick="printSticker()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print Sticker</button>
@@ -348,8 +348,11 @@
                     <!-- PVC Emergency Pocket Card Preview -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
                         <!-- PVC mini preview -->
-                        <div style="width: 90px; height: 90px; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 6px; margin-bottom: 0.5rem; overflow: hidden; border-radius: 4px;">
-                            <div id="qrPvcPreview" style="width: 78px; height: 78px;"></div>
+                        <div style="width: 90px; height: 58px; border: 2px solid #f59e0b; border-radius: 4px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px; margin-bottom: 0.5rem; overflow: hidden;">
+                            <div style="font-size: 0.28rem; font-weight: 900; color: #f59e0b; letter-spacing: 0.5px;">MYVAULT · EMERGENCY</div>
+                            <div id="pvcPreviewName" style="font-size: 0.32rem; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">---</div>
+                            <div id="pvcPreviewMedical" style="font-size: 0.28rem; color: #ef4444; font-weight: 700;">Blood: --- | Geno: ---</div>
+                            <div id="pvcPreviewId" style="font-size: 0.25rem; color: #94a3b8;">ID: ---</div>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">PVC Emergency ID</span>
                         <button class="btn btn-outline" onclick="printPVCCard()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print PVC ID</button>
@@ -988,21 +991,18 @@
 
         _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl, phone: rider.phone || '' };
 
-        // Generate live QR code in preview for both boxes
+        // Update mini preview
+        if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
+        if (document.getElementById('pvcPreviewMedical')) document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | Geno: ${gt}`;
+        if (document.getElementById('pvcPreviewId')) document.getElementById('pvcPreviewId').textContent = `ID: ${rider.riderId}`;
+
+        // Generate live QR code in preview
         const qrContainer = document.getElementById('qrStickerPreview');
         if (qrContainer) {
             qrContainer.innerHTML = '';
             try {
-                new QRCode(qrContainer, { text: profileUrl, width: 78, height: 78, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+                new QRCode(qrContainer, { text: profileUrl, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
             } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
-        }
-
-        const qrPvcContainer = document.getElementById('qrPvcPreview');
-        if (qrPvcContainer) {
-            qrPvcContainer.innerHTML = '';
-            try {
-                new QRCode(qrPvcContainer, { text: profileUrl, width: 78, height: 78, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-            } catch(e) { qrPvcContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
     }
 
@@ -1041,8 +1041,8 @@
         if (!d.riderId) { alert('Please wait for profile data to load.'); return; }
 
         let qrDataUrl = '';
-        const qrCanvas = document.querySelector('#qrPvcPreview canvas') || document.querySelector('#qrStickerPreview canvas');
-        const qrImg = document.querySelector('#qrPvcPreview img') || document.querySelector('#qrStickerPreview img');
+        const qrCanvas = document.querySelector('#qrStickerPreview canvas');
+        const qrImg = document.querySelector('#qrStickerPreview img');
         if (qrCanvas) qrDataUrl = qrCanvas.toDataURL();
         else if (qrImg) qrDataUrl = qrImg.src;
 
