@@ -250,6 +250,26 @@
             background: linear-gradient(135deg, #374151, #1f2937);
             animation: none; box-shadow: none; cursor: not-allowed; transform: none;
         }
+        /* Alarm button */
+        .sos-alarm-btn {
+            width: 100%; padding: 1.1rem;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: 2px solid #fcd34d; border-radius: 0.85rem; color: #fff;
+            font-size: 1rem; font-weight: 900; letter-spacing: 1px;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 0.5rem;
+            box-shadow: 0 8px 30px rgba(245,158,11,0.45);
+            transition: all 0.2s ease; margin-bottom: 0.85rem;
+            animation: pulse-alarm 2s ease-in-out infinite;
+        }
+        .sos-alarm-btn.active {
+            background: #1f2937; border-color: #4b5563;
+            animation: none; box-shadow: none;
+        }
+        @keyframes pulse-alarm {
+            0%, 100% { box-shadow: 0 8px 20px rgba(245,158,11,0.45); }
+            50%       { box-shadow: 0 8px 40px rgba(245,158,11,0.8); }
+        }
         /* Share row */
         .share-row { display: flex; gap: 0.65rem; }
         .share-btn {
@@ -470,6 +490,11 @@
             </div>
         </div>
 
+        <!-- Alarm Button -->
+        <button class="sos-alarm-btn" id="sirenBtn" onclick="toggleSiren()">
+            🔊 TAP TO ACTIVATE EMERGENCY ALARM
+        </button>
+
         <!-- Alert Button -->
         <button class="sos-alert-btn" id="kinAlertBtn" onclick="sendKinAlert()">
             🚨 ALERT NEXT OF KIN NOW
@@ -498,6 +523,65 @@
     <script>
         let sessionData = null;
         const currentUrl = window.location.href;
+
+        // --- SIREN & VIBRATION LOGIC ---
+        let audioCtx, sirenOscillator, sirenGain, sirenInterval;
+        let isSirenActive = false;
+
+        function toggleSiren() {
+            if (!isSirenActive) {
+                startSiren();
+                const btn = document.getElementById('sirenBtn');
+                btn.innerHTML = '🔇 STOP EMERGENCY ALARM';
+                btn.classList.add('active');
+                isSirenActive = true;
+            } else {
+                stopSiren();
+                const btn = document.getElementById('sirenBtn');
+                btn.innerHTML = '🔊 TAP TO ACTIVATE EMERGENCY ALARM';
+                btn.classList.remove('active');
+                isSirenActive = false;
+            }
+        }
+
+        function startSiren() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            sirenOscillator = audioCtx.createOscillator();
+            sirenGain = audioCtx.createGain();
+
+            sirenOscillator.type = 'square';
+            sirenOscillator.connect(sirenGain);
+            sirenGain.connect(audioCtx.destination);
+
+            sirenGain.gain.value = 0.5; // Very loud
+            sirenOscillator.start();
+
+            let high = true;
+            sirenInterval = setInterval(() => {
+                // High-low alternating siren
+                sirenOscillator.frequency.value = high ? 800 : 600;
+                high = !high;
+                
+                if ("vibrate" in navigator) {
+                    navigator.vibrate([300, 100, 300, 100]); // intense vibration pattern
+                }
+            }, 400);
+        }
+
+        function stopSiren() {
+            if (sirenInterval) clearInterval(sirenInterval);
+            if (sirenOscillator) {
+                sirenOscillator.stop();
+                sirenOscillator.disconnect();
+            }
+            if (sirenGain) sirenGain.disconnect();
+            if ("vibrate" in navigator) {
+                navigator.vibrate(0);
+            }
+        }
+        // -------------------------------
 
         function showToast(msg, ms = 2500) {
             const t = document.getElementById('toast');
