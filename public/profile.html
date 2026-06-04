@@ -807,8 +807,8 @@
         
         <form id="editProfileForm">
             <div class="input-group">
-                <label>Profile Picture URL</label>
-                <input type="text" id="editPic" name="passportPhoto" placeholder="https://...">
+                <label>Upload New Profile Picture</label>
+                <input type="file" id="editPic" name="passportPhoto" accept="image/*">
             </div>
             <div class="input-group">
                 <label>Blood Type</label>
@@ -850,10 +850,7 @@
             document.getElementById('editKinPhone').value = kinHref.replace('tel:', '');
         }
         
-        const img = document.getElementById('passportImg').src;
-        if(!img.includes('default-avatar')) {
-            document.getElementById('editPic').value = img;
-        }
+        // Cannot pre-fill a file input for security reasons
     }
     
     function closeEditProfileModal() {
@@ -866,13 +863,12 @@
         btn.textContent = 'Saving...'; btn.disabled = true;
         
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
         
         try {
             const res = await fetch('/api/profile/update/' + currentRiderId, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('riderToken') },
-                body: JSON.stringify(data)
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('riderToken') },
+                body: formData
             });
             const result = await res.json();
             if (result.success) {

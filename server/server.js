@@ -407,7 +407,7 @@ app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
 });
 
 // Update Profile
-app.post('/api/profile/update/:riderId', authenticateToken, async (req, res) => {
+app.post('/api/profile/update/:riderId', authenticateToken, upload.single('passportPhoto'), async (req, res) => {
     try {
         const riderId = req.params.riderId;
         // Verify user is updating their own profile or is admin
@@ -418,12 +418,12 @@ app.post('/api/profile/update/:riderId', authenticateToken, async (req, res) => 
         const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
         
-        const { passportPhoto, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
+        const { bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
         
         // Update documents
-        if (passportPhoto) {
+        if (req.file) {
             rider.documents = rider.documents || {};
-            rider.documents.passportPhoto = { url: passportPhoto };
+            rider.documents.passportPhoto = { url: `/uploads/${req.file.filename}` };
         }
         
         // Update medical
