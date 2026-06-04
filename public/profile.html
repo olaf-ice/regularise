@@ -5,6 +5,7 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
         /* Custom styled switch slider */
@@ -309,24 +310,25 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <!-- Circular Helmet Sticker Preview -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
-                        <div id="stickerPreviewFrame" style="width: 70px; height: 70px; border-radius: 50%; border: 2px dashed var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(--primary-light); font-weight: 800; padding: 0.25rem; flex-direction: column; margin-bottom: 0.5rem; transition: all 0.3s ease;">
-                            <span style="font-size: 0.45rem;">EMERGENCY SCAN</span>
-                            <span style="font-size: 1rem;">🔗</span>
-                            <span style="font-size: 0.4rem;">MYVAULT ICE</span>
+                        <!-- QR sticker visual -->
+                        <div style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--primary); background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; margin-bottom: 0.5rem; overflow: hidden;">
+                            <div id="qrStickerPreview" style="width: 60px; height: 60px;"></div>
                         </div>
                         <span id="stickerTitleLabel" style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">Helmet QR Sticker</span>
-                        <button class="btn btn-outline" onclick="printAsset('stickerPreviewFrame', 'Emergency Sticker')" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">Print Sticker</button>
+                        <button class="btn btn-outline" onclick="printSticker()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print Sticker</button>
                     </div>
 
                     <!-- PVC Emergency Pocket Card Preview -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
-                        <div id="pvcPreviewFrame" style="width: 80px; height: 50px; border: 1px solid var(--accent); border-radius: 0.25rem; display: flex; flex-direction: column; align-items: left; text-align: left; padding: 0.25rem; font-size: 0.4rem; justify-content: space-between; margin-bottom: 0.5rem; background: rgba(251,191,36,0.05);">
-                            <span style="font-weight: 800; color: var(--accent);">MYVAULT EMERGENCY PASS</span>
-                            <span id="pvcRiderId" style="font-size: 0.3rem; color: var(--text-muted);">ID: ---</span>
-                            <span id="pvcMedical" style="font-size: 0.3rem; color: var(--error);">Blood: --- | Genotype: ---</span>
+                        <!-- PVC mini preview -->
+                        <div style="width: 90px; height: 58px; border: 2px solid #f59e0b; border-radius: 4px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px; margin-bottom: 0.5rem; overflow: hidden;">
+                            <div style="font-size: 0.28rem; font-weight: 900; color: #f59e0b; letter-spacing: 0.5px;">MYVAULT · EMERGENCY</div>
+                            <div id="pvcPreviewName" style="font-size: 0.32rem; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">---</div>
+                            <div id="pvcPreviewMedical" style="font-size: 0.28rem; color: #ef4444; font-weight: 700;">Blood: --- | Geno: ---</div>
+                            <div id="pvcPreviewId" style="font-size: 0.25rem; color: #94a3b8;">ID: ---</div>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">PVC Emergency ID</span>
-                        <button class="btn btn-outline" onclick="printAsset('pvcPreviewFrame', 'PVC ID')" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">Print PVC ID</button>
+                        <button class="btn btn-outline" onclick="printPVCCard()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print PVC ID</button>
                     </div>
                 </div>
             </div>
@@ -649,6 +651,10 @@
                     document.getElementById('bikeColor').textContent = vehicleInfo.color || '---';
                     document.getElementById('bikeOwnership').textContent = vehicleInfo.ownershipType || '---';
 
+                    // Initialise print data (QR + PVC card)
+                    initPrintData(rider);
+
+
                     // Safety Status
                     if (rider.safety) {
                         const safetyEl = document.getElementById('theftStatus');
@@ -943,52 +949,200 @@
         window.location.href = 'index.html';
     }
 
-    function printAsset(elementId, title) {
-        const elem = document.getElementById(elementId);
-        if (!elem) return;
-        const printWindow = window.open('', '', 'height=600,width=800');
-        
-        printWindow.document.write('<html><head><title>Print ' + title + '</title>');
-        printWindow.document.write('<style>');
-        printWindow.document.write('body { font-family: "Inter", sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: white; color: black; }');
-        printWindow.document.write('#stickerPreviewFrame { width: 150px; height: 150px; border-radius: 50%; border: 4px dashed #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #60a5fa; font-weight: 800; padding: 1rem; flex-direction: column; text-align: center; }');
-        printWindow.document.write('#pvcPreviewFrame { width: 320px; height: 200px; border: 3px solid #f59e0b; border-radius: 12px; display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 1.5rem; justify-content: space-between; background: rgba(245,158,11,0.05); }');
-        printWindow.document.write('</style></head><body>');
-        
-        const clone = elem.cloneNode(true);
-        clone.style.width = '';
-        clone.style.height = '';
-        clone.style.border = ''; 
-        clone.style.background = ''; 
-        clone.style.fontSize = ''; 
-        
-        const spans = clone.querySelectorAll('span');
-        if(elementId === 'pvcPreviewFrame') {
-            if(spans.length >= 3) {
-                spans[0].style.fontSize = '1.3rem';
-                spans[0].style.color = '#f59e0b';
-                spans[1].style.fontSize = '1.1rem';
-                spans[1].style.color = '#4b5563';
-                spans[2].style.fontSize = '1.1rem';
-                spans[2].style.color = '#ef4444';
-            }
-        } else {
-            if(spans.length >= 3) {
-                spans[0].style.fontSize = '1rem';
-                spans[1].style.fontSize = '3.5rem';
-                spans[2].style.fontSize = '0.9rem';
-            }
+    // ---- PRINT ASSETS ----
+    let _printRiderData = {};
+
+    function initPrintData(rider) {
+        const vehicleInfo = rider.vehicle || rider.bike || {};
+        const plate = (vehicleInfo.plateNumber || rider.plateNumber || '').toUpperCase();
+        const bg = (rider.medical && rider.medical.bloodGroup) || '---';
+        const gt = (rider.medical && rider.medical.genotype) || '---';
+        const allergies = (rider.medical && rider.medical.allergies) || 'None';
+        const kinName = (rider.emergencyContact && rider.emergencyContact.name) || 'N/A';
+        const kinPhone = (rider.emergencyContact && rider.emergencyContact.phone) || '';
+        const profileUrl = window.location.origin + '/profile.html?q=' + rider.riderId;
+
+        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl, phone: rider.phone || '' };
+
+        // Update mini preview
+        if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
+        if (document.getElementById('pvcPreviewMedical')) document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | Geno: ${gt}`;
+        if (document.getElementById('pvcPreviewId')) document.getElementById('pvcPreviewId').textContent = `ID: ${rider.riderId}`;
+
+        // Generate live QR code in preview
+        const qrContainer = document.getElementById('qrStickerPreview');
+        if (qrContainer) {
+            qrContainer.innerHTML = '';
+            try {
+                new QRCode(qrContainer, { text: profileUrl, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+            } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
-        
-        printWindow.document.write(clone.outerHTML);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.focus();
-        
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 500);
+    }
+
+    function printSticker() {
+        const d = _printRiderData;
+        if (!d.riderId) { alert('Please wait for profile data to load.'); return; }
+
+        // Get QR code image from canvas
+        let qrDataUrl = '';
+        const qrCanvas = document.querySelector('#qrStickerPreview canvas');
+        const qrImg = document.querySelector('#qrStickerPreview img');
+        if (qrCanvas) qrDataUrl = qrCanvas.toDataURL();
+        else if (qrImg) qrDataUrl = qrImg.src;
+
+        const pw = window.open('', '', 'height=700,width=700');
+        pw.document.write(`<!DOCTYPE html><html><head><title>Emergency Sticker - ${d.name}</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            * { margin:0; padding:0; box-sizing:border-box; }
+            body { background:#f5f5f5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:'Inter',sans-serif; }
+            .page-hint { font-size:11px; color:#999; margin-bottom:16px; }
+            .sticker {
+                width: 200px; height: 200px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+                border: 6px solid #3b82f6;
+                display: flex; flex-direction:column;
+                align-items:center; justify-content:center;
+                box-shadow: 0 0 0 3px white, 0 0 0 6px #3b82f6;
+                padding: 16px;
+                text-align:center;
+                position:relative;
+            }
+            .sticker-top { font-size:7px; font-weight:900; color:#60a5fa; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:6px; }
+            .sticker-qr { width:90px; height:90px; background:white; border-radius:6px; padding:3px; margin-bottom:6px; }
+            .sticker-qr img { width:100%; height:100%; }
+            .sticker-name { font-size:9px; font-weight:900; color:white; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
+            .sticker-id { font-size:7px; font-weight:700; color:#94a3b8; letter-spacing:1.5px; margin-bottom:2px; }
+            .sticker-bottom { font-size:6px; font-weight:800; color:#ef4444; letter-spacing:1.5px; text-transform:uppercase; }
+            .red-ring { position:absolute; inset:0; border-radius:50%; border:2px solid rgba(239,68,68,0.3); }
+            @media print {
+                body { background: white; }
+                .page-hint { display:none; }
+                .sticker { box-shadow: 0 0 0 3px white, 0 0 0 6px #3b82f6; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+            }
+        </style></head><body>
+        <p class="page-hint">Print this page · Recommended: Cut along outer edge</p>
+        <div class="sticker">
+            <div class="red-ring"></div>
+            <div class="sticker-top">SCAN IN EMERGENCY</div>
+            <div class="sticker-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="font-size:8px;color:#333;display:flex;align-items:center;justify-content:center;height:100%;font-weight:700;">QR CODE</div>'}</div>
+            <div class="sticker-name">${d.name}</div>
+            <div class="sticker-id">${d.riderId} · ${d.plate || 'N/A'}</div>
+            <div class="sticker-bottom">🚨 MYVAULT ICE</div>
+        </div>
+        </body></html>`);
+        pw.document.close();
+        pw.focus();
+        setTimeout(() => { pw.print(); pw.close(); }, 800);
+    }
+
+    function printPVCCard() {
+        const d = _printRiderData;
+        if (!d.riderId) { alert('Please wait for profile data to load.'); return; }
+
+        let qrDataUrl = '';
+        const qrCanvas = document.querySelector('#qrStickerPreview canvas');
+        const qrImg = document.querySelector('#qrStickerPreview img');
+        if (qrCanvas) qrDataUrl = qrCanvas.toDataURL();
+        else if (qrImg) qrDataUrl = qrImg.src;
+
+        const pw = window.open('', '', 'height=700,width=900');
+        pw.document.write(`<!DOCTYPE html><html><head><title>PVC Emergency ID - ${d.name}</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            * { margin:0; padding:0; box-sizing:border-box; }
+            body { background:#e5e7eb; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:'Inter',sans-serif; gap:16px; }
+            .page-hint { font-size:11px; color:#666; }
+            .card {
+                width: 340px; height: 215px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+                border: 2px solid #f59e0b;
+                display: flex;
+                overflow: hidden;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+                position: relative;
+            }
+            /* subtle pattern */
+            .card::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(45deg,transparent,transparent 12px,rgba(59,130,246,0.05) 12px,rgba(59,130,246,0.05) 14px); border-radius:14px; }
+            .card-left { flex:1; padding:14px 10px 14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:1; }
+            .card-right { width:90px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px; gap:6px; background:rgba(0,0,0,0.2); position:relative; z-index:1; border-left:1px solid rgba(245,158,11,0.3); }
+            .header-row { display:flex; align-items:center; gap:6px; }
+            .brand-badge { font-size:6.5px; font-weight:900; color:#f59e0b; letter-spacing:1.5px; text-transform:uppercase; }
+            .emergency-badge { font-size:5.5px; font-weight:900; color:#ef4444; letter-spacing:1px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); padding:1.5px 5px; border-radius:3px; }
+            .rider-name { font-size:15px; font-weight:900; color:white; letter-spacing:0.3px; line-height:1.1; margin-top:4px; text-transform:uppercase; }
+            .rider-plate { font-size:10px; font-weight:900; color:#60a5fa; letter-spacing:2px; margin-top:2px; }
+            .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; margin-top:6px; }
+            .info-label { font-size:5.5px; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase; }
+            .info-value { font-size:9px; font-weight:800; color:white; }
+            .blood-value { color:#ef4444; font-size:13px; }
+            .kin-block { margin-top:auto; padding-top:6px; border-top:1px solid rgba(255,255,255,0.1); }
+            .kin-label { font-size:5.5px; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase; }
+            .kin-value { font-size:8px; font-weight:800; color:white; }
+            .card-qr { width:66px; height:66px; background:white; border-radius:6px; padding:3px; }
+            .card-qr img { width:100%; height:100%; }
+            .scan-label { font-size:5.5px; font-weight:800; color:#94a3b8; letter-spacing:1px; text-align:center; text-transform:uppercase; }
+            .rider-id-small { font-size:6px; font-weight:700; color:#64748b; text-align:center; }
+            .allergy-bar { margin-top:4px; padding:3px 6px; background:rgba(239,68,68,0.15); border-left:2px solid #ef4444; border-radius:2px; }
+            .allergy-text { font-size:6.5px; font-weight:800; color:#ef4444; }
+            @media print {
+                body { background:white; }
+                .page-hint { display:none; }
+                .card { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+            }
+        </style></head><body>
+        <p class="page-hint">Print this page · Laminate for best results · Standard PVC card size (CR80)</p>
+        <div class="card">
+            <div class="card-left">
+                <div>
+                    <div class="header-row">
+                        <span class="brand-badge">MYVAULT</span>
+                        <span class="emergency-badge">🚨 EMERGENCY ID</span>
+                    </div>
+                    <div class="rider-name">${d.name}</div>
+                    <div class="rider-plate">${d.plate || 'NO PLATE'}</div>
+                </div>
+                <div class="info-grid">
+                    <div>
+                        <div class="info-label">Blood Group</div>
+                        <div class="info-value blood-value">${d.bg}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Genotype</div>
+                        <div class="info-value">${d.gt}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Phone</div>
+                        <div class="info-value" style="font-size:8px;">${d.phone}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">ID</div>
+                        <div class="info-value" style="font-size:8px;">${d.riderId}</div>
+                    </div>
+                </div>
+                ${d.allergies && d.allergies !== 'None' ? `<div class="allergy-bar"><div class="allergy-text">⚠️ ALLERGIES: ${d.allergies}</div></div>` : ''}
+                <div class="kin-block">
+                    <div class="kin-label">Emergency Contact</div>
+                    <div class="kin-value">${d.kinName} · ${d.kinPhone}</div>
+                </div>
+            </div>
+            <div class="card-right">
+                <div class="card-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:#333;">QR CODE</div>'}</div>
+                <div class="scan-label">Scan for full profile</div>
+                <div class="rider-id-small">${d.riderId}</div>
+            </div>
+        </div>
+        </body></html>`);
+        pw.document.close();
+        pw.focus();
+        setTimeout(() => { pw.print(); pw.close(); }, 800);
+    }
+
+    // legacy wrapper (no longer used but kept for safety)
+    function printAsset(elementId, title) {
+        if (elementId === 'stickerPreviewFrame') printSticker();
+        else printPVCCard();
     }
 
     document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
