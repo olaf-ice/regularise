@@ -837,6 +837,35 @@
                 <label>Emergency Contact Phone</label>
                 <input type="tel" id="editKinPhone" name="emergencyContactPhone">
             </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">Update Compliance Documents</h4>
+            
+            <div class="input-group">
+                <label>Driver/Rider's License</label>
+                <input type="file" name="licenseDoc" accept="image/*,application/pdf">
+                <input type="text" name="licenseNumber" placeholder="License Number" style="margin-top: 0.5rem;">
+                <input type="date" name="licenseExpiry" placeholder="Expiry Date" style="margin-top: 0.5rem;">
+            </div>
+
+            <div class="input-group">
+                <label>Vehicle Insurance</label>
+                <input type="file" name="insuranceDoc" accept="image/*,application/pdf">
+                <input type="text" name="insuranceNumber" placeholder="Policy Number" style="margin-top: 0.5rem;">
+                <input type="date" name="insuranceExpiry" placeholder="Expiry Date" style="margin-top: 0.5rem;">
+            </div>
+
+            <div class="input-group">
+                <label>Vehicle Registration Papers</label>
+                <input type="file" name="bikePapers" accept="image/*,application/pdf">
+            </div>
+
+            <div class="input-group">
+                <label>NIN Slip / National ID</label>
+                <input type="file" name="ninDoc" accept="image/*,application/pdf">
+                <input type="text" name="ninNumber" placeholder="NIN Number" style="margin-top: 0.5rem;">
+            </div>
+
             <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
         </form>
     </div>

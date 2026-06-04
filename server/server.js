@@ -407,7 +407,13 @@ app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
 });
 
 // Update Profile
-app.post('/api/profile/update/:riderId', authenticateToken, upload.single('passportPhoto'), async (req, res) => {
+app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
+    { name: 'passportPhoto', maxCount: 1 },
+    { name: 'licenseDoc', maxCount: 1 },
+    { name: 'insuranceDoc', maxCount: 1 },
+    { name: 'bikePapers', maxCount: 1 },
+    { name: 'ninDoc', maxCount: 1 }
+]), async (req, res) => {
     try {
         const riderId = req.params.riderId;
         // Verify user is updating their own profile or is admin
@@ -418,13 +424,32 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.single('passp
         const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
         
-        const { bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
+        const { bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber } = req.body;
+        
+        rider.documents = rider.documents || {};
         
         // Update documents
-        if (req.file) {
-            rider.documents = rider.documents || {};
-            rider.documents.passportPhoto = { url: `/uploads/${req.file.filename}` };
+        if (req.files && req.files.passportPhoto) {
+            rider.documents.passportPhoto = { url: `/uploads/${req.files.passportPhoto[0].filename}` };
         }
+        
+        const docFields = ['licenseDoc', 'insuranceDoc', 'bikePapers', 'ninDoc'];
+        const docNumbers = { licenseDoc: licenseNumber, insuranceDoc: insuranceNumber, ninDoc: ninNumber };
+        const docExpirations = { licenseDoc: licenseExpiry, insuranceDoc: insuranceExpiry };
+        
+        docFields.forEach(field => {
+            if (req.files && req.files[field]) {
+                rider.documents[field] = {
+                    url: `/uploads/${req.files[field][0].filename}`,
+                    number: docNumbers[field] || (rider.documents[field]?.number || ''),
+                    uploadDate: new Date().toISOString().split('T')[0],
+                    expiryDate: docExpirations[field] || (rider.documents[field]?.expiryDate || '')
+                };
+            } else if (rider.documents[field]) {
+                if (docNumbers[field]) rider.documents[field].number = docNumbers[field];
+                if (docExpirations[field]) rider.documents[field].expiryDate = docExpirations[field];
+            }
+        });
         
         // Update medical
         rider.medical = rider.medical || {};
