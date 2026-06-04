@@ -89,8 +89,9 @@
     <div id="namePlateContainer" style="text-align: center; margin-bottom: 1.5rem;">
     <h2 id="riderName" style="margin-bottom: 0.25rem; font-size: 1.5rem; font-weight: 800; transition: all 0.3s ease;">Rider Name</h2><p id="riderPlate" style="color: var(--primary-light); font-weight: 900; font-size: 1.35rem; letter-spacing: 1px; margin-bottom: 1.25rem; transition: all 0.3s ease;">PLATE: ---</p></div>
 
-    <div class="no-print" style="text-align: center; margin-bottom: 1.5rem;">
+    <div id="ownerActions" class="no-print" style="display: none; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
         <button onclick="openEditProfileModal()" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-color: var(--primary-light); color: var(--primary-light);">✏️ Edit Profile</button>
+        <button onclick="logoutRider()" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-color: var(--error); color: var(--error);">🚪 Log Out</button>
     </div>
 
             <!-- Roadside Switch -->
@@ -567,6 +568,10 @@
                     document.getElementById('profileContent').style.display = 'block';
                     document.getElementById('profileStatusText').textContent = 'Verification Active';
                     
+                    if (localStorage.getItem('riderToken')) {
+                        document.getElementById('ownerActions').style.display = 'flex';
+                    }
+                    
                     document.getElementById('riderName').textContent = rider.name;
                     document.getElementById('riderPlate').textContent = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
                     document.getElementById('riderId').textContent = rider.riderId;
@@ -855,6 +860,11 @@
     
     function closeEditProfileModal() {
         document.getElementById('editProfileModal').style.display = 'none';
+    }
+
+    function logoutRider() {
+        localStorage.removeItem('riderToken');
+        window.location.href = 'index.html';
     }
 
     document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
