@@ -14,6 +14,27 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const dbHelpers = require('./db');
 
+// ── In-Memory Emergency Session Store ───────────────────────────────────────
+// Sessions expire after 6 hours and are purged automatically.
+const emergencySessions = new Map();
+const SESSION_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+function generateSessionId() {
+    const digits = Math.floor(10000 + Math.random() * 90000);
+    return `MV-EMG-${digits}`;
+}
+
+function purgeExpiredSessions() {
+    const now = Date.now();
+    for (const [id, session] of emergencySessions.entries()) {
+        if (now - new Date(session.createdAt).getTime() > SESSION_TTL_MS) {
+            emergencySessions.delete(id);
+        }
+    }
+}
+// Purge every 30 minutes
+setInterval(purgeExpiredSessions, 30 * 60 * 1000);
+
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_key_change_in_prod';
 const PORT = process.env.PORT || 3001;
@@ -282,7 +303,84 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
 // PUBLIC / RIDER ROUTES
 // ---------------------------------------------------------
 
-// Emergency SOS Endpoint
+// ── CREATE Emergency Session ─────────────────────────────────────────────────
+// POST /api/emergency/create/:riderId
+// Body: { location: { name, latitude, longitude } }
+// Returns: { success, sessionId, sessionUrl }
+app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
+    try {
+        const riderId = req.params.riderId;
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+
+        const sessionId = generateSessionId();
+        const numericId = sessionId.replace('MV-EMG-', '');
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const sessionUrl = `${baseUrl}/emergency/${numericId}`;
+
+        // Safe rider snapshot (strip PIN)
+        const { pin, ...safeRider } = rider;
+
+        const session = {
+            sessionId,
+            numericId,
+            riderId,
+            sessionUrl,
+            createdAt: new Date().toISOString(),
+            location: req.body.location || null,
+            rider: safeRider
+        };
+
+        // Store by both the full ID and the numeric part for flexible lookup
+        emergencySessions.set(sessionId, session);
+        emergencySessions.set(numericId, session);
+
+        // Fire-and-forget: notify emergency contact
+        if (rider.emergencyContact && rider.emergencyContact.phone) {
+            const locText = session.location?.name ? ` near ${session.location.name}` : '';
+            const msg = `🚨 EMERGENCY: ${rider.name} has triggered a SOS alert${locText}. ` +
+                        `View their emergency profile here: ${sessionUrl}`;
+            sendSMS(rider.emergencyContact.phone, msg).catch(() => {});
+            if (rider.emergencyContact.secondaryPhone) {
+                sendSMS(rider.emergencyContact.secondaryPhone, msg).catch(() => {});
+            }
+        }
+
+        console.log(`[SOS] Emergency session created: ${sessionId} for rider ${riderId}`);
+        res.json({ success: true, sessionId, numericId, sessionUrl });
+    } catch (err) {
+        console.error('Emergency Create Error:', err);
+        res.status(500).json({ success: false, message: 'Failed to create emergency session' });
+    }
+});
+
+// ── GET Emergency Session ─────────────────────────────────────────────────────
+// GET /api/emergency/:sessionId  (public — no auth required)
+app.get('/api/emergency/:sessionId', (req, res) => {
+    const key = req.params.sessionId;
+    const session = emergencySessions.get(key);
+
+    if (!session) {
+        return res.status(404).json({ success: false, message: 'Session not found or expired' });
+    }
+
+    // Refresh from DB in case rider data changed
+    try {
+        const { pin, ...safeRider } = dbHelpers.getRiderById(session.riderId) || session.rider;
+        const freshSession = { ...session, rider: safeRider };
+        res.json({ success: true, session: freshSession });
+    } catch (e) {
+        res.json({ success: true, session });
+    }
+});
+
+// ── Serve emergency.html for /emergency/* paths ───────────────────────────────
+app.get('/emergency/:sessionId', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'emergency.html'));
+});
+
+// ── Legacy SOS Endpoint (kept for ICE hub compatibility) ─────────────────────
+// POST /api/sos/:riderId  — alerts next of kin via SMS
 app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
     try {
         const riderId = req.params.riderId;
@@ -297,7 +395,6 @@ app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
         const message = `URGENT: Someone has just accessed the Emergency Medical Profile for ${rider.name}. If this is unexpected, please try contacting them immediately.`;
         await sendSMS(rider.emergencyContact.phone, message);
         
-        // Optionally text secondary contact if available
         if (rider.emergencyContact.secondaryPhone) {
             await sendSMS(rider.emergencyContact.secondaryPhone, message);
         }
@@ -306,6 +403,46 @@ app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
     } catch (err) {
         console.error('SOS Error:', err);
         res.status(500).json({ success: false, message: 'Failed to send SOS' });
+    }
+});
+
+// Update Profile
+app.post('/api/profile/update/:riderId', authenticateToken, async (req, res) => {
+    try {
+        const riderId = req.params.riderId;
+        // Verify user is updating their own profile or is admin
+        if (req.user.riderId !== riderId && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Unauthorized profile update' });
+        }
+        
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
+        
+        const { passportPhoto, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
+        
+        // Update documents
+        if (passportPhoto) {
+            rider.documents = rider.documents || {};
+            rider.documents.passportPhoto = { url: passportPhoto };
+        }
+        
+        // Update medical
+        rider.medical = rider.medical || {};
+        if (bloodType) rider.medical.bloodGroup = bloodType;
+        if (allergies) rider.medical.allergies = allergies;
+        
+        // Update emergency contact
+        rider.emergencyContact = rider.emergencyContact || {};
+        if (emergencyContactName) rider.emergencyContact.name = emergencyContactName;
+        if (emergencyContactPhone) rider.emergencyContact.phone = emergencyContactPhone;
+        
+        dbHelpers.updateRider(riderId, rider);
+        saveToGoogleSheets(rider);
+        
+        res.json({ success: true, message: 'Profile updated' });
+    } catch (err) {
+        console.error('Profile Update Error:', err);
+        res.status(500).json({ success: false, message: 'Failed to update profile' });
     }
 });
 
@@ -362,7 +499,7 @@ app.post('/api/register', authLimiter, [
     }
 
     try {
-        const { name, phone, altPhone, address, dob, plateNumber, union, pin, vehicleType } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, union, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
         
         if (dbHelpers.getRiderByPhone(phone)) {
             return res.status(400).json({ success: false, message: 'Phone number already registered' });
@@ -387,7 +524,14 @@ app.post('/api/register', authLimiter, [
                 plateNumber: plateNumber
             },
             documents: {}, 
-            emergencyContact: {},
+            medical: {
+                bloodGroup: bloodType || '',
+                allergies: allergies || 'None'
+            },
+            emergencyContact: {
+                name: emergencyContactName || '',
+                phone: emergencyContactPhone || ''
+            },
             safety: {
                 sosEnabled: false,
                 theftStatus: 'Safe'

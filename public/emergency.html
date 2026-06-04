@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Session | MyVault SOS</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060a12;
+            --surface: #0d1424;
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.08);
+            --red: #ef4444;
+            --red-dark: #b91c1c;
+            --amber: #f59e0b;
+            --green: #10b981;
+            --text: #f0f4ff;
+            --text-muted: #8892a4;
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .sos-bg {
+            position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+        }
+        .sos-bg::before {
+            content: '';
+            position: absolute; top: -30%; left: -20%;
+            width: 70vw; height: 70vw;
+            background: radial-gradient(circle, rgba(239,68,68,0.12) 0%, transparent 70%);
+            animation: pulse-orb 4s ease-in-out infinite alternate;
+        }
+        .sos-bg::after {
+            content: '';
+            position: absolute; bottom: -20%; right: -15%;
+            width: 55vw; height: 55vw;
+            background: radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%);
+            animation: pulse-orb 5s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes pulse-orb {
+            from { opacity: 0.6; transform: scale(0.95); }
+            to   { opacity: 1;   transform: scale(1.05); }
+        }
+        .wrapper {
+            position: relative; z-index: 1;
+            max-width: 500px; margin: 0 auto;
+            padding: 1.5rem 1rem 4rem;
+        }
+        .top-bar {
+            display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 1.75rem;
+        }
+        .brand {
+            display: flex; align-items: center; gap: 0.5rem;
+            text-decoration: none;
+        }
+        .brand img { height: 2rem; width: auto; object-fit: contain; }
+        .brand-name {
+            font-size: 0.85rem; font-weight: 900;
+            letter-spacing: 2px; color: var(--text);
+        }
+        .live-pill {
+            display: flex; align-items: center; gap: 0.4rem;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            padding: 0.3rem 0.75rem; border-radius: 999px;
+            font-size: 0.7rem; font-weight: 800;
+            color: var(--red); letter-spacing: 1px;
+            animation: blink-border 1.5s ease-in-out infinite;
+        }
+        @keyframes blink-border {
+            0%, 100% { border-color: rgba(239,68,68,0.4); }
+            50%       { border-color: rgba(239,68,68,0.9); }
+        }
+        .live-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--red);
+            animation: blink-dot 1s ease-in-out infinite;
+        }
+        @keyframes blink-dot {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.2; }
+        }
+        /* SOS Banner */
+        .sos-banner {
+            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(185,28,28,0.1) 100%);
+            border: 2px solid var(--red); border-radius: 1.25rem;
+            padding: 1.5rem 1.25rem; margin-bottom: 1.25rem;
+            text-align: center; position: relative; overflow: hidden;
+            box-shadow: 0 0 40px rgba(239,68,68,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        .sos-banner::before {
+            content: ''; position: absolute; inset: 0;
+            background: repeating-linear-gradient(
+                45deg, transparent, transparent 10px,
+                rgba(239,68,68,0.03) 10px, rgba(239,68,68,0.03) 20px
+            );
+        }
+        .sos-icon {
+            font-size: 2.75rem; display: block; margin-bottom: 0.5rem;
+            animation: shake 0.8s ease-in-out infinite;
+            position: relative; z-index: 1;
+        }
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            20% { transform: rotate(-8deg); }
+            40% { transform: rotate(8deg); }
+            60% { transform: rotate(-5deg); }
+            80% { transform: rotate(5deg); }
+        }
+        .sos-title {
+            font-size: 1.1rem; font-weight: 900; color: var(--red);
+            letter-spacing: 2px; text-transform: uppercase;
+            position: relative; z-index: 1;
+        }
+        .session-id-badge {
+            display: inline-block; margin-top: 0.5rem;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.35);
+            color: var(--red); font-size: 0.75rem; font-weight: 800;
+            letter-spacing: 2px; padding: 0.25rem 0.9rem;
+            border-radius: 0.35rem; position: relative; z-index: 1;
+        }
+        .session-link-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-top: 0.75rem; position: relative; z-index: 1;
+            background: rgba(0,0,0,0.25); border-radius: 0.5rem;
+            padding: 0.45rem 0.6rem; border: 1px solid rgba(239,68,68,0.2);
+        }
+        .session-link-text {
+            flex: 1; font-size: 0.65rem; color: var(--text-muted);
+            font-weight: 600; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+            text-align: left;
+        }
+        /* Cards */
+        .card {
+            background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        .card-title {
+            font-size: 0.62rem; font-weight: 800; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text-muted);
+            margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;
+        }
+        /* Rider identity */
+        .rider-identity { display: flex; align-items: center; gap: 1rem; }
+        .rider-photo {
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 3px solid var(--red); object-fit: cover; flex-shrink: 0;
+            background: var(--surface);
+            box-shadow: 0 0 24px rgba(239,68,68,0.35);
+        }
+        .rider-info { flex: 1; min-width: 0; }
+        .rider-name { font-size: 1.3rem; font-weight: 900; line-height: 1.2; }
+        .rider-plate {
+            font-size: 1rem; font-weight: 900; color: var(--primary-light);
+            letter-spacing: 2px; margin-top: 0.2rem;
+        }
+        .rider-id-badge {
+            display: inline-block; margin-top: 0.35rem;
+            font-size: 0.65rem; font-weight: 700; color: var(--text-muted);
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            padding: 0.15rem 0.5rem; border-radius: 0.25rem; letter-spacing: 1px;
+        }
+        /* Details grid */
+        .detail-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;
+        }
+        .detail-item { display: flex; flex-direction: column; gap: 0.2rem; }
+        .detail-item.full { grid-column: span 2; }
+        .detail-label {
+            font-size: 0.58rem; text-transform: uppercase;
+            font-weight: 700; letter-spacing: 1px; color: var(--text-muted);
+        }
+        .detail-value { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+        .detail-value.amber { color: var(--amber); }
+        /* Medical vitals */
+        .medical-vitals { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .vital-box {
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.22);
+            border-radius: 0.65rem; padding: 0.85rem; text-align: center;
+        }
+        .vital-label {
+            font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
+            text-transform: uppercase; color: var(--text-muted);
+            display: block; margin-bottom: 0.3rem;
+        }
+        .vital-value { font-size: 1.5rem; font-weight: 900; color: var(--red); line-height: 1; }
+        /* Location */
+        .location-block { display: flex; align-items: flex-start; gap: 0.75rem; }
+        .location-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+        .location-name { font-size: 0.95rem; font-weight: 800; }
+        .location-coords { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem; font-family: monospace; }
+        .location-time { font-size: 0.72rem; color: var(--amber); font-weight: 700; margin-top: 0.25rem; }
+        .map-btn {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            margin-top: 0.65rem; padding: 0.4rem 0.85rem;
+            background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35);
+            border-radius: 0.4rem; color: var(--primary-light);
+            font-size: 0.72rem; font-weight: 700; text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .map-btn:hover { background: rgba(59,130,246,0.25); transform: translateY(-1px); }
+        /* Kin */
+        .kin-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.18);
+            border-radius: 0.75rem; padding: 0.85rem 1rem; margin-bottom: 0.6rem;
+        }
+        .kin-name { font-size: 0.9rem; font-weight: 800; }
+        .kin-rel  { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .call-btn {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.5rem 1rem; background: var(--red); border: none;
+            border-radius: 0.45rem; color: white; font-size: 0.78rem;
+            font-weight: 800; text-decoration: none; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+            transition: all 0.2s ease;
+        }
+        .call-btn:hover { background: var(--red-dark); transform: translateY(-1px); }
+        /* Alert button */
+        .sos-alert-btn {
+            width: 100%; padding: 1rem;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            border: none; border-radius: 0.85rem; color: white;
+            font-size: 0.95rem; font-weight: 900; letter-spacing: 1px;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 0.5rem;
+            box-shadow: 0 8px 30px rgba(239,68,68,0.45);
+            transition: all 0.2s ease;
+            animation: pulse-btn 2.5s ease-in-out infinite;
+            margin-bottom: 0.85rem;
+        }
+        @keyframes pulse-btn {
+            0%, 100% { box-shadow: 0 8px 30px rgba(239,68,68,0.45); }
+            50%       { box-shadow: 0 8px 50px rgba(239,68,68,0.75); }
+        }
+        .sos-alert-btn:hover { transform: translateY(-2px); }
+        .sos-alert-btn:disabled {
+            background: linear-gradient(135deg, #374151, #1f2937);
+            animation: none; box-shadow: none; cursor: not-allowed; transform: none;
+        }
+        /* Share row */
+        .share-row { display: flex; gap: 0.65rem; }
+        .share-btn {
+            flex: 1; padding: 0.7rem;
+            border: 1px solid var(--glass-border); border-radius: 0.65rem;
+            background: var(--glass); color: var(--text);
+            font-size: 0.78rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+            text-decoration: none; transition: all 0.2s ease; font-family: inherit;
+        }
+        .share-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+        .share-btn.wa { border-color: rgba(37,211,102,0.4); color: #25D366; }
+        .share-btn.wa:hover { background: rgba(37,211,102,0.08); }
+        .share-btn.copy { border-color: rgba(96,165,250,0.4); color: var(--primary-light); }
+        .share-btn.copy:hover { background: rgba(59,130,246,0.08); }
+        /* Session detail */
+        .session-detail-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.65rem 0; border-bottom: 1px solid var(--glass-border);
+        }
+        .session-detail-row:last-child { border-bottom: none; }
+        .session-detail-label { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; }
+        .session-detail-value { font-size: 0.82rem; font-weight: 700; }
+        /* Disclaimer */
+        .disclaimer {
+            text-align: center; font-size: 0.65rem; color: var(--text-muted);
+            line-height: 1.7; margin-top: 1.75rem;
+        }
+        /* Loading / Error */
+        .state-center {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 70vh; text-align: center; gap: 1rem;
+        }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(239,68,68,0.18);
+            border-top-color: var(--red); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner-text { color: var(--red); font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; }
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 1.5rem; left: 50%;
+            transform: translateX(-50%) translateY(90px);
+            background: #1a2540; border: 1px solid rgba(255,255,255,0.12);
+            padding: 0.75rem 1.25rem; border-radius: 0.75rem;
+            font-size: 0.82rem; font-weight: 700; color: var(--text);
+            z-index: 999; transition: transform 0.3s ease;
+            white-space: nowrap; box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        /* Expired */
+        .expired-banner {
+            background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 0.75rem; padding: 0.85rem; text-align: center;
+            color: var(--amber); font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="sos-bg"></div>
+
+    <!-- Loading -->
+    <div id="loadingState" class="wrapper">
+        <div class="state-center">
+            <div class="spinner"></div>
+            <p class="spinner-text">LOADING EMERGENCY SESSION...</p>
+        </div>
+    </div>
+
+    <!-- Error -->
+    <div id="errorState" class="wrapper" style="display:none;">
+        <div class="state-center">
+            <span style="font-size:3rem;">⚠️</span>
+            <h2 style="color:var(--amber);font-size:1.1rem;letter-spacing:1px;">SESSION NOT FOUND</h2>
+            <p style="color:var(--text-muted);font-size:0.85rem;max-width:280px;line-height:1.6;">
+                This emergency session does not exist or has expired. Sessions are valid for 6 hours from creation.
+            </p>
+            <a href="/" style="margin-top:1rem;padding:0.65rem 1.5rem;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:0.6rem;color:var(--text);text-decoration:none;font-size:0.82rem;font-weight:700;">
+                ← Back to MyVault
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Emergency Content -->
+    <div id="mainContent" class="wrapper" style="display:none;">
+
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <a href="/" class="brand">
+                <img src="/assets/logo.png" alt="MyVault" onerror="this.style.display='none'">
+                <span class="brand-name">MYVAULT</span>
+            </a>
+            <div class="live-pill">
+                <span class="live-dot"></span>
+                <span>SOS LIVE</span>
+            </div>
+        </div>
+
+        <!-- Expired notice -->
+        <div id="expiredBanner" class="expired-banner" style="display:none;">
+            ⚠️ This session was created over 6 hours ago. Information may be outdated.
+        </div>
+
+        <!-- SOS Hero Banner -->
+        <div class="sos-banner">
+            <span class="sos-icon">🚨</span>
+            <div class="sos-title">EMERGENCY SESSION ACTIVE</div>
+            <div class="session-id-badge" id="sessionIdDisplay">MV-EMG-XXXXX</div>
+            <div class="session-link-row">
+                <span class="session-link-text" id="sessionLinkText"></span>
+                <button onclick="copyLink()" style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:var(--red);font-size:0.62rem;font-weight:800;padding:0.2rem 0.55rem;border-radius:0.3rem;cursor:pointer;font-family:inherit;flex-shrink:0;">COPY</button>
+            </div>
+        </div>
+
+        <!-- Rider Identity -->
+        <div class="card">
+            <div class="card-title"><span>👤</span> RIDER / DRIVER IDENTITY</div>
+            <div class="rider-identity">
+                <img id="riderPhoto" class="rider-photo" src="/assets/default-avatar.png" alt="Rider" onerror="this.src='/assets/default-avatar.png'">
+                <div class="rider-info">
+                    <div class="rider-name" id="riderName">Loading...</div>
+                    <div class="rider-plate" id="riderPlate">---</div>
+                    <span class="rider-id-badge" id="riderIdBadge">ID: ---</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Identity Details -->
+        <div class="card">
+            <div class="card-title"><span>📋</span> IDENTITY DETAILS</div>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">License No.</span>
+                    <span class="detail-value" id="licenseNumber">---</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Vehicle Color</span>
+                    <span class="detail-value" id="vehicleColor">---</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Vehicle Type</span>
+                    <span class="detail-value" id="vehicleType">---</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Phone</span>
+                    <span class="detail-value"><a id="riderPhoneLink" href="#" style="color:var(--primary-light);text-decoration:none;font-weight:700;">---</a></span>
+                </div>
+                <div class="detail-item full">
+                    <span class="detail-label">Union / Branch</span>
+                    <span class="detail-value" id="riderUnion">---</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical ICE -->
+        <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04);">
+            <div class="card-title" style="color:var(--red)"><span>🩺</span> MEDICAL — IN CASE OF EMERGENCY</div>
+            <div class="medical-vitals">
+                <div class="vital-box">
+                    <span class="vital-label">Blood Group</span>
+                    <span class="vital-value" id="bloodGroup">---</span>
+                </div>
+                <div class="vital-box">
+                    <span class="vital-label">Genotype</span>
+                    <span class="vital-value" id="genotype">---</span>
+                </div>
+            </div>
+            <div style="margin-top:0.85rem;" class="detail-grid">
+                <div class="detail-item full">
+                    <span class="detail-label">Known Allergies</span>
+                    <span class="detail-value amber" id="allergies">---</span>
+                </div>
+                <div class="detail-item full">
+                    <span class="detail-label">Preferred Hospital</span>
+                    <span class="detail-value" id="hospital">---</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="card">
+            <div class="card-title"><span>📍</span> LAST KNOWN LOCATION</div>
+            <div class="location-block">
+                <span class="location-icon">📍</span>
+                <div>
+                    <div class="location-name" id="locationName">Fetching location...</div>
+                    <div class="location-coords" id="locationCoords"></div>
+                    <div class="location-time" id="locationTime"></div>
+                    <a id="mapsLink" href="#" target="_blank" class="map-btn" style="display:none;">
+                        🗺️ Open in Google Maps
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Contacts -->
+        <div class="card" id="kinCard" style="display:none;">
+            <div class="card-title"><span>📞</span> EMERGENCY CONTACTS</div>
+            <div id="kinList"></div>
+        </div>
+
+        <!-- Session Info -->
+        <div class="card">
+            <div class="card-title"><span>🔐</span> SESSION DETAILS</div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">Session ID</span>
+                <span class="session-detail-value" id="sessionIdSmall" style="color:var(--red);font-size:0.75rem;letter-spacing:1px;">---</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">Triggered At</span>
+                <span class="session-detail-value" id="triggeredAt">---</span>
+            </div>
+            <div class="session-detail-row">
+                <span class="session-detail-label">Session Expires</span>
+                <span class="session-detail-value" id="expiresAt" style="color:var(--amber);">---</span>
+            </div>
+        </div>
+
+        <!-- Alert Button -->
+        <button class="sos-alert-btn" id="kinAlertBtn" onclick="sendKinAlert()">
+            🚨 ALERT NEXT OF KIN NOW
+        </button>
+
+        <!-- Share Row -->
+        <div class="share-row">
+            <a id="waShareBtn" href="#" target="_blank" class="share-btn wa">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.451 5.437 0 9.862-4.418 9.865-9.85.002-2.63-1.023-5.101-2.887-6.963C16.38 1.93 13.905.908 11.274.908c-5.43 0-9.85 4.417-9.854 9.848-.002 1.718.448 3.39 1.3 4.869L1.71 21.099l5.937-1.558-.001-.005-.002-.002zM10.5 7.5c-.3-.1-.5-.2-.7-.1s-.3.1-.4.2c-.1.1-.3.3-.3.8s.4 1 .4 1.1c.1.1.7 1.1 1.7 1.5.3.1.5.2.7.2.3 0 .5-.1.7-.2.2-.1.5-.4.5-.7s0-.5-.1-.6c-.1 0-.2-.1-.5-.2zm4.8 5.4c-.2-.1-1.1-.5-1.3-.6s-.3-.1-.4.1c-.1.2-.5.6-.6.7s-.2.1-.5 0c-.3-.1-1.2-.4-2.2-1.3-.8-.7-1.3-1.6-1.5-1.9s0-.3.1-.4c.1-.1.3-.3.4-.4.1-.1.2-.2.2-.3s.1-.3 0-.4c-.1-.1-.4-1.1-.6-1.4-.2-.5-.4-.4-.6-.4h-.4c-.2 0-.5.1-.7.3s-.8.8-.8 2c0 1.2.9 2.4 1 2.6.1.2 1.8 2.7 4.3 3.8.6.3 1.1.4 1.5.3.6-.1 1.1-.5 1.3-1 .2-.5.2-.9.1-1-.1-.2-.3-.3-.6-.4z"/></svg>
+                WhatsApp
+            </a>
+            <button class="share-btn copy" onclick="copyLink()">
+                📋 Copy Link
+            </button>
+        </div>
+
+        <div class="disclaimer">
+            This is a verified MyVault emergency session.<br>
+            All information is sourced directly from the rider's registered profile.<br>
+            This session is valid for 6 hours from time of creation.
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let sessionData = null;
+        const currentUrl = window.location.href;
+
+        function showToast(msg, ms = 2500) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), ms);
+        }
+
+        function fmt(isoStr) {
+            if (!isoStr) return '---';
+            const d = new Date(isoStr);
+            return d.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit', hour12: true }) +
+                   ' · ' + d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function cap(s) {
+            if (!s) return '---';
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        function buildKinCard(ec) {
+            if (!ec || !ec.phone) return;
+            document.getElementById('kinCard').style.display = 'block';
+            const list = document.getElementById('kinList');
+            list.innerHTML = '';
+            const contacts = [
+                { name: ec.name, phone: ec.phone, rel: ec.relationship || 'Next of Kin' },
+                ec.secondaryPhone ? { name: ec.name || 'Contact', phone: ec.secondaryPhone, rel: 'Secondary Contact' } : null
+            ].filter(Boolean);
+
+            contacts.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'kin-row';
+                row.innerHTML = `
+                    <div>
+                        <div class="kin-name">${c.name || 'Next of Kin'}</div>
+                        <div class="kin-rel">${c.rel}</div>
+                    </div>
+                    <a href="tel:${c.phone}" class="call-btn">📞 CALL</a>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        async function sendKinAlert() {
+            const btn = document.getElementById('kinAlertBtn');
+            if (!sessionData) return;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Sending Alert...';
+            try {
+                const res = await fetch('/api/sos/' + sessionData.riderId, { method: 'POST' });
+                const d = await res.json();
+                if (d.success) {
+                    btn.innerHTML = '✅ NEXT OF KIN ALERTED';
+                    btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+                    btn.style.animation = 'none';
+                    btn.style.boxShadow = '0 8px 30px rgba(16,185,129,0.4)';
+                    showToast('✅ Emergency alert sent to next of kin');
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '🚨 ALERT NEXT OF KIN NOW';
+                    showToast('⚠️ ' + d.message);
+                }
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '🚨 ALERT NEXT OF KIN NOW';
+                showToast('Connection error. Please try again.');
+            }
+        }
+
+        function copyLink() {
+            const url = currentUrl;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => showToast('✅ Emergency link copied!'));
+            } else {
+                const el = document.createElement('textarea');
+                el.value = url; document.body.appendChild(el);
+                el.select(); document.execCommand('copy');
+                document.body.removeChild(el);
+                showToast('✅ Emergency link copied!');
+            }
+        }
+
+        async function loadSession() {
+            // Extract session ID from URL path: /emergency/XXXXX
+            const pathMatch = window.location.pathname.match(/\/emergency\/([^/?\s]+)/);
+            if (!pathMatch) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                return;
+            }
+            const sessionId = pathMatch[1];
+
+            try {
+                const res = await fetch('/api/emergency/' + sessionId);
+                const data = await res.json();
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (!data.success) {
+                    document.getElementById('errorState').style.display = 'block';
+                    return;
+                }
+
+                sessionData = data.session;
+                const s = sessionData;
+                const rider = s.rider;
+
+                document.getElementById('mainContent').style.display = 'block';
+
+                // Check if older than 6h
+                if (Date.now() - new Date(s.createdAt).getTime() > 6 * 60 * 60 * 1000) {
+                    document.getElementById('expiredBanner').style.display = 'block';
+                }
+
+                // Banner
+                document.getElementById('sessionIdDisplay').textContent = s.sessionId;
+                document.getElementById('sessionLinkText').textContent = currentUrl;
+
+                // Identity
+                const vehicleInfo = rider.vehicle || rider.bike || {};
+                const plate = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
+                document.getElementById('riderName').textContent = rider.name || '---';
+                document.getElementById('riderPlate').textContent = plate;
+                document.getElementById('riderIdBadge').textContent = 'ID: ' + (rider.riderId || '---');
+
+                if (rider.documents && rider.documents.passportPhoto) {
+                    const src = rider.documents.passportPhoto.url || rider.documents.passportPhoto;
+                    document.getElementById('riderPhoto').src = src;
+                }
+
+                // Details
+                document.getElementById('licenseNumber').textContent = rider.documents?.licenseDoc?.number || '---';
+                document.getElementById('vehicleColor').textContent = vehicleInfo.color || '---';
+                document.getElementById('vehicleType').textContent = cap(rider.vehicleType || 'motorcycle');
+                const phone = rider.phone || '---';
+                document.getElementById('riderPhoneLink').textContent = phone;
+                document.getElementById('riderPhoneLink').href = 'tel:' + phone;
+                document.getElementById('riderUnion').textContent = rider.union || '---';
+
+                // Medical
+                if (rider.medical) {
+                    document.getElementById('bloodGroup').textContent = rider.medical.bloodGroup || '---';
+                    document.getElementById('genotype').textContent = rider.medical.genotype || '---';
+                    document.getElementById('allergies').textContent = rider.medical.allergies || 'None reported';
+                    document.getElementById('hospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                }
+
+                // Location
+                if (s.location) {
+                    const loc = s.location;
+                    document.getElementById('locationName').textContent = loc.name || 'Unknown Location';
+                    if (loc.latitude && loc.longitude) {
+                        document.getElementById('locationCoords').textContent =
+                            loc.latitude.toFixed(6) + ', ' + loc.longitude.toFixed(6);
+                        const ml = document.getElementById('mapsLink');
+                        ml.href = 'https://www.google.com/maps?q=' + loc.latitude + ',' + loc.longitude;
+                        ml.style.display = 'inline-flex';
+                    }
+                    document.getElementById('locationTime').textContent = '⏱ Captured: ' + fmt(s.createdAt);
+                } else {
+                    document.getElementById('locationName').textContent = 'Location not shared';
+                }
+
+                // Kin
+                buildKinCard(rider.emergencyContact);
+
+                // Session timing
+                const created = new Date(s.createdAt);
+                const expires = new Date(created.getTime() + 6 * 60 * 60 * 1000);
+                document.getElementById('sessionIdSmall').textContent = s.sessionId;
+                document.getElementById('triggeredAt').textContent = fmt(s.createdAt);
+                document.getElementById('expiresAt').textContent = fmt(expires.toISOString());
+
+                // WhatsApp share
+                const shareText = encodeURIComponent(
+                    '🚨 *EMERGENCY ALERT — MyVault SOS*\n\n' +
+                    'A rider may need immediate assistance!\n\n' +
+                    '👤 *Name:* ' + (rider.name || '---') + '\n' +
+                    '🏍️ *Plate:* ' + plate + '\n' +
+                    '📍 *Location:* ' + (s.location?.name || 'Unknown') + '\n' +
+                    '🕐 *Time:* ' + fmt(s.createdAt) + '\n\n' +
+                    'View full emergency profile:\n' + currentUrl
+                );
+                document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText;
+
+            } catch(err) {
+                console.error(err);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+            }
+        }
+
+        loadSession();
+    </script>
+</body>
+</html>

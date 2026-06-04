@@ -15,8 +15,8 @@
             <div style="text-align: center; margin-top: 1.5rem;">
                 <img src="assets/logo.png" alt="MyVault Logo" style="height: 3rem; width: auto; object-fit: contain;">
             </div>
-            <div class="logo" style="margin-top: 0.5rem;">REGISTRATION</div>
-            <p>Step 1: Basic Information</p>
+            <div class="logo" style="margin-top: 0.5rem;">SECURE YOUR EMERGENCY PROFILE</div>
+            <p>Step 1: Identity & Vital Medical Data</p>
         </header>
 
         <main>
@@ -56,8 +56,43 @@
                     </div>
 
                     <div class="input-group">
-                        <label for="plateNumber">Plate Number</label>
-                        <input type="text" id="plateNumber" name="plateNumber" placeholder="ABC-123-XY" required>
+                        <label for="plateNumber">Plate Number (Optional for Non-Riders)</label>
+                        <input type="text" id="plateNumber" name="plateNumber" placeholder="ABC-123-XY">
+                    </div>
+
+                    <div style="margin: 2.5rem 0 1.5rem 0; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+                        <h3 style="color: var(--primary-light); margin-bottom: 1rem;">🚑 Medical & Emergency Contact</h3>
+                        
+                        <div class="input-group">
+                            <label for="bloodType">Blood Type</label>
+                            <select id="bloodType" name="bloodType" required>
+                                <option value="">Select Blood Type</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="Unknown">I don't know</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="allergies">Severe Allergies or Medical Conditions</label>
+                            <input type="text" id="allergies" name="allergies" placeholder="e.g. Asthma, Penicillin Allergy (or type 'None')">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="emergencyContactName">Emergency Contact Name (Next of Kin)</label>
+                            <input type="text" id="emergencyContactName" name="emergencyContactName" placeholder="Jane Doe" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="emergencyContactPhone">Emergency Contact Phone Number</label>
+                            <input type="tel" id="emergencyContactPhone" name="emergencyContactPhone" placeholder="080XXXXXXXX" required>
+                        </div>
                     </div>
 
                     <div class="input-group">
@@ -78,7 +113,7 @@
 
                     <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 0.75rem; margin: 2rem 0; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
                         <p style="font-size: 1rem; color: var(--primary-light); font-weight: 700;">
-                            Subscription: ₦3,000 / 1 Year
+                            Subscription: ₦3,000 / 1 Year (Early Adopter Price)
                         </p>
                     </div>
 
