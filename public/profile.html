@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
         /* Custom styled switch slider */
         .switch {
@@ -588,16 +587,8 @@
 
                     if (isCar) {
                         document.getElementById('stickerDescriptionText').textContent = 'Get print-ready assets to connect your car, windshield, or emergency keychain directly to MyVault.';
-                        const stickerPreview = document.getElementById('stickerPreviewFrame');
-                        stickerPreview.style.width = '85px';
-                        stickerPreview.style.height = '60px';
-                        stickerPreview.style.borderRadius = '0.35rem';
-                        stickerPreview.style.border = '2px dashed var(--primary)';
-                        stickerPreview.innerHTML = `
-                            <span style="font-size: 0.35rem; font-weight: 900; color: var(--primary-light);">VEHICLE PERMIT</span>
-                            <span style="font-size: 0.75rem; line-height: 1;">🚗</span>
-                            <span style="font-size: 0.3rem; color: var(--text-muted);">MYVAULT SECURE</span>
-                        `;
+                        const stickerLabel = document.getElementById('stickerTitleLabel');
+                        if (stickerLabel) stickerLabel.textContent = 'Windshield QR Sticker';
                         document.getElementById('stickerTitleLabel').textContent = 'Windshield QR Sticker';
                     }
 
