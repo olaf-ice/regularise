@@ -1050,16 +1050,83 @@
         pw.document.write(`<!DOCTYPE html><html><head><title>PVC Emergency ID - ${d.name}</title>
         <style>
             @page { size: A4 landscape; margin: 0; }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
             * { margin:0; padding:0; box-sizing:border-box; }
-            html, body { width:100%; height:100%; background:transparent; }
-            body { display:flex; flex-direction:column; align-items:center; justify-content:center; }
-            .card-qr { width:200px; height:200px; display:flex; align-items:center; justify-content:center; }
+            html, body { width:297mm; height:210mm; background:white; font-family:'Inter',sans-serif; }
+            body { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
+            .card {
+                width: 650px; height: 410px;
+                border-radius: 22px;
+                background: white;
+                border: 3px solid #0f172a;
+                display: flex;
+                overflow: hidden;
+                position: relative;
+            }
+            .card-left { flex:1; padding:28px 20px 28px 32px; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:1; }
+            .card-right { width:170px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; gap:12px; background:white; position:relative; z-index:1; border-left:1px solid #e2e8f0; }
+            .header-row { display:flex; align-items:center; gap:10px; }
+            .brand-badge { font-size:13px; font-weight:900; color:#3b82f6; letter-spacing:2px; text-transform:uppercase; }
+            .emergency-badge { font-size:10px; font-weight:900; color:#ef4444; background:white; border:1px solid #ef4444; padding:3px 10px; border-radius:5px; letter-spacing:1px; }
+            .rider-name { font-size:30px; font-weight:900; color:#0f172a; line-height:1.1; margin-top:8px; text-transform:uppercase; }
+            .rider-plate { font-size:18px; font-weight:900; color:#3b82f6; letter-spacing:4px; margin-top:4px; }
+            .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; margin-top:14px; }
+            .info-label { font-size:9px; font-weight:700; color:#64748b; letter-spacing:1.5px; text-transform:uppercase; }
+            .info-value { font-size:17px; font-weight:800; color:#0f172a; margin-top:2px; }
+            .blood-value { color:#ef4444; font-size:26px; }
+            .kin-block { padding-top:12px; border-top:1px solid #e2e8f0; }
+            .kin-label { font-size:9px; font-weight:700; color:#64748b; letter-spacing:1.5px; text-transform:uppercase; }
+            .kin-value { font-size:14px; font-weight:800; color:#0f172a; margin-top:2px; }
+            .allergy-bar { padding:5px 10px; background:white; border-left:3px solid #ef4444; border:1px solid #e2e8f0; border-radius:3px; margin-top:10px; }
+            .allergy-text { font-size:11px; font-weight:800; color:#ef4444; }
+            .card-qr { width:126px; height:126px; background:white; border-radius:10px; padding:5px; border:1px solid #e2e8f0; }
             .card-qr img { width:100%; height:100%; object-fit:contain; }
+            .scan-label { font-size:9px; font-weight:800; color:#64748b; letter-spacing:1.5px; text-align:center; text-transform:uppercase; }
+            .rider-id-small { font-size:10px; font-weight:700; color:#64748b; text-align:center; }
             @media print {
                 html, body { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
             }
         </style></head><body>
-        <div class="card-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#333;">QR</div>'}</div>
+        <div class="card">
+            <div class="card-left">
+                <div>
+                    <div class="header-row">
+                        <span class="brand-badge">MYVAULT</span>
+                        <span class="emergency-badge">&#x1F6A8; EMERGENCY ID</span>
+                    </div>
+                    <div class="rider-name">${d.name}</div>
+                    <div class="rider-plate">${d.plate || 'NO PLATE'}</div>
+                </div>
+                <div class="info-grid">
+                    <div>
+                        <div class="info-label">Blood Group</div>
+                        <div class="info-value blood-value">${d.bg}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Genotype</div>
+                        <div class="info-value">${d.gt}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Phone</div>
+                        <div class="info-value" style="font-size:14px;">${d.phone}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Member ID</div>
+                        <div class="info-value" style="font-size:14px;">${d.riderId}</div>
+                    </div>
+                </div>
+                ${d.allergies && d.allergies !== 'None' ? `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies}</div></div>` : ''}
+                <div class="kin-block">
+                    <div class="kin-label">Emergency Contact</div>
+                    <div class="kin-value">${d.kinName} &middot; ${d.kinPhone}</div>
+                </div>
+            </div>
+            <div class="card-right">
+                <div class="card-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#333;">QR</div>'}</div>
+                <div class="scan-label">Scan for full<br>emergency profile</div>
+                <div class="rider-id-small">${d.riderId}</div>
+            </div>
+        </div>
         </body></html>`);
         pw.document.close();
         pw.focus();
