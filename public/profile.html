@@ -771,10 +771,20 @@
                     );
                     document.getElementById('whatsappShareBtn').href = `https://api.whatsapp.com/send?text=${shareText}`;
 
-                    // Generate QR Canvas
-                    QRCode.toCanvas(document.getElementById('qrCode'), window.location.href, {
-                        width: 140, margin: 1, color: { dark: '#0f172a', light: '#ffffff' }
-                    });
+                    // Generate QR Code using qrcodejs
+                    const qrEl = document.getElementById('qrCode');
+                    if (qrEl) {
+                        qrEl.innerHTML = '';
+                        try {
+                            new QRCode(qrEl, {
+                                text: window.location.href,
+                                width: 140, height: 140,
+                                colorDark: '#0f172a', colorLight: '#ffffff',
+                                correctLevel: QRCode.CorrectLevel.M
+                            });
+                        } catch(e) { console.warn('QR generation failed', e); }
+                    }
+
 
                 } else {
                     document.getElementById('notFound').style.display = 'block';
