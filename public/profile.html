@@ -615,10 +615,8 @@
                         document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None reported';
                         document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
                         
-                        // Populate PVC
-                        document.getElementById('pvcRiderId').textContent = `ID: ${rider.riderId}`;
-                        document.getElementById('pvcMedical').textContent = `Blood: ${bg} | Genotype: ${gt}`;
-                        
+                        // PVC data is populated via initPrintData() called after vehicle details load
+
                         // Advance Directive Check
                         if (rider.documents && rider.documents.medicalDirectiveDoc) {
                             document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
