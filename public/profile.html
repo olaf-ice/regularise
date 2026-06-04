@@ -839,6 +839,34 @@
             </div>
 
             <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">Update Vehicle Details</h4>
+            
+            <div class="input-group">
+                <label>Vehicle Plate Number</label>
+                <input type="text" id="editPlateNumber" name="plateNumber" placeholder="Plate Number">
+            </div>
+            <div class="input-group">
+                <label>Vehicle Brand</label>
+                <input type="text" id="editBikeBrand" name="bikeBrand" placeholder="e.g. Toyota, Bajaj">
+            </div>
+            <div class="input-group">
+                <label>Vehicle Model</label>
+                <input type="text" id="editBikeModel" name="bikeModel" placeholder="e.g. Corolla, Boxer">
+            </div>
+            <div class="input-group">
+                <label>Vehicle Color</label>
+                <input type="text" id="editBikeColor" name="bikeColor" placeholder="Color">
+            </div>
+            <div class="input-group">
+                <label>Ownership Type</label>
+                <select id="editOwnershipType" name="ownershipType">
+                    <option value="Owned">Owned</option>
+                    <option value="Rented">Rented/Hired</option>
+                    <option value="Company">Company Issued</option>
+                </select>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
             <h4 style="margin-bottom: 1rem; color: var(--primary-light);">Update Compliance Documents</h4>
             
             <div class="input-group">
@@ -878,6 +906,21 @@
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
         document.getElementById('editAllergies').value = document.getElementById('iceAllergies').textContent;
         document.getElementById('editKinName').value = document.getElementById('iceKinName').textContent;
+        
+        // Prefill vehicle details if available
+        const brandModelText = document.getElementById('bikeBrandModel') ? document.getElementById('bikeBrandModel').textContent : '';
+        const colorText = document.getElementById('bikeColor') ? document.getElementById('bikeColor').textContent : '';
+        const ownershipText = document.getElementById('bikeOwnership') ? document.getElementById('bikeOwnership').textContent : '';
+        const plateText = document.getElementById('riderPlate') ? document.getElementById('riderPlate').textContent.replace('PLATE: ', '') : '';
+
+        if (brandModelText && brandModelText !== '---') {
+            const parts = brandModelText.split(' ');
+            document.getElementById('editBikeBrand').value = parts[0] || '';
+            document.getElementById('editBikeModel').value = parts.slice(1).join(' ') || '';
+        }
+        if (colorText && colorText !== '---') document.getElementById('editBikeColor').value = colorText;
+        if (ownershipText && ownershipText !== '---') document.getElementById('editOwnershipType').value = ownershipText;
+        if (plateText && plateText !== '---') document.getElementById('editPlateNumber').value = plateText;
         
         const kinHref = document.getElementById('iceKinCallBtn').href;
         if(kinHref && kinHref.startsWith('tel:')) {

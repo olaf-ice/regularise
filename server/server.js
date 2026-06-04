@@ -424,7 +424,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
         
-        const { bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber } = req.body;
+        const { bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber } = req.body;
         
         rider.documents = rider.documents || {};
         
@@ -450,6 +450,27 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
                 if (docExpirations[field]) rider.documents[field].expiryDate = docExpirations[field];
             }
         });
+        
+        // Update Vehicle Info
+        if (bikeBrand || bikeModel || bikeColor || ownershipType || plateNumber) {
+            rider.vehicle = rider.vehicle || { type: rider.vehicleType || 'motorcycle' };
+            if (bikeBrand) rider.vehicle.brand = bikeBrand;
+            if (bikeModel) rider.vehicle.model = bikeModel;
+            if (bikeColor) rider.vehicle.color = bikeColor;
+            if (ownershipType) rider.vehicle.ownershipType = ownershipType;
+            if (plateNumber) {
+                rider.vehicle.plateNumber = plateNumber;
+                rider.plateNumber = plateNumber; // Sync root level
+            }
+            
+            // Backward compat
+            rider.bike = rider.bike || {};
+            if (bikeBrand) rider.bike.brand = bikeBrand;
+            if (bikeModel) rider.bike.model = bikeModel;
+            if (bikeColor) rider.bike.color = bikeColor;
+            if (ownershipType) rider.bike.ownershipType = ownershipType;
+            if (plateNumber) rider.bike.plateNumber = plateNumber;
+        }
         
         // Update medical
         rider.medical = rider.medical || {};
