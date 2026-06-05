@@ -619,8 +619,7 @@
                     const isEmergencyView = urlParams.get('view') === 'emergency';
                     
                     if (isEmergencyView) {
-                        // Strict emergency mode - only show Level 1 & Level 2 unlock
-                        document.getElementById('namePlateContainer').style.display = 'none';
+                        // Strict emergency mode - hide wallet card and below
                         document.getElementById('riderWalletCard').style.display = 'none';
                         const quickShares = document.querySelector('.no-print[style*="margin-bottom: 3rem"]');
                         if (quickShares) quickShares.style.display = 'none';
@@ -816,8 +815,9 @@
                     if (qrEl) {
                         qrEl.innerHTML = '';
                         try {
+                            const emergencyUrl = `${window.location.origin}/profile.html?q=${encodeURIComponent(rider.riderId)}&view=emergency`;
                             new QRCode(qrEl, {
-                                text: window.location.href,
+                                text: emergencyUrl,
                                 width: 140, height: 140,
                                 colorDark: '#0f172a', colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.M
