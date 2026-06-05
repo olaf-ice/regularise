@@ -619,26 +619,23 @@
                     const isEmergencyView = urlParams.get('view') === 'emergency';
                     
                     if (isEmergencyView) {
-                        // Strict emergency mode - hide Rider ID block and below, but keep Wallet Card outline and summary
-                        const riderIdBlock = document.getElementById('riderIdBlock');
-                        if (riderIdBlock) riderIdBlock.style.display = 'none';
-                        // Also hide the large MYVAULT ID text and the MV-XXXX text itself
-                        const bigRiderId = document.getElementById('riderId');
-                        if (bigRiderId) {
-                            bigRiderId.style.display = 'none';
-                            const myVaultTitle = bigRiderId.previousElementSibling;
-                            if (myVaultTitle && myVaultTitle.textContent.includes('MYVAULT ID')) {
-                                myVaultTitle.style.display = 'none';
+                        const elementsToBlur = [
+                            document.getElementById('riderIdBlock'),
+                            document.getElementById('bikeSection'),
+                            document.getElementById('documentsSection'),
+                            document.getElementById('physicalAssetsCard'),
+                            document.getElementById('whatsappShareBtn'),
+                            document.querySelector('button[onclick="window.print()"]')
+                        ];
+
+                        elementsToBlur.forEach(el => {
+                            if (el) {
+                                el.style.filter = 'blur(6px)';
+                                el.style.pointerEvents = 'none';
+                                el.style.userSelect = 'none';
+                                el.style.opacity = '0.4';
                             }
-                        }
-                        const bikeSection = document.getElementById('bikeSection');
-                        if (bikeSection) bikeSection.style.display = 'none';
-                        const documentsSection = document.getElementById('documentsSection');
-                        if (documentsSection) documentsSection.style.display = 'none';
-                        const quickShares = document.querySelector('.no-print[style*="margin-bottom: 3rem"]');
-                        if (quickShares) quickShares.style.display = 'none';
-                        if (document.getElementById('physicalAssetsCard')) document.getElementById('physicalAssetsCard').style.display = 'none';
-                        document.getElementById('profileStatusText').parentElement.parentElement.style.display = 'none'; // Hide header
+                        });
                     }
                     
                     if (localStorage.getItem('riderToken') && !isEmergencyView) {
@@ -829,9 +826,8 @@
                     if (qrEl) {
                         qrEl.innerHTML = '';
                         try {
-                            const emergencyUrl = `${window.location.origin}/profile.html?q=${encodeURIComponent(rider.riderId)}&view=emergency`;
                             new QRCode(qrEl, {
-                                text: emergencyUrl,
+                                text: window.location.href,
                                 width: 140, height: 140,
                                 colorDark: '#0f172a', colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.M
@@ -845,7 +841,8 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert('Error loading profile details.');
+                document.body.innerHTML += '<div style="color:red; background:white; padding:20px; z-index:9999; position:fixed; top:0; left:0; width:100%;"><b>DEBUG ERROR:</b> ' + error.message + '</div>';
+                alert('Error loading profile details: ' + error.message);
             }
         }
 
@@ -1018,7 +1015,7 @@
             kinPhone = rider.emergencyContact.phone || '---';
         }
 
-        const profileUrl = window.location.origin + '/profile.html?q=' + rider.riderId + '&view=emergency';
+        const profileUrl = window.location.origin + '/profile.html?q=' + rider.riderId + '&view=emergency&v=2';
 
         _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl, phone: rider.phone || '' };
 
