@@ -354,7 +354,7 @@ app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
     }
 });
 
-// ── GET Emergency Session ─────────────────────────────────────────────────────
+// ── GET Emergency Session (LEVEL 1 PUBLIC SCAN) ──────────────────────────────
 // GET /api/emergency/:sessionId  (public — no auth required)
 app.get('/api/emergency/:sessionId', (req, res) => {
     const key = req.params.sessionId;
@@ -365,6 +365,60 @@ app.get('/api/emergency/:sessionId', (req, res) => {
     }
 
     // Refresh from DB in case rider data changed
+    try {
+        const { pin, ...fullRider } = dbHelpers.getRiderById(session.riderId) || session.rider;
+        
+        // Strip sensitive data for Level 1 access
+        const level1Rider = {
+            name: fullRider.name,
+            phone: fullRider.phone,
+            riderId: fullRider.riderId,
+            emergencyContact: fullRider.emergencyContact,
+            medical: fullRider.medical ? { bloodGroup: fullRider.medical.bloodGroup } : {},
+            // Include photo for identity
+            documents: fullRider.documents && fullRider.documents.passportPhoto ? { passportPhoto: fullRider.documents.passportPhoto } : {}
+        };
+
+        const level1Session = { 
+            sessionId: session.sessionId,
+            numericId: session.numericId,
+            createdAt: session.createdAt,
+            rider: level1Rider 
+        };
+        
+        res.json({ success: true, session: level1Session, isLevel1: true });
+    } catch (e) {
+        // Fallback Level 1 stripping
+        const rider = session.rider;
+        const level1Rider = {
+            name: rider.name,
+            phone: rider.phone,
+            riderId: rider.riderId,
+            emergencyContact: rider.emergencyContact,
+            medical: rider.medical ? { bloodGroup: rider.medical.bloodGroup } : {},
+            documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
+        };
+        const level1Session = {
+            sessionId: session.sessionId,
+            numericId: session.numericId,
+            createdAt: session.createdAt,
+            rider: level1Rider
+        };
+        res.json({ success: true, session: level1Session, isLevel1: true });
+    }
+});
+
+// ── UNLOCK Emergency Session (LEVEL 2) ─────────────────────────────────────────
+// POST /api/emergency/:sessionId/unlock
+app.post('/api/emergency/:sessionId/unlock', apiLimiter, (req, res) => {
+    const key = req.params.sessionId;
+    const session = emergencySessions.get(key);
+
+    if (!session) {
+        return res.status(404).json({ success: false, message: 'Session not found or expired' });
+    }
+
+    // Return the full safe rider data for Level 2
     try {
         const { pin, ...safeRider } = dbHelpers.getRiderById(session.riderId) || session.rider;
         const freshSession = { ...session, rider: safeRider };
@@ -496,7 +550,34 @@ app.get('/api/verify/:query', (req, res) => {
     const query = req.params.query.toLowerCase();
     const rider = dbHelpers.findRiderByQuery(query);
     if (rider) {
-        // Don't send the hashed pin to the client
+        // Strip sensitive data for Level 1 access (Public scan)
+        const level1Rider = {
+            name: rider.name,
+            phone: rider.phone,
+            riderId: rider.riderId,
+            union: rider.union,
+            status: rider.status,
+            expiryDate: rider.expiryDate,
+            vehicleType: rider.vehicleType,
+            safety: rider.safety,
+            vehicle: rider.vehicle,
+            bike: rider.bike,
+            emergencyContact: rider.emergencyContact,
+            medical: rider.medical ? { bloodGroup: rider.medical.bloodGroup } : {},
+            // Only include passport photo, hide all other documents and expiry dates
+            documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
+        };
+        res.json({ success: true, rider: level1Rider, isLevel1: true });
+    } else {
+        res.json({ success: false, message: 'Rider not found' });
+    }
+});
+
+// Unlock Endpoint for Public Profile (Level 2)
+app.post('/api/verify/:query/unlock', apiLimiter, (req, res) => {
+    const query = req.params.query.toLowerCase();
+    const rider = dbHelpers.findRiderByQuery(query);
+    if (rider) {
         const { pin, ...safeRiderData } = rider;
         res.json({ success: true, rider: safeRiderData });
     } else {

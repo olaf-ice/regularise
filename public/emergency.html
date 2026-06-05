@@ -328,6 +328,45 @@
             border-radius: 0.75rem; padding: 0.85rem; text-align: center;
             color: var(--amber); font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem;
         }
+        /* Hold to Unlock */
+        .unlock-container {
+            text-align: center; margin: 2rem 0;
+            display: flex; flex-direction: column; align-items: center; gap: 1rem;
+        }
+        .hold-btn {
+            position: relative; width: 120px; height: 120px;
+            border-radius: 50%; background: #1a2540; border: none;
+            color: var(--text); font-weight: 800; font-size: 0.9rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 0.5rem; outline: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.2s; overflow: hidden;
+            user-select: none; -webkit-user-select: none;
+        }
+        .hold-btn:active { transform: scale(0.95); }
+        .hold-btn::before {
+            content: ''; position: absolute; inset: 0;
+            border-radius: 50%; border: 4px solid var(--red);
+            clip-path: polygon(50% 50%, 50% 0, 50% 0, 50% 0, 50% 0, 50% 0, 50% 0);
+            transform: rotate(-90deg); z-index: 1; pointer-events: none;
+        }
+        .hold-btn.holding::before {
+            animation: fill-ring 3s linear forwards;
+        }
+        @keyframes fill-ring {
+            0%   { clip-path: polygon(50% 50%, 100% 0, 100% 0, 100% 0, 100% 0, 100% 0, 100% 0); }
+            25%  { clip-path: polygon(50% 50%, 100% 0, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%); }
+            50%  { clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 100%, 0 100%, 0 100%); }
+            75%  { clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0, 0 0, 0 0); }
+            100% { clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0, 100% 0, 100% 0); }
+        }
+        .hold-btn-text { position: relative; z-index: 2; line-height: 1.2; }
+        .hold-btn-icon { font-size: 1.5rem; position: relative; z-index: 2; }
+        .unlock-msg { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        
+        .level-2-data { display: none; }
+        .level-2-data.unlocked { display: block; animation: fade-in 0.5s ease-out forwards; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -399,9 +438,9 @@
             </div>
         </div>
 
-        <!-- Identity Details -->
-        <div class="card">
-            <div class="card-title"><span>📋</span> IDENTITY DETAILS</div>
+        <!-- Identity Details (Level 2) -->
+        <div class="card level-2-data">
+            <div class="card-title"><span>📋</span> IDENTITY DETAILS (L2)</div>
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="detail-label">License No.</span>
@@ -426,34 +465,39 @@
             </div>
         </div>
 
-        <!-- Medical ICE -->
+        <!-- Medical ICE (Level 1 + Level 2) -->
         <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04);">
             <div class="card-title" style="color:var(--red)"><span>🩺</span> MEDICAL — IN CASE OF EMERGENCY</div>
             <div class="medical-vitals">
-                <div class="vital-box">
+                <div class="vital-box" style="grid-column: span 2;">
                     <span class="vital-label">Blood Group</span>
                     <span class="vital-value" id="bloodGroup">---</span>
                 </div>
-                <div class="vital-box">
-                    <span class="vital-label">Genotype</span>
-                    <span class="vital-value" id="genotype">---</span>
-                </div>
             </div>
-            <div style="margin-top:0.85rem;" class="detail-grid">
-                <div class="detail-item full">
-                    <span class="detail-label">Known Allergies</span>
-                    <span class="detail-value amber" id="allergies">---</span>
+            
+            <div class="level-2-data" style="margin-top: 1rem;">
+                <div class="medical-vitals" style="margin-bottom: 0.85rem;">
+                    <div class="vital-box" style="grid-column: span 2; background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.22);">
+                        <span class="vital-label">Genotype</span>
+                        <span class="vital-value" style="color:var(--amber);" id="genotype">---</span>
+                    </div>
                 </div>
-                <div class="detail-item full">
-                    <span class="detail-label">Preferred Hospital</span>
-                    <span class="detail-value" id="hospital">---</span>
+                <div class="detail-grid">
+                    <div class="detail-item full">
+                        <span class="detail-label">Known Allergies</span>
+                        <span class="detail-value amber" id="allergies">---</span>
+                    </div>
+                    <div class="detail-item full">
+                        <span class="detail-label">Preferred Hospital</span>
+                        <span class="detail-value" id="hospital">---</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Location -->
-        <div class="card">
-            <div class="card-title"><span>📍</span> LAST KNOWN LOCATION</div>
+        <!-- Location (Level 2) -->
+        <div class="card level-2-data">
+            <div class="card-title"><span>📍</span> LAST KNOWN LOCATION (L2)</div>
             <div class="location-block">
                 <span class="location-icon">📍</span>
                 <div>
@@ -467,10 +511,19 @@
             </div>
         </div>
 
-        <!-- Emergency Contacts -->
+        <!-- Emergency Contacts (Level 1) -->
         <div class="card" id="kinCard" style="display:none;">
             <div class="card-title"><span>📞</span> EMERGENCY CONTACTS</div>
             <div id="kinList"></div>
+        </div>
+        
+        <!-- Unlock Section -->
+        <div class="unlock-container" id="unlockContainer">
+            <button class="hold-btn" id="holdUnlockBtn">
+                <span class="hold-btn-icon">🔒</span>
+                <span class="hold-btn-text">HOLD TO<br>UNLOCK</span>
+            </button>
+            <div class="unlock-msg">Press and hold for 3 seconds to access full medical history and documents.</div>
         </div>
 
         <!-- Session Info -->
@@ -521,8 +574,10 @@
     <div class="toast" id="toast"></div>
 
     <script>
+    <script>
         let sessionData = null;
         const currentUrl = window.location.href;
+        let isUnlocked = false;
 
         // --- SIREN & VIBRATION LOGIC ---
         let audioCtx, sirenOscillator, sirenGain, sirenInterval;
@@ -601,6 +656,67 @@
             if (!s) return '---';
             return s.charAt(0).toUpperCase() + s.slice(1);
         }
+
+        // --- UNLOCK LOGIC ---
+        const holdBtn = document.getElementById('holdUnlockBtn');
+        let holdTimeout;
+        
+        function startHold(e) {
+            if(e.type === 'touchstart') e.preventDefault();
+            if(isUnlocked) return;
+            holdBtn.classList.add('holding');
+            holdTimeout = setTimeout(() => {
+                unlockLevel2();
+            }, 3000); // 3 seconds hold
+        }
+        
+        function stopHold() {
+            if(isUnlocked) return;
+            holdBtn.classList.remove('holding');
+            clearTimeout(holdTimeout);
+        }
+        
+        holdBtn.addEventListener('mousedown', startHold);
+        holdBtn.addEventListener('touchstart', startHold);
+        holdBtn.addEventListener('mouseup', stopHold);
+        holdBtn.addEventListener('mouseleave', stopHold);
+        holdBtn.addEventListener('touchend', stopHold);
+
+        async function unlockLevel2() {
+            isUnlocked = true;
+            holdBtn.classList.remove('holding');
+            holdBtn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:3px;border-top-color:#fff;"></span>';
+            
+            const pathMatch = window.location.pathname.match(/\/emergency\/([^/?\s]+)/);
+            if (!pathMatch) return;
+            
+            try {
+                const res = await fetch('/api/emergency/' + pathMatch[1] + '/unlock', { method: 'POST' });
+                const data = await res.json();
+                
+                if (data.success) {
+                    sessionData = data.session;
+                    populateLevel2Data(sessionData.rider, sessionData);
+                    
+                    document.getElementById('unlockContainer').style.display = 'none';
+                    document.querySelectorAll('.level-2-data').forEach(el => {
+                        el.classList.add('unlocked');
+                    });
+                    
+                    showToast('🔓 Full medical profile unlocked');
+                    if ("vibrate" in navigator) navigator.vibrate(200);
+                } else {
+                    showToast('⚠️ Failed to unlock session');
+                    holdBtn.innerHTML = '<span class="hold-btn-icon">🔒</span><span class="hold-btn-text">HOLD TO<br>UNLOCK</span>';
+                    isUnlocked = false;
+                }
+            } catch(e) {
+                showToast('Connection error');
+                holdBtn.innerHTML = '<span class="hold-btn-icon">🔒</span><span class="hold-btn-text">HOLD TO<br>UNLOCK</span>';
+                isUnlocked = false;
+            }
+        }
+        // --------------------
 
         function buildKinCard(ec) {
             if (!ec || !ec.phone) return;
@@ -700,9 +816,8 @@
                 document.getElementById('sessionIdDisplay').textContent = s.sessionId;
                 document.getElementById('sessionLinkText').textContent = currentUrl;
 
-                // Identity
-                const vehicleInfo = rider.vehicle || rider.bike || {};
-                const plate = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
+                // Identity (Level 1)
+                const plate = (rider.plateNumber || '---').toUpperCase();
                 document.getElementById('riderName').textContent = rider.name || '---';
                 document.getElementById('riderPlate').textContent = plate;
                 document.getElementById('riderIdBadge').textContent = 'ID: ' + (rider.riderId || '---');
@@ -712,40 +827,12 @@
                     document.getElementById('riderPhoto').src = src;
                 }
 
-                // Details
-                document.getElementById('licenseNumber').textContent = rider.documents?.licenseDoc?.number || '---';
-                document.getElementById('vehicleColor').textContent = vehicleInfo.color || '---';
-                document.getElementById('vehicleType').textContent = cap(rider.vehicleType || 'motorcycle');
-                const phone = rider.phone || '---';
-                document.getElementById('riderPhoneLink').textContent = phone;
-                document.getElementById('riderPhoneLink').href = 'tel:' + phone;
-                document.getElementById('riderUnion').textContent = rider.union || '---';
-
-                // Medical
+                // Medical (Level 1)
                 if (rider.medical) {
                     document.getElementById('bloodGroup').textContent = rider.medical.bloodGroup || '---';
-                    document.getElementById('genotype').textContent = rider.medical.genotype || '---';
-                    document.getElementById('allergies').textContent = rider.medical.allergies || 'None reported';
-                    document.getElementById('hospital').textContent = rider.medical.hospitalPreference || 'Not specified';
                 }
 
-                // Location
-                if (s.location) {
-                    const loc = s.location;
-                    document.getElementById('locationName').textContent = loc.name || 'Unknown Location';
-                    if (loc.latitude && loc.longitude) {
-                        document.getElementById('locationCoords').textContent =
-                            loc.latitude.toFixed(6) + ', ' + loc.longitude.toFixed(6);
-                        const ml = document.getElementById('mapsLink');
-                        ml.href = 'https://www.google.com/maps?q=' + loc.latitude + ',' + loc.longitude;
-                        ml.style.display = 'inline-flex';
-                    }
-                    document.getElementById('locationTime').textContent = '⏱ Captured: ' + fmt(s.createdAt);
-                } else {
-                    document.getElementById('locationName').textContent = 'Location not shared';
-                }
-
-                // Kin
+                // Kin (Level 1)
                 buildKinCard(rider.emergencyContact);
 
                 // Session timing
@@ -760,8 +847,6 @@
                     '🚨 *EMERGENCY ALERT — MyVault SOS*\n\n' +
                     'A rider may need immediate assistance!\n\n' +
                     '👤 *Name:* ' + (rider.name || '---') + '\n' +
-                    '🏍️ *Plate:* ' + plate + '\n' +
-                    '📍 *Location:* ' + (s.location?.name || 'Unknown') + '\n' +
                     '🕐 *Time:* ' + fmt(s.createdAt) + '\n\n' +
                     'View full emergency profile:\n' + currentUrl
                 );
@@ -772,6 +857,54 @@
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('errorState').style.display = 'block';
             }
+        }
+
+        function populateLevel2Data(rider, s) {
+            // Identity Details
+            const vehicleInfo = rider.vehicle || rider.bike || {};
+            document.getElementById('licenseNumber').textContent = rider.documents?.licenseDoc?.number || '---';
+            document.getElementById('vehicleColor').textContent = vehicleInfo.color || '---';
+            document.getElementById('vehicleType').textContent = cap(rider.vehicleType || 'motorcycle');
+            const phone = rider.phone || '---';
+            document.getElementById('riderPhoneLink').textContent = phone;
+            document.getElementById('riderPhoneLink').href = 'tel:' + phone;
+            document.getElementById('riderUnion').textContent = rider.union || '---';
+
+            // Medical Details
+            if (rider.medical) {
+                document.getElementById('genotype').textContent = rider.medical.genotype || '---';
+                document.getElementById('allergies').textContent = rider.medical.allergies || 'None reported';
+                document.getElementById('hospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+            }
+
+            // Location
+            if (s.location) {
+                const loc = s.location;
+                document.getElementById('locationName').textContent = loc.name || 'Unknown Location';
+                if (loc.latitude && loc.longitude) {
+                    document.getElementById('locationCoords').textContent =
+                        loc.latitude.toFixed(6) + ', ' + loc.longitude.toFixed(6);
+                    const ml = document.getElementById('mapsLink');
+                    ml.href = 'https://www.google.com/maps?q=' + loc.latitude + ',' + loc.longitude;
+                    ml.style.display = 'inline-flex';
+                }
+                document.getElementById('locationTime').textContent = '⏱ Captured: ' + fmt(s.createdAt);
+            } else {
+                document.getElementById('locationName').textContent = 'Location not shared';
+            }
+            
+            // Update WhatsApp share with more info if location exists
+            const plate = (rider.plateNumber || '---').toUpperCase();
+            const shareText = encodeURIComponent(
+                '🚨 *EMERGENCY ALERT — MyVault SOS*\n\n' +
+                'A rider may need immediate assistance!\n\n' +
+                '👤 *Name:* ' + (rider.name || '---') + '\n' +
+                '🏍️ *Plate:* ' + plate + '\n' +
+                '📍 *Location:* ' + (s.location?.name || 'Unknown') + '\n' +
+                '🕐 *Time:* ' + fmt(s.createdAt) + '\n\n' +
+                'View full emergency profile:\n' + currentUrl
+            );
+            document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText;
         }
 
         loadSession();

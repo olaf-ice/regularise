@@ -93,19 +93,17 @@
         <button onclick="logoutRider()" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-color: var(--error); color: var(--error);">🚪 Log Out</button>
     </div>
 
-            <!-- Roadside Switch -->
-            <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 0.75rem 1rem; border-radius: 0.75rem;">
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <span style="font-size: 1.25rem;">⚡</span>
-                    <div style="display: flex; flex-direction: column; text-align: left;">
-                        <span style="font-size: 0.85rem; font-weight: 800; color: var(--text);">Roadside / Checkpoint Mode</span>
-                        <span style="font-size: 0.68rem; color: var(--text-muted);">Simplified layout for rapid roadside check</span>
-                    </div>
+            <!-- 2-Level Privacy Lock -->
+            <div class="no-print" id="unlockLevel2Box" style="margin-bottom: 1.5rem; text-align: center;">
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">Access full medical details & compliance documents</p>
+                <div class="unlock-btn-container" style="position: relative; display: inline-block; width: 100%;">
+                    <svg class="progress-ring" width="60" height="60" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); pointer-events: none;">
+                        <circle cx="30" cy="30" r="26" fill="transparent" stroke="rgba(239, 68, 68, 0.2)" stroke-width="4"></circle>
+                        <circle class="progress-ring__circle" cx="30" cy="30" r="26" fill="transparent" stroke="#ef4444" stroke-width="4" stroke-dasharray="163.36" stroke-dashoffset="163.36" style="transition: stroke-dashoffset 0.1s linear;"></circle>
+                    </svg>
+                    <button id="unlockLevel2Btn" style="position: relative; z-index: 10; background: var(--surface); border: 2px solid var(--glass-border); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; cursor: pointer; color: var(--text); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin: 0 auto; user-select: none; -webkit-user-select: none;">🔒</button>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="roadsideToggle" onchange="toggleRoadsideMode()">
-                    <span class="slider"></span>
-                </label>
+                <p id="unlockHelpText" style="font-size: 0.65rem; color: var(--error); font-weight: 800; margin-top: 0.5rem; letter-spacing: 1px;">HOLD TO UNLOCK</p>
             </div>
 
             <!-- Emergency ICE Hub (Medical & Kin Card combined) -->
@@ -119,25 +117,25 @@
                     <span id="iceMedicalSummaryBadge" style="font-size: 0.65rem; font-weight: 900; background: var(--error); color: white; padding: 0.15rem 0.5rem; border-radius: 0.25rem;">---</span>
                 </div>
                 
-                <!-- Medical Vitals Grid -->
+                <!-- Medical Vitals Grid (Level 2 locked by default) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Blood Group</span>
                         <span id="iceBloodGroup" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span>
                     </div>
-                    <div>
+                    <div class="level-2-data" style="display: none;">
                         <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Genotype</span>
                         <span id="iceGenotype" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span>
                     </div>
-                    <div style="grid-column: span 2;">
+                    <div class="level-2-data" style="grid-column: span 2; display: none;">
                         <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Known Allergies</span>
                         <span id="iceAllergies" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span>
                     </div>
-                    <div style="grid-column: span 2;">
+                    <div class="level-2-data" style="grid-column: span 2; display: none;">
                         <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Preferred Rescue Hospital</span>
                         <span id="iceHospital" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span>
                     </div>
-                    <div id="iceMedicalDirectiveBlock" style="grid-column: span 2; display: none; background: rgba(239, 68, 68, 0.15); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--error); margin-top: 0.5rem;">
+                    <div id="iceMedicalDirectiveBlock" class="level-2-data" style="grid-column: span 2; display: none; background: rgba(239, 68, 68, 0.15); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--error); margin-top: 0.5rem;">
                         <span style="color: var(--error); font-size: 0.7rem; text-transform: uppercase; display: block; font-weight: 800; margin-bottom: 0.3rem;">⚠️ ADVANCE DIRECTIVE (NO BLOOD)</span>
                         <a id="iceMedicalDirectiveBtn" href="#" target="_blank" class="btn btn-outline" style="border-color: var(--error); color: var(--error); padding: 0.3rem 0.6rem; font-size: 0.7rem; width: 100%;">View Uploaded Document</a>
                     </div>
@@ -283,7 +281,7 @@
                 </div>
 
                 <!-- Digital Wallet & Compliance Checkers -->
-                <div id="documentsSection" style="text-align: left; border-top: 1px solid var(--glass-border); padding-top: 1.25rem;">
+                <div id="documentsSection" class="level-2-data" style="text-align: left; border-top: 1px solid var(--glass-border); padding-top: 1.25rem; display: none;">
                     <h4 style="margin-bottom: 1rem; color: var(--primary-light); font-size: 0.82rem; letter-spacing: 1px; font-weight: 800;">VERIFIED ROAD COMPLIANCE DOCUMENTS</h4>
                     <div id="docList" style="display: grid; gap: 0.75rem;">
                         <!-- Docs injected here -->
@@ -353,48 +351,97 @@
     </div>
 
     <script>
-        function toggleRoadsideMode() {
-            const isChecked = document.getElementById('roadsideToggle').checked;
-            const emergencyIceHub = document.getElementById('emergencyIceHub');
-            const passportFrame = document.getElementById('passportFrame');
-            const qrFrame = document.getElementById('qrFrame');
-            const checkpointSummaryRing = document.getElementById('checkpointSummaryRing');
-            const physicalAssetsCard = document.getElementById('physicalAssetsCard');
+        // Roadside Mode Toggle (Removed, but keeping empty stub just in case)
+        function toggleRoadsideMode() {}
+        
+        // 2-Level Unlock Logic
+        const unlockBtn = document.getElementById('unlockLevel2Btn');
+        const circle = document.querySelector('.progress-ring__circle');
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
 
-            if (isChecked) {
-                // Checkpoint-friendly view
-                emergencyIceHub.style.display = 'none';
-                physicalAssetsCard.style.display = 'none';
-                
-                // Maximize photo
-                passportFrame.style.width = '160px';
-                passportFrame.style.height = '160px';
-                passportFrame.style.borderRadius = '1rem'; 
-                passportFrame.style.borderColor = 'var(--primary)';
-                
-                // Hide QR code 
-                qrFrame.style.display = 'none';
-                
-                // Show compliance ring
-                checkpointSummaryRing.style.display = 'flex';
-            } else {
-                // Standard view
-                emergencyIceHub.style.display = 'block';
-                physicalAssetsCard.style.display = 'block';
-                
-                // Standard photo
-                passportFrame.style.width = '120px';
-                passportFrame.style.height = '120px';
-                passportFrame.style.borderRadius = '50%';
-                passportFrame.style.borderColor = 'var(--primary)';
-                
-                // Show QR code
-                qrFrame.style.display = 'block';
-                
-                // Hide compliance ring
-                checkpointSummaryRing.style.display = 'none';
+        let pressTimer = null;
+        let progressInterval = null;
+        const HOLD_DURATION = 3000;
+        let isUnlocked = false;
+
+        function setProgress(percent) {
+            const offset = circumference - percent / 100 * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        async function unlockLevel2() {
+            if (isUnlocked || !currentRiderId) return;
+            isUnlocked = true;
+            document.getElementById('unlockHelpText').textContent = 'UNLOCKING...';
+            document.getElementById('unlockHelpText').style.color = 'var(--primary-light)';
+            unlockBtn.innerHTML = '🔄';
+
+            try {
+                const res = await fetch(`/api/verify/${currentRiderId}/unlock`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    const rider = data.rider;
+                    
+                    // Populate hidden data
+                    if (rider.medical) {
+                        document.getElementById('iceGenotype').textContent = rider.medical.genotype || '---';
+                        document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None reported';
+                        document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                        if (rider.documents && rider.documents.medicalDirectiveDoc) {
+                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
+                            document.getElementById('iceMedicalDirectiveBtn').href = rider.documents.medicalDirectiveDoc.url;
+                        }
+                    }
+
+                    // Populate documents
+                    populateDocuments(rider);
+                    
+                    // Show hidden elements
+                    document.querySelectorAll('.level-2-data').forEach(el => {
+                        el.style.display = el.id === 'iceMedicalDirectiveBlock' && (!rider.documents || !rider.documents.medicalDirectiveDoc) ? 'none' : 'block';
+                    });
+                    
+                    // Update button state
+                    document.getElementById('unlockLevel2Box').style.display = 'none';
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to unlock profile. Check connection.");
+                resetUnlock();
             }
         }
+
+        function resetUnlock() {
+            if (isUnlocked) return;
+            clearInterval(progressInterval);
+            clearTimeout(pressTimer);
+            setProgress(0);
+            unlockBtn.style.transform = 'scale(1)';
+        }
+
+        function startUnlock() {
+            if (isUnlocked) return;
+            let startTime = Date.now();
+            unlockBtn.style.transform = 'scale(0.9)';
+            
+            progressInterval = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                let percent = Math.min((elapsed / HOLD_DURATION) * 100, 100);
+                setProgress(percent);
+            }, 50);
+
+            pressTimer = setTimeout(() => {
+                clearInterval(progressInterval);
+                setProgress(100);
+                unlockLevel2();
+            }, HOLD_DURATION);
+        }
+
+        ['mousedown', 'touchstart'].forEach(evt => unlockBtn.addEventListener(evt, (e) => { e.preventDefault(); startUnlock(); }));
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => unlockBtn.addEventListener(evt, resetUnlock));
 
         function getCompliance(expiryDateStr) {
             if (!expiryDateStr) return { status: 'none', label: 'No Expiry Recorded', color: 'var(--text-muted)', ring: '📄' };
@@ -569,7 +616,19 @@
                     document.getElementById('profileContent').style.display = 'block';
                     document.getElementById('profileStatusText').textContent = 'Verification Active';
                     
-                    if (localStorage.getItem('riderToken')) {
+                    const isEmergencyView = urlParams.get('view') === 'emergency';
+                    
+                    if (isEmergencyView) {
+                        // Strict emergency mode - only show Level 1 & Level 2 unlock
+                        document.getElementById('namePlateContainer').style.display = 'none';
+                        document.getElementById('riderWalletCard').style.display = 'none';
+                        const quickShares = document.querySelector('.no-print[style*="margin-bottom: 3rem"]');
+                        if (quickShares) quickShares.style.display = 'none';
+                        if (document.getElementById('physicalAssetsCard')) document.getElementById('physicalAssetsCard').style.display = 'none';
+                        document.getElementById('profileStatusText').parentElement.parentElement.style.display = 'none'; // Hide header
+                    }
+                    
+                    if (localStorage.getItem('riderToken') && !isEmergencyView) {
                         document.getElementById('ownerActions').style.display = 'flex';
                     }
                     
@@ -605,25 +664,11 @@
                         document.getElementById('passportImg').src = photoSrc;
                     }
 
-                    // Populate Emergency ICE Card details
+                    // Populate Emergency ICE Card details (Level 1 only)
                     if (rider.medical) {
                         const bg = rider.medical.bloodGroup || 'O+';
-                        const gt = rider.medical.genotype || 'AA';
                         document.getElementById('iceBloodGroup').textContent = bg;
-                        document.getElementById('iceGenotype').textContent = gt;
-                        document.getElementById('iceMedicalSummaryBadge').textContent = `${bg} | ${gt}`;
-                        document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None reported';
-                        document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
-                        
-                        // PVC data is populated via initPrintData() called after vehicle details load
-
-                        // Advance Directive Check
-                        if (rider.documents && rider.documents.medicalDirectiveDoc) {
-                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
-                            document.getElementById('iceMedicalDirectiveBtn').href = rider.documents.medicalDirectiveDoc.url;
-                        } else {
-                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'none';
-                        }
+                        document.getElementById('iceMedicalSummaryBadge').textContent = `${bg}`;
                     } else {
                         document.getElementById('emergencyIceHub').style.display = 'none';
                     }
@@ -655,89 +700,84 @@
                     badge.textContent = rider.status.toUpperCase();
                     badge.className = `badge badge-${rider.status.toLowerCase()}`;
 
-                    // Documents Injection & Compliance Check
-                    const docList = document.getElementById('docList');
-                    docList.innerHTML = '';
-                    
-                    const docLabels = {
-                        licenseDoc: isCar ? "Driver’s License" : "Rider’s License",
-                        bikePapers: isCar ? "Car Reg. Papers" : "Motorcycle Reg. Papers",
-                        proofOfOwnership: "Proof of Ownership",
-                        insuranceDoc: "Insurance Certificate",
-                        ninDoc: "NIN Slip / National ID",
-                        unionId: isCar ? "Driver Union ID Card" : "Union ID Card"
-                    };
+                    // Create a separate function for populating documents since it will be deferred to Level 2
+                    window.populateDocuments = function(fullRider) {
+                        const docList = document.getElementById('docList');
+                        docList.innerHTML = '';
+                        
+                        const docLabels = {
+                            licenseDoc: isCar ? "Driver’s License" : "Rider’s License",
+                            bikePapers: isCar ? "Car Reg. Papers" : "Motorcycle Reg. Papers",
+                            proofOfOwnership: "Proof of Ownership",
+                            insuranceDoc: "Insurance Certificate",
+                            ninDoc: "NIN Slip / National ID",
+                            unionId: isCar ? "Driver Union ID Card" : "Union ID Card"
+                        };
 
-                    let hasDocs = false;
-                    let hasExpired = false;
-                    let hasWarning = false;
-
-                    if (rider.documents) {
-                        for (const [key, doc] of Object.entries(rider.documents)) {
-                            if (doc && key !== 'passportPhoto') {
-                                hasDocs = true;
-                                
-                                // Compute compliance
-                                const comp = getCompliance(doc.expiryDate);
-                                if (comp.status === 'expired') hasExpired = true;
-                                if (comp.status === 'warning') hasWarning = true;
-
-                                const docDiv = document.createElement('div');
-                                docDiv.style.background = 'rgba(255,255,255,0.03)';
-                                docDiv.style.padding = '0.85rem';
-                                docDiv.style.borderRadius = '0.5rem';
-                                docDiv.style.display = 'flex';
-                                docDiv.style.justifyContent = 'space-between';
-                                docDiv.style.alignItems = 'center';
-                                docDiv.style.borderLeft = `4px solid ${comp.color}`;
-                                docDiv.style.borderTop = `1px solid var(--glass-border)`;
-                                docDiv.style.borderRight = `1px solid var(--glass-border)`;
-                                docDiv.style.borderBottom = `1px solid var(--glass-border)`;
-                                
-                                docDiv.innerHTML = `
-                                    <div style="display: flex; flex-direction: column; text-align: left;">
-                                        <span style="font-size: 0.82rem; font-weight: 700; color: var(--text);">${docLabels[key] || key}</span>
-                                        <span style="font-size: 0.65rem; color: var(--text-muted); margin: 0.15rem 0;">No: ${doc.number || 'N/A'}</span>
-                                        <span style="font-size: 0.68rem; font-weight: 800; color: ${comp.color};">${comp.ring || '📄'} ${comp.label}</span>
-                                    </div>
-                                    <a href="${doc.url}" target="_blank" class="no-print" style="color: ${comp.color}; font-size: 0.72rem; font-weight: 800; text-decoration: none; border: 1px solid ${comp.color}; padding: 0.25rem 0.6rem; border-radius: 0.35rem; transition: all 0.3s ease;">VIEW &rarr;</a>
-                                `;
-                                docList.appendChild(docDiv);
+                        let hasDocs = false;
+                        if (fullRider.documents) {
+                            for (const [key, doc] of Object.entries(fullRider.documents)) {
+                                if (doc && key !== 'passportPhoto' && doc.url) {
+                                    hasDocs = true;
+                                    const comp = getCompliance(doc.expiryDate);
+                                    
+                                    const docDiv = document.createElement('div');
+                                    docDiv.style.background = 'rgba(255,255,255,0.03)';
+                                    docDiv.style.padding = '0.85rem';
+                                    docDiv.style.borderRadius = '0.5rem';
+                                    docDiv.style.display = 'flex';
+                                    docDiv.style.justifyContent = 'space-between';
+                                    docDiv.style.alignItems = 'center';
+                                    docDiv.style.borderLeft = `4px solid ${comp.color}`;
+                                    docDiv.style.borderTop = `1px solid var(--glass-border)`;
+                                    docDiv.style.borderRight = `1px solid var(--glass-border)`;
+                                    docDiv.style.borderBottom = `1px solid var(--glass-border)`;
+                                    
+                                    docDiv.innerHTML = `
+                                        <div style="display: flex; flex-direction: column; text-align: left;">
+                                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text);">${docLabels[key] || key}</span>
+                                            <span style="font-size: 0.65rem; color: var(--text-muted); margin: 0.15rem 0;">No: ${doc.number || 'N/A'}</span>
+                                            <span style="font-size: 0.68rem; font-weight: 800; color: ${comp.color};">${comp.ring || '📄'} ${comp.label}</span>
+                                        </div>
+                                        <a href="${doc.url}" target="_blank" class="no-print" style="color: ${comp.color}; font-size: 0.72rem; font-weight: 800; text-decoration: none; border: 1px solid ${comp.color}; padding: 0.25rem 0.6rem; border-radius: 0.35rem; transition: all 0.3s ease;">VIEW &rarr;</a>
+                                    `;
+                                    docList.appendChild(docDiv);
+                                }
                             }
                         }
-                    }
 
-                    // Add Union Dues block if present
-                    if (rider.unionDuesExpiry) {
-                        hasDocs = true;
-                        const comp = getCompliance(rider.unionDuesExpiry);
-                        if (comp.status === 'expired') hasExpired = true;
-                        if (comp.status === 'warning') hasWarning = true;
+                        if (fullRider.unionDuesExpiry) {
+                            hasDocs = true;
+                            const comp = getCompliance(fullRider.unionDuesExpiry);
+                            const docDiv = document.createElement('div');
+                            docDiv.style.background = 'rgba(255,255,255,0.03)';
+                            docDiv.style.padding = '0.85rem';
+                            docDiv.style.borderRadius = '0.5rem';
+                            docDiv.style.display = 'flex';
+                            docDiv.style.justifyContent = 'space-between';
+                            docDiv.style.alignItems = 'center';
+                            docDiv.style.borderLeft = `4px solid ${comp.color}`;
+                            docDiv.style.borderTop = `1px solid var(--glass-border)`;
+                            docDiv.style.borderRight = `1px solid var(--glass-border)`;
+                            docDiv.style.borderBottom = `1px solid var(--glass-border)`;
+                            
+                            docDiv.innerHTML = `
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: var(--text);">Union Membership Dues</span>
+                                    <span style="font-size: 0.65rem; color: var(--text-muted); margin: 0.15rem 0;">Status: Verified Member</span>
+                                    <span style="font-size: 0.68rem; font-weight: 800; color: ${comp.color};">${comp.ring || '🤝'} ${comp.label}</span>
+                                </div>
+                                <span style="color: ${comp.color}; font-size: 0.68rem; font-weight: 800; border: 1px solid ${comp.color}; padding: 0.25rem 0.6rem; border-radius: 0.35rem; opacity: 0.7;">UNION</span>
+                            `;
+                            docList.appendChild(docDiv);
+                        }
 
-                        const docDiv = document.createElement('div');
-                        docDiv.style.background = 'rgba(255,255,255,0.03)';
-                        docDiv.style.padding = '0.85rem';
-                        docDiv.style.borderRadius = '0.5rem';
-                        docDiv.style.display = 'flex';
-                        docDiv.style.justifyContent = 'space-between';
-                        docDiv.style.alignItems = 'center';
-                        docDiv.style.borderLeft = `4px solid ${comp.color}`;
-                        docDiv.style.borderTop = `1px solid var(--glass-border)`;
-                        docDiv.style.borderRight = `1px solid var(--glass-border)`;
-                        docDiv.style.borderBottom = `1px solid var(--glass-border)`;
-                        
-                        docDiv.innerHTML = `
-                            <div style="display: flex; flex-direction: column; text-align: left;">
-                                <span style="font-size: 0.82rem; font-weight: 700; color: var(--text);">Union Membership Dues</span>
-                                <span style="font-size: 0.65rem; color: var(--text-muted); margin: 0.15rem 0;">Status: Verified Member</span>
-                                <span style="font-size: 0.68rem; font-weight: 800; color: ${comp.color};">${comp.ring || '🤝'} ${comp.label}</span>
-                            </div>
-                            <span style="color: ${comp.color}; font-size: 0.68rem; font-weight: 800; border: 1px solid ${comp.color}; padding: 0.25rem 0.6rem; border-radius: 0.35rem; opacity: 0.7;">UNION</span>
-                        `;
-                        docList.appendChild(docDiv);
-                    }
-
-                    if (!hasDocs) document.getElementById('documentsSection').style.display = 'none';
+                        if (!hasDocs) document.getElementById('documentsSection').style.display = 'none';
+                    };
+                    
+                    let hasExpired = false;
+                    let hasWarning = false;
+                    // We can still calculate compliance summary if needed using Level 1 summary, but for now we just show default state
 
                     // Update checkpoint-friendly summary ring status
                     const checkpointStatusText = document.getElementById('checkpointStatusText');
@@ -951,15 +991,20 @@
     // ---- PRINT ASSETS ----
     let _printRiderData = {};
 
-    function initPrintData(rider) {
-        const vehicleInfo = rider.vehicle || rider.bike || {};
-        const plate = (vehicleInfo.plateNumber || rider.plateNumber || '').toUpperCase();
-        const bg = (rider.medical && rider.medical.bloodGroup) || '---';
-        const gt = (rider.medical && rider.medical.genotype) || '---';
-        const allergies = (rider.medical && rider.medical.allergies) || 'None';
-        const kinName = (rider.emergencyContact && rider.emergencyContact.name) || 'N/A';
-        const kinPhone = (rider.emergencyContact && rider.emergencyContact.phone) || '';
-        const profileUrl = window.location.origin + '/profile.html?q=' + rider.riderId;
+    function initPrintData(rider, vehicleInfo) {
+        const plate = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
+        let bg = 'O+'; let gt = 'AA'; let allergies = 'None'; let kinName = '---'; let kinPhone = '---';
+        if (rider.medical) {
+            bg = rider.medical.bloodGroup || 'O+';
+            gt = rider.medical.genotype || 'AA';
+            allergies = rider.medical.allergies || 'None';
+        }
+        if (rider.emergencyContact) {
+            kinName = rider.emergencyContact.name || '---';
+            kinPhone = rider.emergencyContact.phone || '---';
+        }
+
+        const profileUrl = window.location.origin + '/profile.html?q=' + rider.riderId + '&view=emergency';
 
         _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl, phone: rider.phone || '' };
 
@@ -984,22 +1029,95 @@
 
         let qrDataUrl = '';
         const qrCanvas = document.querySelector('#qrStickerPreview canvas');
-        const qrImg = document.querySelector('#qrStickerPreview img');
         if (qrCanvas) qrDataUrl = qrCanvas.toDataURL();
-        else if (qrImg) qrDataUrl = qrImg.src;
+        else {
+            const qrImg = document.querySelector('#qrStickerPreview img');
+            if (qrImg && qrImg.src) qrDataUrl = qrImg.src;
+            // Fallback: forcefully generate right before print if missing
+            if (!qrDataUrl || qrDataUrl.trim() === '') {
+                qrDataUrl = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23f5f5f5"/%3E%3Ctext x="50" y="50" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="%23999"%3EQR%3C/text%3E%3C/svg%3E';
+            }
+        }
 
         const pw = window.open('', '', 'height=600,width=600');
-        pw.document.write(`<!DOCTYPE html><html><head><title>Tag QR Code - ${d.name}</title>
+        pw.document.write(`<!DOCTYPE html><html><head><title>Sticker - ${d.name}</title>
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
             * { margin:0; padding:0; box-sizing:border-box; }
-            html, body { width:100%; height:100%; background:transparent; display:flex; align-items:center; justify-content:center; }
-            .card-qr { width:200px; height:200px; display:flex; align-items:center; justify-content:center; }
-            .card-qr img { width:100%; height:100%; object-fit:contain; }
+            html, body { width:100%; height:100%; background:white; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; }
+            .sticker {
+                width: 320px;
+                border: 4px solid #ef4444;
+                border-radius: 16px;
+                overflow: hidden;
+                background: #fff;
+                color: #0f172a;
+            }
+            .top {
+                background: #ef4444;
+                color: white;
+                text-align: center;
+                padding: 12px 10px;
+                font-size: 24px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            .middle {
+                display: flex;
+                padding: 16px;
+                align-items: center;
+                gap: 16px;
+            }
+            .middle-left {
+                flex: 1;
+            }
+            .middle-right {
+                width: 100px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
+            }
+            .kin-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+            .kin-name { font-size: 16px; font-weight: 900; line-height: 1.2; margin-top: 2px; }
+            .kin-phone { font-size: 14px; font-weight: 700; color: #ef4444; margin-top: 4px; }
+            .instruction { font-size: 11px; font-weight: 800; background: #fee2e2; color: #b91c1c; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px; }
+            
+            .qr-wrapper { width: 100px; height: 100px; background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 4px; }
+            .qr-wrapper img { width: 100%; height: 100%; object-fit: contain; }
+            .qr-text { font-size: 9px; font-weight: 700; text-align: center; color: #64748b; line-height: 1.2; }
+            
+            .bottom {
+                background: #0f172a;
+                color: white;
+                text-align: center;
+                padding: 10px;
+                font-size: 14px;
+                font-weight: 800;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            }
             @media print {
                 html, body { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
             }
         </style></head><body>
-        <div class="card-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="font-size:14px;color:#333;font-weight:700;">QR CODE</div>'}</div>
+        <div class="sticker">
+            <div class="top">IN CASE OF EMERGENCY</div>
+            <div class="middle">
+                <div class="middle-left">
+                    <div class="kin-label">Emergency Contact</div>
+                    <div class="kin-name">${d.kinName}</div>
+                    <div class="kin-phone">${d.kinPhone}</div>
+                    <div class="instruction">Call immediately</div>
+                </div>
+                <div class="middle-right">
+                    <div class="qr-wrapper">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:12px;font-weight:700;">QR</div>'}</div>
+                    <div class="qr-text">Scan for medical & identity details</div>
+                </div>
+            </div>
+            <div class="bottom">Scan. Inform. Save Life.</div>
+        </div>
         </body></html>`);
         pw.document.close();
         pw.focus();
@@ -1012,9 +1130,14 @@
 
         let qrDataUrl = '';
         const qrCanvas = document.querySelector('#qrStickerPreview canvas');
-        const qrImg = document.querySelector('#qrStickerPreview img');
         if (qrCanvas) qrDataUrl = qrCanvas.toDataURL();
-        else if (qrImg) qrDataUrl = qrImg.src;
+        else {
+            const qrImg = document.querySelector('#qrStickerPreview img');
+            if (qrImg && qrImg.src) qrDataUrl = qrImg.src;
+            if (!qrDataUrl || qrDataUrl.trim() === '') {
+                qrDataUrl = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23f5f5f5"/%3E%3Ctext x="50" y="50" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="%23999"%3EQR%3C/text%3E%3C/svg%3E';
+            }
+        }
 
         const pw = window.open('', '', 'height=700,width=1000');
         pw.document.write(`<!DOCTYPE html><html><head><title>PVC Emergency ID - ${d.name}</title>
