@@ -238,7 +238,7 @@
                 
 
                 <!-- Rider ID Card Details -->
-                <div style="text-align: left; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.25rem; border: 1px solid var(--glass-border);">
+                <div id="riderIdBlock" style="text-align: left; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.25rem; border: 1px solid var(--glass-border);">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
                         <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Rider ID</span>
                         <span id="riderId" style="font-weight: 700; color: var(--accent);">---</span>
@@ -619,8 +619,22 @@
                     const isEmergencyView = urlParams.get('view') === 'emergency';
                     
                     if (isEmergencyView) {
-                        // Strict emergency mode - hide wallet card and below
-                        document.getElementById('riderWalletCard').style.display = 'none';
+                        // Strict emergency mode - hide Rider ID block and below, but keep Wallet Card outline and summary
+                        const riderIdBlock = document.getElementById('riderIdBlock');
+                        if (riderIdBlock) riderIdBlock.style.display = 'none';
+                        // Also hide the large MYVAULT ID text and the MV-XXXX text itself
+                        const bigRiderId = document.getElementById('riderId');
+                        if (bigRiderId) {
+                            bigRiderId.style.display = 'none';
+                            const myVaultTitle = bigRiderId.previousElementSibling;
+                            if (myVaultTitle && myVaultTitle.textContent.includes('MYVAULT ID')) {
+                                myVaultTitle.style.display = 'none';
+                            }
+                        }
+                        const bikeSection = document.getElementById('bikeSection');
+                        if (bikeSection) bikeSection.style.display = 'none';
+                        const documentsSection = document.getElementById('documentsSection');
+                        if (documentsSection) documentsSection.style.display = 'none';
                         const quickShares = document.querySelector('.no-print[style*="margin-bottom: 3rem"]');
                         if (quickShares) quickShares.style.display = 'none';
                         if (document.getElementById('physicalAssetsCard')) document.getElementById('physicalAssetsCard').style.display = 'none';
