@@ -826,8 +826,9 @@
                     if (qrEl) {
                         qrEl.innerHTML = '';
                         try {
+                            const emergencyUrl = `${window.location.origin}/profile.html?q=${encodeURIComponent(rider.riderId)}&view=emergency`;
                             new QRCode(qrEl, {
-                                text: window.location.href,
+                                text: emergencyUrl,
                                 width: 140, height: 140,
                                 colorDark: '#0f172a', colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.M
