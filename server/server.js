@@ -373,6 +373,7 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             name: fullRider.name,
             phone: fullRider.phone,
             riderId: fullRider.riderId,
+            userType: fullRider.userType || 'driver',
             emergencyContact: fullRider.emergencyContact,
             medical: fullRider.medical ? { bloodGroup: fullRider.medical.bloodGroup } : {},
             // Include photo for identity
@@ -394,6 +395,7 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             name: rider.name,
             phone: rider.phone,
             riderId: rider.riderId,
+            userType: rider.userType || 'driver',
             emergencyContact: rider.emergencyContact,
             medical: rider.medical ? { bloodGroup: rider.medical.bloodGroup } : {},
             documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
@@ -555,6 +557,7 @@ app.get('/api/verify/:query', (req, res) => {
             name: rider.name,
             phone: rider.phone,
             riderId: rider.riderId,
+            userType: rider.userType || 'driver',
             union: rider.union,
             status: rider.status,
             expiryDate: rider.expiryDate,
@@ -618,7 +621,7 @@ app.post('/api/register', authLimiter, [
     body('name').trim().notEmpty().withMessage('Name is required').escape(),
     body('phone').trim().isNumeric().withMessage('Phone must be numeric').isLength({ min: 10, max: 15 }).withMessage('Invalid phone length'),
     body('pin').isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be exactly 4 digits'),
-    body('plateNumber').trim().notEmpty().withMessage('Plate number is required').escape()
+    body('plateNumber').optional({ checkFalsy: true }).trim().escape()
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -626,7 +629,7 @@ app.post('/api/register', authLimiter, [
     }
 
     try {
-        const { name, phone, altPhone, address, dob, plateNumber, union, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, union, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, userType } = req.body;
         
         if (dbHelpers.getRiderByPhone(phone)) {
             return res.status(400).json({ success: false, message: 'Phone number already registered' });
@@ -639,16 +642,17 @@ app.post('/api/register', authLimiter, [
         const riderId = `RID-${Math.floor(10000 + Math.random() * 90000)}`;
         const reference = `PAY-${Date.now()}`;
         const newRider = {
-            riderId, name, phone, altPhone, address, dob, plateNumber, union,
+            riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '', union: union || '',
             pin: hashedPin,
+            userType: userType || 'driver',
             registrationDate: new Date().toISOString().split('T')[0],
-            vehicleType: vehicleType || 'motorcycle',
+            vehicleType: vehicleType || (userType === 'non-driver' ? null : 'motorcycle'),
             bike: {
-                plateNumber: plateNumber
+                plateNumber: plateNumber || ''
             },
             vehicle: {
-                type: vehicleType || 'motorcycle',
-                plateNumber: plateNumber
+                type: vehicleType || (userType === 'non-driver' ? null : 'motorcycle'),
+                plateNumber: plateNumber || ''
             },
             documents: {}, 
             medical: {

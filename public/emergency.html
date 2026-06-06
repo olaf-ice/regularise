@@ -817,9 +817,14 @@
                 document.getElementById('sessionLinkText').textContent = currentUrl;
 
                 // Identity (Level 1)
+                const isNonDriver = rider.userType === 'non-driver';
                 const plate = (rider.plateNumber || '---').toUpperCase();
                 document.getElementById('riderName').textContent = rider.name || '---';
-                document.getElementById('riderPlate').textContent = plate;
+                if (isNonDriver) {
+                    document.getElementById('riderPlate').style.display = 'none';
+                } else {
+                    document.getElementById('riderPlate').textContent = plate;
+                }
                 document.getElementById('riderIdBadge').textContent = 'ID: ' + (rider.riderId || '---');
 
                 if (rider.documents && rider.documents.passportPhoto) {
@@ -860,15 +865,25 @@
         }
 
         function populateLevel2Data(rider, s) {
+            const isNonDriver = rider.userType === 'non-driver';
             // Identity Details
             const vehicleInfo = rider.vehicle || rider.bike || {};
-            document.getElementById('licenseNumber').textContent = rider.documents?.licenseDoc?.number || '---';
-            document.getElementById('vehicleColor').textContent = vehicleInfo.color || '---';
-            document.getElementById('vehicleType').textContent = cap(rider.vehicleType || 'motorcycle');
+            
+            if (isNonDriver) {
+                document.getElementById('licenseNumber').parentElement.style.display = 'none';
+                document.getElementById('vehicleColor').parentElement.style.display = 'none';
+                document.getElementById('vehicleType').parentElement.style.display = 'none';
+                document.getElementById('riderUnion').parentElement.style.display = 'none';
+            } else {
+                document.getElementById('licenseNumber').textContent = rider.documents?.licenseDoc?.number || '---';
+                document.getElementById('vehicleColor').textContent = vehicleInfo.color || '---';
+                document.getElementById('vehicleType').textContent = cap(rider.vehicleType || 'motorcycle');
+                document.getElementById('riderUnion').textContent = rider.union || '---';
+            }
+            
             const phone = rider.phone || '---';
             document.getElementById('riderPhoneLink').textContent = phone;
             document.getElementById('riderPhoneLink').href = 'tel:' + phone;
-            document.getElementById('riderUnion').textContent = rider.union || '---';
 
             // Medical Details
             if (rider.medical) {

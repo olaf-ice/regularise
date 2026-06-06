@@ -119,7 +119,7 @@
                         </div>
                     </section>
 
-                    <section style="margin-top: 2.5rem;">
+                    <section style="margin-top: 2.5rem;" id="vehicleSection">
                         <h3 style="margin-bottom: 1.5rem; color: var(--primary-light); font-size: 1.1rem;" id="vehicleSectionHeader">Bike Information</h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="input-group">
@@ -155,7 +155,7 @@
                             <input type="file" id="passportPhoto" name="passportPhoto" accept="image/*" required>
                         </div>
 
-                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
+                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);" id="licenseSection">
                             <div class="input-group">
                                 <label for="licenseDoc" id="licenseLabel">Rider’s License</label>
                                 <input type="file" id="licenseDoc" name="licenseDoc" accept="image/*,.pdf">
@@ -172,17 +172,17 @@
                             </div>
                         </div>
 
-                        <div class="input-group">
+                        <div class="input-group" id="bikePapersGroup">
                             <label for="bikePapers" id="regPapersLabel">Motorcycle Registration Papers</label>
                             <input type="file" id="bikePapers" name="bikePapers" accept="image/*,.pdf">
                         </div>
 
-                        <div class="input-group">
+                        <div class="input-group" id="proofGroup">
                             <label for="proofOfOwnership">Proof of Ownership</label>
                             <input type="file" id="proofOfOwnership" name="proofOfOwnership" accept="image/*,.pdf">
                         </div>
 
-                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
+                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);" id="insuranceSection">
                             <div class="input-group">
                                 <label for="insuranceDoc">Insurance Certificate</label>
                                 <input type="file" id="insuranceDoc" name="insuranceDoc" accept="image/*,.pdf">
@@ -210,7 +210,7 @@
                             </div>
                         </div>
 
-                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);">
+                        <div class="glass-card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02);" id="unionSection">
                             <h4 style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: var(--primary-light);">Transport Union Compliance</h4>
                             <div class="input-group">
                                 <label for="unionDuesExpiry">Union Dues / Card Validity Expiry</label>
@@ -231,6 +231,7 @@
         const riderId = urlParams.get('id');
         const reference = urlParams.get('ref');
         const vehicleType = urlParams.get('type') || 'motorcycle';
+        const userType = urlParams.get('userType') || 'driver';
 
         if (!riderId) { window.location.href = 'index.html'; }
         
@@ -249,6 +250,21 @@
             document.getElementById('bikeColor').placeholder = 'e.g. Silver, Black';
             document.getElementById('licenseLabel').textContent = 'Driver’s License';
             document.getElementById('regPapersLabel').textContent = 'Car Registration Papers';
+        }
+
+        if (userType === 'non-driver') {
+            document.getElementById('vehicleSection').style.display = 'none';
+            document.getElementById('licenseSection').style.display = 'none';
+            document.getElementById('bikePapersGroup').style.display = 'none';
+            document.getElementById('proofGroup').style.display = 'none';
+            document.getElementById('insuranceSection').style.display = 'none';
+            document.getElementById('unionSection').style.display = 'none';
+            
+            // Remove required attributes from hidden fields
+            document.getElementById('bikeBrand').removeAttribute('required');
+            document.getElementById('bikeModel').removeAttribute('required');
+            document.getElementById('bikeColor').removeAttribute('required');
+            document.getElementById('ownershipType').removeAttribute('required');
         }
 
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {

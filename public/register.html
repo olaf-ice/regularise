@@ -48,6 +48,14 @@
                     </div>
 
                     <div class="input-group">
+                        <label for="userType">User Type</label>
+                        <select id="userType" name="userType" onchange="toggleVehicleFields()" required>
+                            <option value="driver">I have a vehicle (Driver/Rider)</option>
+                            <option value="non-driver">I don't have a vehicle (Personal Only)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
                         <label for="vehicleType">Vehicle Type</label>
                         <select id="vehicleType" name="vehicleType" required>
                             <option value="motorcycle">Motorcycle 🏍️</option>
@@ -129,6 +137,27 @@
 
     <script src="https://js.paystack.co/v1/inline.js"></script>
     <script>
+        function toggleVehicleFields() {
+            const userType = document.getElementById('userType').value;
+            const vehicleTypeGroup = document.getElementById('vehicleType').closest('.input-group');
+            const plateNumberGroup = document.getElementById('plateNumber').closest('.input-group');
+            const unionGroup = document.getElementById('union').closest('.input-group');
+            
+            if (userType === 'non-driver') {
+                vehicleTypeGroup.style.display = 'none';
+                document.getElementById('vehicleType').removeAttribute('required');
+                plateNumberGroup.style.display = 'none';
+                unionGroup.style.display = 'none';
+                document.getElementById('union').removeAttribute('required');
+            } else {
+                vehicleTypeGroup.style.display = 'block';
+                document.getElementById('vehicleType').setAttribute('required', 'true');
+                plateNumberGroup.style.display = 'block';
+                unionGroup.style.display = 'block';
+                document.getElementById('union').setAttribute('required', 'true');
+            }
+        }
+
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -163,7 +192,7 @@
                             ]
                         },
                         callback: function(response) {
-                            window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}&type=${data.vehicleType}`;
+                            window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}&type=${data.vehicleType}&userType=${data.userType}`;
                         },
                         onClose: function() {
                             alert('Transaction cancelled.');

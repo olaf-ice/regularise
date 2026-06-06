@@ -612,6 +612,7 @@
                     const vehicleInfo = rider.vehicle || rider.bike || {};
                     currentPlate = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
                     const isCar = rider.vehicleType === 'car';
+                    const isNonDriver = rider.userType === 'non-driver';
 
                     document.getElementById('profileContent').style.display = 'block';
                     document.getElementById('profileStatusText').textContent = 'Verification Active';
@@ -650,15 +651,24 @@
                     document.getElementById('riderExpiry').textContent = rider.expiryDate ? "VALID UNTIL " + rider.expiryDate : 'EXPIRED / INACTIVE';
 
                     // Terminology Adaptation
-                    document.getElementById('bikeSectionHeader').textContent = isCar ? 'CAR COMPLIANCE DETAILS' : 'BIKE COMPLIANCE DETAILS';
-                    document.getElementById('brandModelLabel').textContent = isCar ? 'Car Brand/Model' : 'Bike Brand/Model';
-                    document.getElementById('bookmarkTipSpan').textContent = isCar ? '💡 Tip for Drivers:' : '💡 Tip for Riders:';
-
-                    if (isCar) {
-                        document.getElementById('stickerDescriptionText').textContent = 'Get print-ready assets to connect your car, windshield, or emergency keychain directly to MyVault.';
+                    if (isNonDriver) {
+                        document.getElementById('riderPlate').style.display = 'none';
+                        document.getElementById('bikeSection').style.display = 'none';
+                        document.getElementById('riderUnion').parentElement.style.display = 'none';
+                        document.getElementById('checkpointSummaryRing').style.display = 'none';
+                        document.getElementById('stickerDescriptionText').textContent = 'Get print-ready assets for your personal emergency ID.';
                         const stickerLabel = document.getElementById('stickerTitleLabel');
-                        if (stickerLabel) stickerLabel.textContent = 'Windshield QR Sticker';
-                        document.getElementById('stickerTitleLabel').textContent = 'Windshield QR Sticker';
+                        if (stickerLabel) stickerLabel.textContent = 'Wallet QR Sticker';
+                    } else {
+                        document.getElementById('bikeSectionHeader').textContent = isCar ? 'CAR COMPLIANCE DETAILS' : 'BIKE COMPLIANCE DETAILS';
+                        document.getElementById('brandModelLabel').textContent = isCar ? 'Car Brand/Model' : 'Bike Brand/Model';
+                        document.getElementById('bookmarkTipSpan').textContent = isCar ? '💡 Tip for Drivers:' : '💡 Tip for Riders:';
+
+                        if (isCar) {
+                            document.getElementById('stickerDescriptionText').textContent = 'Get print-ready assets to connect your car, windshield, or emergency keychain directly to MyVault.';
+                            const stickerLabel = document.getElementById('stickerTitleLabel');
+                            if (stickerLabel) stickerLabel.textContent = 'Windshield QR Sticker';
+                        }
                     }
 
                     // Show bookmark tip with direct profile link
