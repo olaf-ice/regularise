@@ -588,6 +588,75 @@ app.post('/api/verify/:query/unlock', apiLimiter, (req, res) => {
     }
 });
 
+// --- OTP Cache for PIN Reset ---
+const otpStore = new Map(); // phone -> { otp, expiresAt }
+
+app.post('/api/rider/forgot-pin', authLimiter, async (req, res) => {
+    const { phone } = req.body;
+    const rider = dbHelpers.getRiderByPhone(phone);
+    
+    if (!rider) {
+        // We return success anyway to prevent number enumeration
+        return res.json({ success: true, message: 'If the number is registered, an OTP will be sent.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    otpStore.set(phone, { otp, expiresAt });
+
+    // Send SMS
+    const msg = `Your Regularise PIN reset OTP is ${otp}. It expires in 10 minutes.`;
+    await sendSMS(phone, msg);
+
+    res.json({ success: true, message: 'If the number is registered, an OTP will be sent.' });
+});
+
+app.post('/api/rider/verify-otp', authLimiter, (req, res) => {
+    const { phone, otp } = req.body;
+    const stored = otpStore.get(phone);
+
+    if (!stored || stored.otp !== otp || stored.expiresAt < Date.now()) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+
+    res.json({ success: true, message: 'OTP verified' });
+});
+
+app.post('/api/rider/reset-pin', authLimiter, async (req, res) => {
+    const { phone, otp, newPin } = req.body;
+    const stored = otpStore.get(phone);
+
+    if (!stored || stored.otp !== otp || stored.expiresAt < Date.now()) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+
+    if (!newPin || newPin.length !== 4) {
+        return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits' });
+    }
+
+    const rider = dbHelpers.getRiderByPhone(phone);
+    if (!rider) {
+        return res.status(404).json({ success: false, message: 'Rider not found' });
+    }
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPin = await bcrypt.hash(newPin, salt);
+
+        rider.pin = hashedPin;
+        dbHelpers.updateRider(rider.riderId, rider);
+        
+        // Clear OTP
+        otpStore.delete(phone);
+
+        res.json({ success: true, message: 'PIN updated successfully' });
+    } catch (err) {
+        console.error("PIN reset error:", err);
+        res.status(500).json({ success: false, message: 'Failed to reset PIN' });
+    }
+});
+
 // Rider Login Endpoint
 app.post('/api/rider/login', authLimiter, async (req, res) => {
     const { phone, pin } = req.body;
