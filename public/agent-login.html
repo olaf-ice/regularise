@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Login - MyVault</title>
+    <!-- Use similar aesthetics as main site, but distinct header -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen font-sans">
+
+    <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-600">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">MyVault</h1>
+            <p class="text-blue-600 font-semibold mt-1 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                Verified Agent Portal
+            </p>
+        </div>
+
+        <div id="errorBox" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded" role="alert">
+            <p id="errorMessage"></p>
+        </div>
+
+        <form id="agentLoginForm" class="space-y-6">
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. 08012345678">
+            </div>
+
+            <div>
+                <label for="pin" class="block text-sm font-medium text-gray-700">Agent PIN</label>
+                <input type="password" id="pin" name="pin" required maxlength="4" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-center tracking-widest focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="••••">
+            </div>
+
+            <button type="submit" id="loginBtn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-semibold transition-colors">
+                Login to Portal
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('agentLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errorBox = document.getElementById('errorBox');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Authenticating...';
+            errorBox.classList.add('hidden');
+
+            const phone = document.getElementById('phone').value.trim();
+            const pin = document.getElementById('pin').value.trim();
+
+            try {
+                const res = await fetch('/api/agent/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, pin })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('agentToken', data.token);
+                    localStorage.setItem('agentName', data.agent.name);
+                    window.location.href = '/agent-dashboard.html';
+                } else {
+                    errorMsg.textContent = data.message || 'Login failed';
+                    errorBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.textContent = 'Network error. Please try again.';
+                errorBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Login to Portal';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard - MyVault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal { display: none; }
+        .modal.active { display: flex; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    <span class="font-bold text-xl">MyVault Agent</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="agentNameDisplay" class="font-medium hidden sm:block">Welcome, Agent</span>
+                    <button onclick="logout()" class="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded transition-colors text-sm font-semibold">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Stats Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                <h3 class="text-gray-500 text-sm font-medium">Total Users Onboarded</h3>
+                <p id="totalUsers" class="text-3xl font-bold text-gray-900 mt-2">-</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <h3 class="text-gray-500 text-sm font-medium">Estimated Commission</h3>
+                <p id="totalCommission" class="text-3xl font-bold text-blue-600 mt-2">₦0</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Registration Form -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm">
+                <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Register New User</h2>
+                <form id="registerForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="regName" required class="mt-1 block w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <input type="tel" id="regPhone" required class="mt-1 block w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">4-Digit PIN (Optional)</label>
+                        <input type="password" id="regPin" maxlength="4" placeholder="Auto-generated if empty" class="mt-1 block w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">User Type</label>
+                        <select id="regType" class="mt-1 block w-full border border-gray-300 rounded p-2">
+                            <option value="non-driver">General User (No Vehicle)</option>
+                            <option value="driver">Driver/Rider (Has Vehicle)</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="regBtn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition">Register User</button>
+                </form>
+            </div>
+
+            <!-- Recent Users & Document Uploads -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
+                <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Your Onboarded Users</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Phone</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Documents Modal -->
+    <div id="uploadModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-75 items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-lg font-bold text-gray-900">Upload Documents</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <p id="uploadRiderName" class="text-sm text-gray-600 mb-4"></p>
+            
+            <form id="uploadForm" class="space-y-4">
+                <input type="hidden" id="uploadRiderId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Passport Photo</label>
+                    <input type="file" id="passportPhoto" accept="image/*" class="mt-1 block w-full text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Valid ID (NIN/Voter's Card)</label>
+                    <input type="file" id="ninDoc" accept="image/*,.pdf" class="mt-1 block w-full text-sm">
+                </div>
+                <hr>
+                <div class="bg-blue-50 p-3 rounded">
+                    <p class="text-xs text-blue-800 font-semibold mb-2">For Drivers Only</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Driver's License</label>
+                            <input type="file" id="licenseDoc" accept="image/*,.pdf" class="mt-1 block w-full text-sm">
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" id="uploadBtn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded hover:bg-green-700 transition mt-4">Save Documents</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/agent';
+        let token = localStorage.getItem('agentToken');
+
+        if (!token) {
+            window.location.href = '/agent-login.html';
+        }
+
+        const agentName = localStorage.getItem('agentName');
+        if (agentName) {
+            document.getElementById('agentNameDisplay').textContent = `Welcome, ${agentName}`;
+        }
+
+        function logout() {
+            localStorage.removeItem('agentToken');
+            localStorage.removeItem('agentName');
+            window.location.href = '/agent-login.html';
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(`${API_URL}/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (res.status === 401 || res.status === 403) return logout();
+
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('totalUsers').textContent = data.stats.totalOnboarded;
+                    document.getElementById('totalCommission').textContent = `₦${data.stats.estimatedCommission.toLocaleString()}`;
+                    
+                    const tbody = document.getElementById('usersTableBody');
+                    tbody.innerHTML = '';
+                    
+                    if (data.recentUsers.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">No users onboarded yet.</td></tr>`;
+                        return;
+                    }
+
+                    data.recentUsers.forEach(user => {
+                        const isPending = user.status === 'Pending';
+                        const statusColor = isPending ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
+                        
+                        const actionBtn = isPending 
+                            ? `<button onclick="openModal('${user.riderId}', '${user.name.replace(/'/g, "\\'")}')" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">Upload Docs</button>`
+                            : `<span class="text-xs text-gray-400">Completed</span>`;
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                                    <div class="text-xs text-gray-500">${user.phone}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">${user.status}</span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    ${actionBtn}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            btn.disabled = true;
+            btn.textContent = 'Registering...';
+
+            const payload = {
+                name: document.getElementById('regName').value,
+                phone: document.getElementById('regPhone').value,
+                pin: document.getElementById('regPin').value,
+                userType: document.getElementById('regType').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/register-rider`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    alert('User registered successfully!');
+                    document.getElementById('registerForm').reset();
+                    loadDashboard();
+                    openModal(data.riderId, payload.name); // Prompt to upload docs immediately
+                } else {
+                    alert(data.message || 'Registration failed');
+                }
+            } catch (err) {
+                alert('Network error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Register User';
+            }
+        });
+
+        // Modal Logic
+        function openModal(riderId, name) {
+            document.getElementById('uploadRiderId').value = riderId;
+            document.getElementById('uploadRiderName').textContent = `Uploading for: ${name}`;
+            document.getElementById('uploadForm').reset();
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const riderId = document.getElementById('uploadRiderId').value;
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            
+            const pPhoto = document.getElementById('passportPhoto').files[0];
+            const ninDoc = document.getElementById('ninDoc').files[0];
+            const licDoc = document.getElementById('licenseDoc').files[0];
+
+            if(pPhoto) formData.append('passportPhoto', pPhoto);
+            if(ninDoc) formData.append('ninDoc', ninDoc);
+            if(licDoc) formData.append('licenseDoc', licDoc);
+
+            try {
+                const res = await fetch(`${API_URL}/upload-docs/${riderId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    alert('Documents uploaded successfully! The user must complete their payment to become Active.');
+                    closeModal();
+                    loadDashboard();
+                } else {
+                    alert(data.message || 'Upload failed');
+                }
+            } catch (err) {
+                alert('Network error during upload');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Documents';
+            }
+        });
+
+        // Init
+        loadDashboard();
+    </script>
+</body>
+</html>

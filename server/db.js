@@ -21,7 +21,13 @@ db.exec(`
     phone TEXT UNIQUE NOT NULL,
     pin TEXT NOT NULL,
     data JSON NOT NULL
-  )
+  );
+  CREATE TABLE IF NOT EXISTS agents (
+    agentId TEXT PRIMARY KEY,
+    phone TEXT UNIQUE NOT NULL,
+    pin TEXT NOT NULL,
+    data JSON NOT NULL
+  );
 `);
 
 // Migration script
@@ -110,6 +116,33 @@ const dbHelpers = {
             return data;
         }
         return null;
+    },
+    // Agent helper functions
+    insertAgent: (agent) => {
+        const stmt = db.prepare('INSERT INTO agents (agentId, phone, pin, data) VALUES (?, ?, ?, ?)');
+        stmt.run(agent.agentId, agent.phone, agent.pin, JSON.stringify(agent));
+    },
+    updateAgent: (agentId, agentData) => {
+        const stmt = db.prepare('UPDATE agents SET data = ?, pin = ? WHERE agentId = ?');
+        stmt.run(JSON.stringify(agentData), agentData.pin, agentId);
+    },
+    getAgentById: (agentId) => {
+        const stmt = db.prepare('SELECT * FROM agents WHERE agentId = ?');
+        const row = stmt.get(agentId);
+        return row ? JSON.parse(row.data) : null;
+    },
+    getAgentByPhone: (phone) => {
+        const stmt = db.prepare('SELECT * FROM agents WHERE phone = ?');
+        const row = stmt.get(phone);
+        return row ? JSON.parse(row.data) : null;
+    },
+    getAllAgents: () => {
+        const stmt = db.prepare('SELECT data FROM agents');
+        const agents = [];
+        for (const row of stmt.iterate()) {
+            agents.push(JSON.parse(row.data));
+        }
+        return agents;
     }
 };
 

@@ -98,6 +98,18 @@ function authenticateAdminToken(req, res, next) {
     });
 }
 
+function authenticateAgentToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, message: 'Agent access denied. No token provided.' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err || user.role !== 'agent') return res.status(403).json({ success: false, message: 'Invalid or expired agent token.' });
+        req.user = user;
+        next();
+    });
+}
+
 // Paystack Verification Helper
 async function verifyPaystackPayment(reference) {
     try {
@@ -280,6 +292,50 @@ app.get('/api/admin/riders', authenticateAdminToken, (req, res) => {
     }
 });
 
+// Add Agent (Admin)
+app.post('/api/admin/add-agent', authenticateAdminToken, async (req, res) => {
+    const { name, phone, pin } = req.body;
+    if (!name || !phone || !pin) return res.status(400).json({ success: false, message: 'Name, phone, and PIN required' });
+    if (dbHelpers.getAgentByPhone(phone)) return res.status(400).json({ success: false, message: 'Phone already registered to an agent' });
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPin = await bcrypt.hash(pin, salt);
+        const agentId = `AGT-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const newAgent = {
+            agentId,
+            name,
+            phone,
+            pin: hashedPin,
+            createdAt: new Date().toISOString()
+        };
+
+        dbHelpers.insertAgent(newAgent);
+        res.json({ success: true, message: `Agent ${name} added successfully`, agentId });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to add agent' });
+    }
+});
+
+// Get All Agents (Admin)
+app.get('/api/admin/agents', authenticateAdminToken, (req, res) => {
+    try {
+        const agents = dbHelpers.getAllAgents();
+        const safeAgents = agents.map(({ pin, ...safeData }) => safeData);
+        
+        // Count onboarded users for each agent
+        const riders = dbHelpers.getAllRiders();
+        safeAgents.forEach(agent => {
+            agent.onboardedCount = riders.filter(r => r.onboardedBy === agent.agentId).length;
+        });
+
+        res.json({ success: true, agents: safeAgents });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch agents' });
+    }
+});
+
 // Update Rider Status (Admin)
 app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
     const { riderId, status } = req.body;
@@ -296,6 +352,150 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ success: false, message: 'Failed to update status' });
+    }
+});
+
+// ---------------------------------------------------------
+// AGENT ROUTES
+// ---------------------------------------------------------
+
+app.post('/api/agent/login', authLimiter, async (req, res) => {
+    const { phone, pin } = req.body;
+    const agent = dbHelpers.getAgentByPhone(phone);
+    if (!agent) return res.json({ success: false, message: 'Invalid phone number or PIN' });
+
+    try {
+        const isMatch = await bcrypt.compare(pin, agent.pin);
+        if (isMatch) {
+            const token = jwt.sign({ agentId: agent.agentId, role: 'agent' }, JWT_SECRET, { expiresIn: '12h' });
+            res.json({ success: true, token, agent: { name: agent.name, agentId: agent.agentId } });
+        } else {
+            res.json({ success: false, message: 'Invalid phone number or PIN' });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Login error' });
+    }
+});
+
+app.get('/api/agent/dashboard', authenticateAgentToken, (req, res) => {
+    try {
+        const agentId = req.user.agentId;
+        const allRiders = dbHelpers.getAllRiders();
+        
+        // Find users onboarded by this agent
+        const onboardedUsers = allRiders.filter(r => r.onboardedBy === agentId);
+        
+        // Calculate commission (e.g. 500 per user)
+        const commissionPerUser = 500;
+        const totalCommission = onboardedUsers.length * commissionPerUser;
+
+        // Strip sensitive info from the list sent to agent (only names, status, reference)
+        const recentUsers = onboardedUsers.map(u => ({
+            riderId: u.riderId,
+            name: u.name,
+            phone: u.phone,
+            status: u.status,
+            reference: u.reference,
+            date: u.registrationDate
+        })).reverse();
+
+        res.json({ 
+            success: true, 
+            stats: { 
+                totalOnboarded: onboardedUsers.length,
+                estimatedCommission: totalCommission
+            },
+            recentUsers
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to load dashboard data' });
+    }
+});
+
+app.post('/api/agent/register-rider', authenticateAgentToken, [
+    body('name').trim().notEmpty().withMessage('Name is required').escape(),
+    body('phone').trim().isNumeric().withMessage('Phone must be numeric').isLength({ min: 10, max: 15 }).withMessage('Invalid phone length'),
+    body('pin').optional().isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be exactly 4 digits'),
+    body('plateNumber').optional({ checkFalsy: true }).trim().escape()
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: errors.array()[0].msg });
+
+    try {
+        const { name, phone, altPhone, address, dob, plateNumber, union, userType, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
+        if (dbHelpers.getRiderByPhone(phone)) return res.status(400).json({ success: false, message: 'Phone number already registered' });
+
+        // Generate random PIN if agent didn't provide one
+        const plainPin = req.body.pin || Math.floor(1000 + Math.random() * 9000).toString();
+        const salt = await bcrypt.genSalt(10);
+        const hashedPin = await bcrypt.hash(plainPin, salt);
+
+        const riderId = `RID-${Math.floor(10000 + Math.random() * 90000)}`;
+        const reference = `PAY-${Date.now()}`;
+        
+        const newRider = {
+            riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '', union: union || '',
+            pin: hashedPin,
+            userType: userType || 'driver',
+            registrationDate: new Date().toISOString().split('T')[0],
+            vehicleType: vehicleType || (userType === 'non-driver' ? null : 'motorcycle'),
+            bike: { plateNumber: plateNumber || '' },
+            vehicle: { type: vehicleType || (userType === 'non-driver' ? null : 'motorcycle'), plateNumber: plateNumber || '' },
+            documents: {}, 
+            medical: { bloodGroup: bloodType || '', allergies: allergies || 'None' },
+            emergencyContact: { name: emergencyContactName || '', phone: emergencyContactPhone || '' },
+            safety: { sosEnabled: false, theftStatus: 'Safe' },
+            status: 'Pending', 
+            reference,
+            onboardedBy: req.user.agentId // Link to Agent
+        };
+        
+        dbHelpers.insertRider(newRider);
+
+        // Notify user of their account and PIN if it was auto-generated
+        if (!req.body.pin) {
+            sendSMS(phone, `Welcome ${name}! Your MyVault profile was created by an agent. Your default PIN is ${plainPin}. Please login to change it.`);
+        }
+
+        res.json({ success: true, riderId, reference, message: 'User registered successfully!' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Registration failed' });
+    }
+});
+
+app.post('/api/agent/upload-docs/:riderId', authenticateAgentToken, upload.fields([
+    { name: 'passportPhoto', maxCount: 1 },
+    { name: 'licenseDoc', maxCount: 1 },
+    { name: 'bikePapers', maxCount: 1 },
+    { name: 'insuranceDoc', maxCount: 1 },
+    { name: 'ninDoc', maxCount: 1 }
+]), (req, res) => {
+    try {
+        const riderId = req.params.riderId;
+        const rider = dbHelpers.getRiderById(riderId);
+        
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+        if (rider.onboardedBy !== req.user.agentId) return res.status(403).json({ success: false, message: 'Unauthorized. You did not onboard this user.' });
+        if (rider.status === 'Active') return res.status(400).json({ success: false, message: 'User is already active. Cannot modify documents anymore.' });
+
+        rider.documents = rider.documents || {};
+        
+        if (req.files && req.files.passportPhoto) rider.documents.passportPhoto = { url: `/uploads/${req.files.passportPhoto[0].filename}` };
+        
+        const docFields = ['licenseDoc', 'insuranceDoc', 'bikePapers', 'ninDoc'];
+        docFields.forEach(field => {
+            if (req.files && req.files[field]) {
+                rider.documents[field] = {
+                    url: `/uploads/${req.files[field][0].filename}`,
+                    uploadDate: new Date().toISOString().split('T')[0]
+                };
+            }
+        });
+        
+        dbHelpers.updateRider(riderId, rider);
+        res.json({ success: true, message: 'Documents uploaded successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Document upload failed' });
     }
 });
 

@@ -201,6 +201,52 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Agent Management Section -->
+            <div style="margin-top: 4rem;">
+                <h1 style="margin-bottom: 0.5rem;">Agent Management</h1>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage cyber café operators and local agents who onboard users.</p>
+                
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <!-- Add Agent Form -->
+                    <div style="flex: 1; min-width: 300px; background: var(--glass-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary-light);">Add New Agent</h3>
+                        <form id="addAgentForm" onsubmit="addAgent(event)">
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Full Name</label>
+                                <input type="text" id="agentName" required style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white;">
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Phone Number</label>
+                                <input type="tel" id="agentPhone" required style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white;">
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">4-Digit PIN</label>
+                                <input type="password" id="agentPin" required maxlength="4" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white;">
+                            </div>
+                            <button type="submit" id="addAgentBtn" class="btn btn-primary" style="width: 100%;">Create Agent</button>
+                        </form>
+                    </div>
+
+                    <!-- Agents Table -->
+                    <div style="flex: 2; min-width: 400px;" class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Agent ID</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Users Onboarded</th>
+                                    <th>Date Added</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agentsTableBody">
+                                <tr><td colspan="5" style="text-align: center;">Loading agents...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -256,6 +302,7 @@
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
             fetchRiders();
+            fetchAgents();
         }
 
         async function fetchRiders() {
@@ -352,6 +399,86 @@
                 }
             } catch (err) {
                 alert('Connection error');
+            }
+        }
+
+        async function fetchAgents() {
+            try {
+                const res = await fetch('/api/admin/agents', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    renderAgentsTable(data.agents);
+                }
+            } catch (err) {
+                console.error('Error fetching agents:', err);
+                document.getElementById('agentsTableBody').innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">Failed to load agents</td></tr>`;
+            }
+        }
+
+        function renderAgentsTable(agents) {
+            const tbody = document.getElementById('agentsTableBody');
+            tbody.innerHTML = '';
+
+            if (agents.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No agents found.</td></tr>`;
+                return;
+            }
+
+            // Sort by creation date descending
+            agents.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            agents.forEach(a => {
+                const tr = document.createElement('tr');
+                const dateAdded = a.createdAt ? a.createdAt.split('T')[0] : 'N/A';
+                tr.innerHTML = `
+                    <td><strong>${a.agentId}</strong></td>
+                    <td>${a.name}</td>
+                    <td>${a.phone}</td>
+                    <td><span style="background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 0.2rem 0.6rem; border-radius: 50px; font-weight: bold;">${a.onboardedCount || 0}</span></td>
+                    <td>${dateAdded}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function addAgent(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addAgentBtn');
+            const name = document.getElementById('agentName').value.trim();
+            const phone = document.getElementById('agentPhone').value.trim();
+            const pin = document.getElementById('agentPin').value.trim();
+
+            if (pin.length !== 4) return alert('PIN must be exactly 4 digits');
+
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+
+            try {
+                const res = await fetch('/api/admin/add-agent', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ name, phone, pin })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(`Agent ${name} added successfully!`);
+                    document.getElementById('addAgentForm').reset();
+                    fetchAgents(); // Refresh table
+                } else {
+                    alert(data.message || 'Failed to add agent');
+                }
+            } catch (err) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Agent';
             }
         }
 
