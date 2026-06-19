@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>MyVault | Emergency-First Digital Safety System</title>
+    <meta name="title" content="MyVault | Emergency-First Digital Safety System">
+    <meta name="description" content="The essential safety ID for Nigerians. Instantly share vital medical info, notify emergency contacts, and prove your identity with one simple scan.">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://myvault.com.ng/">
+    <meta property="og:title" content="MyVault | Emergency-First Digital Safety System">
+    <meta property="og:description" content="The essential safety ID for Nigerians. Instantly share vital medical info, notify emergency contacts, and prove your identity with one simple scan.">
+    <meta property="og:image" content="https://myvault.com.ng/assets/social-banner.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://myvault.com.ng/">
+    <meta property="twitter:title" content="MyVault | Emergency-First Digital Safety System">
+    <meta property="twitter:description" content="The essential safety ID for Nigerians. Instantly share vital medical info, notify emergency contacts, and prove your identity with one simple scan.">
+    <meta property="twitter:image" content="https://myvault.com.ng/assets/social-banner.png">
+
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="glow-bg">
+    <!-- Glowing background elements -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+
+    <div class="landing-container animate-fade-in">
+        <!-- Modern Premium Navigation -->
+        <header class="nav-bar">
+            <div class="nav-logo">
+                <img src="assets/logo.png" alt="MyVault Logo" style="height: 2rem; width: auto; object-fit: contain;">
+                <span>MYVAULT</span>
+            </div>
+            <div class="badge-secure">
+                <span class="dot"></span>
+                <span>Secure Live Connection</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Hero Grid: 2-Column Split Layout -->
+            <div class="hero-grid">
+                
+                <!-- Left Column: Hero Text & Officer Search -->
+                <div class="hero-text">
+                    <h1>Speak for yourself when <span>you can't</span></h1>
+                    <p class="subtitle">The essential safety ID for Nigerians. Instantly share vital medical info, notify emergency contacts, and prove your identity with one simple scan.</p>
+                    
+                    <!-- Emergency Responder Portal -->
+                    <div style="margin-top: 2rem;">
+                        <h2 style="font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary-light); margin-bottom: 0.75rem;">🚑 Emergency Responder Portal</h2>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Enter Safety ID, Phone No, or Plate Number to access vital medical data.</p>
+                        <div class="search-wrapper">
+                            <input type="text" id="officerSearch" placeholder="Enter Safety ID or Plate No.">
+                            <button class="search-icon-btn" id="officerSearchBtn" onclick="verifyRider()" aria-label="Search Profile">🔍</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Rider Profile Access Card -->
+                <div class="glass-card login-card">
+                    <div style="margin-bottom: 1rem; text-align: center;"><img src="assets/logo.png" alt="MyVault Logo" style="height: 4rem; width: auto; object-fit: contain;"></div>
+                    <h2>Safety Dashboard</h2>
+                    <p style="color: var(--text-muted);">Manage your emergency profile, medical passport, and trusted contacts.</p>
+                    
+                    <div class="form-input-container">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <input type="tel" id="riderPhone" placeholder="Registered Phone Number (e.g. 080...)">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <input type="password" id="riderPin" placeholder="Enter 4-Digit Security PIN" pattern="\d{4}">
+                        </div>
+                        <div style="text-align: right;">
+                            <a href="#" onclick="openForgotPinModal(); return false;" style="font-size: 0.8rem; color: var(--primary-light); text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Forgot PIN?</a>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="riderLoginBtn" onclick="riderLogin()" style="margin-bottom: 1.25rem;">Access My Profile</button>
+                    
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Don't have a profile? </span>
+                        <a href="register.html" style="font-size: 0.85rem; color: var(--primary-light); text-decoration: none; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Register Here &rarr;</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Features Grid Section -->
+            <div style="margin-bottom: 6rem; position: relative; z-index: 2;">
+                <h2 style="text-align: center; margin-bottom: 0.75rem; font-size: 2rem; font-weight: 800;">Our Core Services</h2>
+                <p style="text-align: center; color: var(--text-muted); max-width: 600px; margin: 0 auto 3rem auto; font-size: 0.95rem;">Delivering excellence in water purification, general merchandise, and contracted digital verification services.</p>
+                
+                <div class="premium-feature-grid">
+                    
+                    <div class="premium-feature-card">
+                        <div class="icon-box">🛡️</div>
+                        <h3>Emergency Response QR</h3>
+                        <p>Your vital information, instantly accessible via a secure, scannable QR code. First responders get exactly what they need.</p>
+                    </div>
+
+                    <div class="premium-feature-card">
+                        <div class="icon-box">🚨</div>
+                        <h3>Instant SOS Alerts</h3>
+                        <p>If your emergency profile is accessed, your designated contacts instantly receive an SMS with your location and status.</p>
+                    </div>
+
+                    <div class="premium-feature-card">
+                        <div class="icon-box">🏥</div>
+                        <h3>Critical Medical Passport</h3>
+                        <p>Immediate visibility of blood type, severe allergies, and chronic conditions to prevent fatal medical errors.</p>
+                    </div>
+
+                    <div class="premium-feature-card">
+                        <div class="icon-box">✅</div>
+                        <h3>Verified Digital Identity</h3>
+                        <p>A trust-badge system that proves you are who you say you are to authorities, backed by your securely vaulted documents.</p>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+        <!-- Compliance: About Our Business Section -->
+        <section style="padding: 4rem 2rem; text-align: center; background: rgba(0,0,0,0.4); border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); position: relative; z-index: 2;">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <h2 style="margin-bottom: 1rem; font-size: 1.75rem; font-weight: 700;">About Our Business</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                    We are a legally registered Nigerian enterprise committed to delivering exceptional value across diverse sectors. Our core business operations span <strong>Water Treatment & Purification</strong>, where we ensure access to clean and safe water solutions, and <strong>General Merchandise</strong>, supplying high-quality goods across the nation. Additionally, through our <strong>General Contracts</strong> division, we execute specialized projects and digital solutions like MyVault—a modern verification ecosystem designed to secure digital credentials and ensure compliance for logistics operators.
+                </p>
+            </div>
+        </section>
+
+        <footer style="text-align: center; padding: 2.5rem 0; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--glass-border); position: relative; z-index: 2;">
+            &copy; 2026 MyVault Verification Ecosystem. All rights reserved.
+        </footer>
+    </div>
+
+    <!-- Forgot PIN Modal -->
+    <div id="forgotPinModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="glass-card" style="width: 90%; max-width: 400px; padding: 2rem; position: relative;">
+            <button onclick="closeForgotPinModal()" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <h2 style="margin-bottom: 1rem;">Reset PIN</h2>
+            
+            <!-- Step 1: Request OTP -->
+            <div id="fpStep1">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Enter your registered phone number to receive a 6-digit OTP via SMS.</p>
+                <input type="tel" id="fpPhone" placeholder="Registered Phone No." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; margin-bottom: 1rem;">
+                <button class="btn btn-primary" id="fpBtn1" onclick="requestOTP()" style="width: 100%;">Send OTP</button>
+            </div>
+
+            <!-- Step 2: Verify OTP -->
+            <div id="fpStep2" style="display: none;">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Enter the 6-digit OTP sent to your phone.</p>
+                <input type="text" id="fpOtp" placeholder="6-Digit OTP" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; margin-bottom: 1rem;">
+                <button class="btn btn-primary" id="fpBtn2" onclick="verifyOTP()" style="width: 100%;">Verify OTP</button>
+            </div>
+
+            <!-- Step 3: New PIN -->
+            <div id="fpStep3" style="display: none;">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Enter your new 4-digit PIN.</p>
+                <input type="password" id="fpNewPin" placeholder="New 4-Digit PIN" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; margin-bottom: 1rem;" pattern="\d{4}">
+                <button class="btn btn-primary" id="fpBtn3" onclick="resetPin()" style="width: 100%;">Reset PIN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function verifyRider() {
+            const query = document.getElementById('officerSearch').value.trim();
+            if (query) {
+                window.location.href = `profile.html?q=${encodeURIComponent(query)}`;
+            } else {
+                alert('Please enter a plate number, phone, or Rider ID.');
+            }
+        }
+
+        async function riderLogin() {
+            const phone = document.getElementById('riderPhone').value.trim();
+            const pin = document.getElementById('riderPin').value.trim();
+            const btn = document.getElementById('riderLoginBtn');
+            
+            if (phone && pin) {
+                btn.disabled = true;
+                btn.textContent = 'Opening Vault...';
+                try {
+                    const res = await fetch('/api/rider/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, pin })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        localStorage.setItem('riderToken', data.token);
+                        window.location.href = `profile.html?id=${encodeURIComponent(data.riderId)}`;
+                    } else {
+                        alert('Error: ' + data.message);
+                        btn.disabled = false;
+                        btn.textContent = 'Access My Profile';
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Connection error. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'Access My Profile';
+                }
+            } else {
+                alert('Please enter your registered phone number and PIN.');
+            }
+        }
+
+        // Allow Enter key on both inputs
+        document.getElementById('officerSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyRider();
+        });
+        document.getElementById('riderPhone').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') riderLogin();
+        });
+        document.getElementById('riderPin').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') riderLogin();
+        });
+
+        // Forgot PIN Logic
+        function openForgotPinModal() {
+            document.getElementById('forgotPinModal').style.display = 'flex';
+            document.getElementById('fpStep1').style.display = 'block';
+            document.getElementById('fpStep2').style.display = 'none';
+            document.getElementById('fpStep3').style.display = 'none';
+            document.getElementById('fpPhone').value = document.getElementById('riderPhone').value;
+        }
+
+        function closeForgotPinModal() {
+            document.getElementById('forgotPinModal').style.display = 'none';
+        }
+
+        async function requestOTP() {
+            const phone = document.getElementById('fpPhone').value.trim();
+            if(!phone) return alert('Enter phone number');
+            const btn = document.getElementById('fpBtn1');
+            btn.disabled = true; btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch('/api/rider/forgot-pin', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    document.getElementById('fpStep1').style.display = 'none';
+                    document.getElementById('fpStep2').style.display = 'block';
+                } else {
+                    alert(data.message);
+                }
+            } catch(e) {
+                alert('Network error');
+            }
+            btn.disabled = false; btn.textContent = 'Send OTP';
+        }
+
+        async function verifyOTP() {
+            const phone = document.getElementById('fpPhone').value.trim();
+            const otp = document.getElementById('fpOtp').value.trim();
+            if(!otp) return alert('Enter OTP');
+            const btn = document.getElementById('fpBtn2');
+            btn.disabled = true; btn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch('/api/rider/verify-otp', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, otp })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    document.getElementById('fpStep2').style.display = 'none';
+                    document.getElementById('fpStep3').style.display = 'block';
+                } else {
+                    alert(data.message);
+                }
+            } catch(e) {
+                alert('Network error');
+            }
+            btn.disabled = false; btn.textContent = 'Verify OTP';
+        }
+
+        async function resetPin() {
+            const phone = document.getElementById('fpPhone').value.trim();
+            const otp = document.getElementById('fpOtp').value.trim();
+            const newPin = document.getElementById('fpNewPin').value.trim();
+            if(newPin.length !== 4) return alert('PIN must be 4 digits');
+            
+            const btn = document.getElementById('fpBtn3');
+            btn.disabled = true; btn.textContent = 'Resetting...';
+
+            try {
+                const res = await fetch('/api/rider/reset-pin', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, otp, newPin })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert('PIN reset successful! You can now login.');
+                    closeForgotPinModal();
+                    document.getElementById('riderPin').value = '';
+                } else {
+                    alert(data.message);
+                }
+            } catch(e) {
+                alert('Network error');
+            }
+            btn.disabled = false; btn.textContent = 'Reset PIN';
+        }
+    </script>
+
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6a1da712f961bc1c2ff57452/1jq1t989h';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
+</body>
+</html>
