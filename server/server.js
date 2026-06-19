@@ -422,6 +422,12 @@ app.post('/api/agent/register-rider', authenticateAgentToken, [
     if (!errors.isEmpty()) return res.status(400).json({ success: false, message: errors.array()[0].msg });
 
     try {
+        // Pre-launch check
+        const LAUNCH_DATE = new Date("2026-07-01T00:00:00Z").getTime();
+        if (Date.now() < LAUNCH_DATE) {
+            return res.status(403).json({ success: false, message: 'Registration is currently closed until July 1st. Join our early access waitlist!' });
+        }
+
         const { name, phone, altPhone, address, dob, plateNumber, union, userType, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
         if (dbHelpers.getRiderByPhone(phone)) return res.status(400).json({ success: false, message: 'Phone number already registered' });
 
@@ -898,6 +904,12 @@ app.post('/api/register', authLimiter, [
     }
 
     try {
+        // Pre-launch check
+        const LAUNCH_DATE = new Date("2026-07-01T00:00:00Z").getTime();
+        if (Date.now() < LAUNCH_DATE) {
+            return res.status(403).json({ success: false, message: 'Registration is currently closed until July 1st. Join our early access waitlist!' });
+        }
+
         const { name, phone, altPhone, address, dob, plateNumber, union, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, userType } = req.body;
         
         if (dbHelpers.getRiderByPhone(phone)) {
