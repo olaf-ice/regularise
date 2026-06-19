@@ -175,10 +175,77 @@
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
         }
+
+        /* Dynamic Background Watermark */
+        .secure-watermark-bg {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.04;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            justify-content: flex-start;
+            overflow: hidden;
+            transform: rotate(-15deg);
+            animation: watermark-pan 60s linear infinite;
+        }
+        .secure-watermark-bg span {
+            font-size: 1.5rem;
+            font-weight: 900;
+            white-space: nowrap;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 1rem 2rem;
+            user-select: none;
+            text-transform: uppercase;
+        }
+        @keyframes watermark-pan {
+            0% { transform: rotate(-15deg) translate(0, 0); }
+            100% { transform: rotate(-15deg) translate(-10%, -10%); }
+        }
+        
+        /* Live Status Bar */
+        .live-status-bar {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+        .live-status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse-green 1.5s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
 </style>
 </head>
 <body>
-    <div class="container animate-fade-in" style="max-width: 500px;">
+    <!-- Dynamic Security Watermark -->
+    <div class="secure-watermark-bg" id="secureWatermark"></div>
+
+    <div class="container animate-fade-in" style="max-width: 500px; position: relative; z-index: 1;">
         <header class="no-print">
             <a href="index.html" style="text-decoration: none; color: var(--primary-light); font-weight: 800; font-size: 0.85rem; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 0.25rem;">← BACK TO SEARCH</a>
             <div style="text-align: center; margin-top: 1.5rem;">
@@ -186,6 +253,11 @@
             </div>
             <div class="logo" style="margin-top: 0.5rem; font-size: 1.5rem; letter-spacing: 1.5px; color: white;">MYVAULT VERIFICATION</div>
             <p id="profileStatusText" style="color: var(--primary-light); font-weight: 700;">Validating Identity...</p>
+            
+            <div id="liveStatusBar" class="live-status-bar" style="display: none;">
+                <div class="live-status-indicator"></div>
+                <span id="liveStatusText">STATUS: ACTIVE • VERIFIED • TIMESTAMP: ---</span>
+            </div>
         </header>
 
         <main id="profileContent" style="display: none;">
@@ -268,6 +340,15 @@
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">MyVault Validity</span>
                         <span id="riderExpiry" style="font-weight: 700; color: var(--primary-light);">---</span>
+                    </div>
+                </div>
+
+                <!-- Short Lived Session Token -->
+                <div id="sessionTokenBlock" style="text-align: center; background: rgba(16, 185, 129, 0.05); padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1.25rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem; font-weight: 700; letter-spacing: 1px;">Secure Session Token</div>
+                    <div id="sessionTokenHash" style="font-family: monospace; font-size: 1.1rem; font-weight: 800; color: var(--success); letter-spacing: 2px;">---</div>
+                    <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 0.4rem; display: flex; justify-content: center; align-items: center; gap: 0.25rem;">
+                        <span id="sessionTokenTimer">Refreshes in 5:00</span>
                     </div>
                 </div>
 
@@ -584,6 +665,60 @@
     </div>
 
     <script>
+        // Security Features Initialization
+        function initSecurityFeatures() {
+            // Populate Watermark
+            const wm = document.getElementById('secureWatermark');
+            const phrases = ['MYVAULT AUTHENTICATED', 'SECURE IDENTITY RECORD', 'VERIFIED DIGITAL PROFILE', 'OFFICIAL RECORD'];
+            let html = '';
+            for (let i = 0; i < 200; i++) {
+                html += `<span>${phrases[i % phrases.length]} • </span>`;
+            }
+            if (wm) wm.innerHTML = html;
+
+            // Start Live Ticker
+            setInterval(() => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const statusEl = document.getElementById('liveStatusText');
+                if (statusEl) {
+                    statusEl.textContent = `STATUS: ACTIVE • VERIFIED • TIMESTAMP: ${timeStr}`;
+                }
+            }, 1000);
+        }
+        
+        let tokenTimerInterval;
+        function initSessionToken(riderId) {
+            function generateToken() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let token = '';
+                for (let i = 0; i < 8; i++) token += chars.charAt(Math.floor(Math.random() * chars.length));
+                return `${(riderId || 'UNK').toString().substring(0, 3).toUpperCase()}-${token}`;
+            }
+
+            let timeLeft = 300; // 5 minutes
+            const hashEl = document.getElementById('sessionTokenHash');
+            const timerEl = document.getElementById('sessionTokenTimer');
+            
+            if (!hashEl || !timerEl) return;
+
+            hashEl.textContent = generateToken();
+            
+            if (tokenTimerInterval) clearInterval(tokenTimerInterval);
+            tokenTimerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    hashEl.textContent = generateToken();
+                    timeLeft = 300;
+                }
+                const m = Math.floor(timeLeft / 60);
+                const s = (timeLeft % 60).toString().padStart(2, '0');
+                timerEl.textContent = `Refreshes in ${m}:${s}`;
+            }, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', initSecurityFeatures);
+
         // Roadside Mode Toggle (Removed, but keeping empty stub just in case)
         
         function switchTab(tabId) {
@@ -857,6 +992,10 @@
 
                     document.getElementById('profileContent').style.display = 'block';
                     document.getElementById('profileStatusText').textContent = 'Verification Active';
+                    document.getElementById('liveStatusBar').style.display = 'flex';
+                    
+                    // Initialize Token
+                    initSessionToken(rider.riderId || currentRiderId || 'UNK');
                     
                     const isEmergencyView = urlParams.get('view') === 'emergency';
                     
