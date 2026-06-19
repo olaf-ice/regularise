@@ -1,6 +1,15 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const { encryptData, decryptData, isEncrypted } = require('./crypto');
+
+// Secure parsing helper
+function parseSecureData(rawData) {
+    if (isEncrypted(rawData)) {
+        return JSON.parse(decryptData(rawData));
+    }
+    return JSON.parse(rawData);
+}
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const DATA_DIR = IS_PRODUCTION ? '/data' : path.join(__dirname, '..');
@@ -56,27 +65,27 @@ if (fs.existsSync(OLD_JSON_FILE)) {
 const dbHelpers = {
     insertRider: (rider) => {
         const stmt = db.prepare('INSERT INTO riders (riderId, phone, pin, data) VALUES (?, ?, ?, ?)');
-        stmt.run(rider.riderId, rider.phone, rider.pin, JSON.stringify(rider));
+        stmt.run(rider.riderId, rider.phone, rider.pin, encryptData(JSON.stringify(rider)));
     },
     updateRider: (riderId, riderData) => {
         const stmt = db.prepare('UPDATE riders SET data = ?, pin = ? WHERE riderId = ?');
-        stmt.run(JSON.stringify(riderData), riderData.pin, riderId);
+        stmt.run(encryptData(JSON.stringify(riderData)), riderData.pin, riderId);
     },
     getRiderById: (riderId) => {
         const stmt = db.prepare('SELECT * FROM riders WHERE riderId = ?');
         const row = stmt.get(riderId);
-        return row ? JSON.parse(row.data) : null;
+        return row ? parseSecureData(row.data) : null;
     },
     getRiderByPhone: (phone) => {
         const stmt = db.prepare('SELECT * FROM riders WHERE phone = ?');
         const row = stmt.get(phone);
-        return row ? JSON.parse(row.data) : null;
+        return row ? parseSecureData(row.data) : null;
     },
     findRiderByQuery: (query) => {
         const q = query.toLowerCase().replace(/[\s-]/g, '');
         const stmt = db.prepare('SELECT * FROM riders');
         for (const row of stmt.iterate()) {
-            const data = JSON.parse(row.data);
+            const data = parseSecureData(row.data);
             const rId = data.riderId ? data.riderId.toLowerCase().replace(/[\s-]/g, '') : '';
             const pNum = data.plateNumber ? data.plateNumber.toLowerCase().replace(/[\s-]/g, '') : '';
             const ph = data.phone ? data.phone.toLowerCase().replace(/[\s-]/g, '') : '';
@@ -90,7 +99,7 @@ const dbHelpers = {
     findByReference: (reference) => {
         const stmt = db.prepare('SELECT * FROM riders');
         for (const row of stmt.iterate()) {
-            const data = JSON.parse(row.data);
+            const data = parseSecureData(row.data);
             if (data.reference === reference) {
                 return data;
             }
@@ -101,7 +110,7 @@ const dbHelpers = {
         const stmt = db.prepare('SELECT data FROM riders');
         const riders = [];
         for (const row of stmt.iterate()) {
-            riders.push(JSON.parse(row.data));
+            riders.push(parseSecureData(row.data));
         }
         return riders;
     },
@@ -109,10 +118,10 @@ const dbHelpers = {
         const stmt = db.prepare('SELECT data, pin FROM riders WHERE riderId = ?');
         const row = stmt.get(riderId);
         if (row) {
-            const data = JSON.parse(row.data);
+            const data = parseSecureData(row.data);
             data.status = newStatus;
             const updateStmt = db.prepare('UPDATE riders SET data = ? WHERE riderId = ?');
-            updateStmt.run(JSON.stringify(data), riderId);
+            updateStmt.run(encryptData(JSON.stringify(data)), riderId);
             return data;
         }
         return null;
@@ -120,27 +129,27 @@ const dbHelpers = {
     // Agent helper functions
     insertAgent: (agent) => {
         const stmt = db.prepare('INSERT INTO agents (agentId, phone, pin, data) VALUES (?, ?, ?, ?)');
-        stmt.run(agent.agentId, agent.phone, agent.pin, JSON.stringify(agent));
+        stmt.run(agent.agentId, agent.phone, agent.pin, encryptData(JSON.stringify(agent)));
     },
     updateAgent: (agentId, agentData) => {
         const stmt = db.prepare('UPDATE agents SET data = ?, pin = ? WHERE agentId = ?');
-        stmt.run(JSON.stringify(agentData), agentData.pin, agentId);
+        stmt.run(encryptData(JSON.stringify(agentData)), agentData.pin, agentId);
     },
     getAgentById: (agentId) => {
         const stmt = db.prepare('SELECT * FROM agents WHERE agentId = ?');
         const row = stmt.get(agentId);
-        return row ? JSON.parse(row.data) : null;
+        return row ? parseSecureData(row.data) : null;
     },
     getAgentByPhone: (phone) => {
         const stmt = db.prepare('SELECT * FROM agents WHERE phone = ?');
         const row = stmt.get(phone);
-        return row ? JSON.parse(row.data) : null;
+        return row ? parseSecureData(row.data) : null;
     },
     getAllAgents: () => {
         const stmt = db.prepare('SELECT data FROM agents');
         const agents = [];
         for (const row of stmt.iterate()) {
-            agents.push(JSON.parse(row.data));
+            agents.push(parseSecureData(row.data));
         }
         return agents;
     }
