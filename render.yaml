@@ -32,3 +32,5 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      - key: ENCRYPTION_KEY
+        value: 815125701ab168789636b04b231f30dc6af0c5e72e17d4fbb57f1ce2dcde4d6a
