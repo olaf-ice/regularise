@@ -637,10 +637,7 @@
 <!-- Quick Shares & Prints -->
             <div class="no-print" style="margin-top: 1.5rem; text-align: center; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 3rem;">
 
-                <div style="display: flex; gap: 0.75rem;">
-                    <button class="btn btn-outline" onclick="window.print()" style="flex: 1;">PRINT PROFILE</button>
-                    <a href="index.html" class="btn btn-primary" style="flex: 1; text-decoration: none;">NEW SEARCH</a>
-                </div>
+
 
                 <!-- Bookmark tip for riders -->
                 <div id="bookmarkTip" style="display: none; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 0.75rem; padding: 0.85rem 1rem; font-size: 0.78rem; color: var(--text-muted); text-align: left;">
@@ -999,8 +996,7 @@
                             document.getElementById('riderIdBlock'),
                             document.getElementById('bikeSection'),
                             document.getElementById('documentsSection'),
-                            document.getElementById('physicalAssetsCard'),
-                            document.querySelector('button[onclick="window.print()"]')
+                            document.getElementById('physicalAssetsCard')
                         ];
 
                         elementsToBlur.forEach(el => {
