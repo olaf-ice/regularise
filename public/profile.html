@@ -1251,6 +1251,10 @@ let hasExpired = false;
         
         <form id="editProfileForm">
             <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="editName" name="name" placeholder="Enter Full Name">
+            </div>
+            <div class="input-group">
                 <label>Upload New Profile Picture</label>
                 <input type="file" id="editPic" name="passportPhoto" accept="image/*">
             </div>
@@ -1342,6 +1346,7 @@ let hasExpired = false;
     function openEditProfileModal() {
         document.getElementById('editProfileModal').style.display = 'flex';
         // Pre-fill
+        document.getElementById('editName').value = document.getElementById('riderName').textContent;
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
         document.getElementById('editAllergies').value = document.getElementById('iceAllergies').textContent;
         document.getElementById('editKinName').value = document.getElementById('iceKinName').textContent;

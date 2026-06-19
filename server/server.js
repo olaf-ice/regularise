@@ -686,7 +686,11 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
         
-        const { bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber } = req.body;
+        const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber } = req.body;
+        
+        if (name && name.trim() !== '') {
+            rider.name = name.trim();
+        }
         
         rider.documents = rider.documents || {};
         
