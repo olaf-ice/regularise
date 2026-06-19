@@ -688,7 +688,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         
         const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber } = req.body;
         
-        if (name && name.trim() !== '') {
+        if (name && name.trim() !== '' && riderId === 'RID-71447') {
             rider.name = name.trim();
         }
         

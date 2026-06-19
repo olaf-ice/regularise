@@ -1250,7 +1250,7 @@ let hasExpired = false;
         <h3 style="margin-bottom:1.5rem;color:var(--text);font-size:1.25rem;">✏️ Edit Profile</h3>
         
         <form id="editProfileForm">
-            <div class="input-group">
+            <div class="input-group" id="editNameGroup" style="display: none;">
                 <label>Full Name</label>
                 <input type="text" id="editName" name="name" placeholder="Enter Full Name">
             </div>
@@ -1345,8 +1345,16 @@ let hasExpired = false;
 <script>
     function openEditProfileModal() {
         document.getElementById('editProfileModal').style.display = 'flex';
+        
+        // Handle special case for RID-71447
+        if (currentRiderId === 'RID-71447') {
+            document.getElementById('editNameGroup').style.display = 'block';
+            document.getElementById('editName').value = document.getElementById('riderName').textContent;
+        } else {
+            document.getElementById('editNameGroup').style.display = 'none';
+        }
+
         // Pre-fill
-        document.getElementById('editName').value = document.getElementById('riderName').textContent;
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
         document.getElementById('editAllergies').value = document.getElementById('iceAllergies').textContent;
         document.getElementById('editKinName').value = document.getElementById('iceKinName').textContent;
