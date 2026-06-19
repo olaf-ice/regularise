@@ -277,19 +277,19 @@
             </div>
         </div>
 
-        <form action="#" method="POST" onsubmit="event.preventDefault(); alert('Thank you for claiming early access!');">
+        <form id="waitlistForm">
             <div class="form-group">
-                <input type="email" class="input-field" placeholder="Email Address" required>
+                <input type="email" id="wlEmail" class="input-field" placeholder="Email Address" required>
             </div>
             <div class="form-group">
-                <input type="tel" class="input-field" placeholder="Phone Number" required>
+                <input type="tel" id="wlPhone" class="input-field" placeholder="Phone Number" required>
             </div>
             <label class="checkbox-group">
-                <input type="checkbox" checked>
+                <input type="checkbox" id="wlWhatsapp" checked>
                 Notify me via WhatsApp for early access updates
             </label>
 
-            <button type="submit" class="cta-btn">Get Early Access</button>
+            <button type="submit" id="wlSubmitBtn" class="cta-btn">Get Early Access</button>
         </form>
 
         <div class="urgency-text">
@@ -347,6 +347,40 @@
 
         updateTimer();
         setInterval(updateTimer, 1000);
+
+        // Handle Waitlist Form Submission
+        document.getElementById('waitlistForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('wlEmail').value.trim();
+            const phone = document.getElementById('wlPhone').value.trim();
+            const wantsWhatsapp = document.getElementById('wlWhatsapp').checked;
+            const btn = document.getElementById('wlSubmitBtn');
+
+            btn.disabled = true;
+            btn.textContent = 'Securing Spot...';
+
+            try {
+                const response = await fetch('/api/waitlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, phone, wantsWhatsapp })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Success! You are on the waitlist. Keep an eye on your WhatsApp!');
+                    document.getElementById('waitlistForm').reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error. Please try again.');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Get Early Access';
+        });
     </script>
 </body>
 </html>

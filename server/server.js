@@ -890,6 +890,22 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
+// Waitlist Registration
+app.post('/api/waitlist', apiLimiter, (req, res) => {
+    const { email, phone, wantsWhatsapp } = req.body;
+    
+    if (!email && !phone) {
+        return res.status(400).json({ success: false, message: 'Please provide either an email or a phone number.' });
+    }
+
+    try {
+        dbHelpers.insertWaitlist({ email, phone, wantsWhatsapp });
+        res.json({ success: true, message: 'Successfully added to the waitlist!' });
+    } catch (err) {
+        console.error('Waitlist error:', err);
+        res.status(500).json({ success: false, message: 'Internal server error while joining waitlist.' });
+    }
+});
 
 // 2. Register
 app.post('/api/register', authLimiter, [

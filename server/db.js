@@ -37,6 +37,13 @@ db.exec(`
     pin TEXT NOT NULL,
     data JSON NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS waitlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT,
+    phone TEXT,
+    wantsWhatsapp INTEGER,
+    timestamp TEXT
+  );
 `);
 
 // Migration script
@@ -70,6 +77,10 @@ const dbHelpers = {
     updateRider: (riderId, riderData) => {
         const stmt = db.prepare('UPDATE riders SET data = ?, pin = ? WHERE riderId = ?');
         stmt.run(encryptData(JSON.stringify(riderData)), riderData.pin, riderId);
+    },
+    insertWaitlist: (entry) => {
+        const stmt = db.prepare('INSERT INTO waitlist (email, phone, wantsWhatsapp, timestamp) VALUES (?, ?, ?, ?)');
+        stmt.run(entry.email || '', entry.phone || '', entry.wantsWhatsapp ? 1 : 0, entry.timestamp || new Date().toISOString());
     },
     getRiderById: (riderId) => {
         const stmt = db.prepare('SELECT * FROM riders WHERE riderId = ?');
