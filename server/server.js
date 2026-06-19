@@ -754,7 +754,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         res.json({ success: true, message: 'Profile updated' });
     } catch (err) {
         console.error('Profile Update Error:', err);
-        res.status(500).json({ success: false, message: 'Failed to update profile' });
+        res.status(500).json({ success: false, message: 'Failed to update profile: ' + (err.message || err) });
     }
 });
 
