@@ -130,7 +130,7 @@ app.use((req, res, next) => {
 });
 
 const PUBLIC_DIR = IS_PRODUCTION && fs.existsSync(path.join(__dirname, '../dist/public')) ? path.join(__dirname, '../dist/public') : path.join(__dirname, '../public');
-app.use(express.static(PUBLIC_DIR));
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 // Serve uploads from the persistent directory in production, otherwise local
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
