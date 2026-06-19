@@ -1681,6 +1681,8 @@ let hasExpired = false;
             .card::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(59,130,246,0.04) 20px,rgba(59,130,246,0.04) 22px); }
             .pvc-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-30deg); font-size:56px; font-weight:900; color:rgba(255,255,255,0.03); white-space:nowrap; pointer-events:none; z-index:0; letter-spacing:8px; text-transform:uppercase; }
             .pvc-secure-badge { position:absolute; top:20px; right:190px; border:1px solid #10b981; color:#10b981; padding:4px 10px; font-size:9px; font-weight:900; border-radius:4px; letter-spacing:1.5px; background:rgba(16,185,129,0.1); z-index:2; transform: rotate(5deg); }
+            .holographic-sheen { position:absolute; inset:0; z-index:10; pointer-events:none; background:linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 25%, rgba(255,100,200,0.15) 28%, rgba(100,200,255,0.15) 32%, transparent 40%); background-size: 200% 200%; animation: holo-shine 6s infinite linear; mix-blend-mode: color-dodge; }
+            @keyframes holo-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
             .card-left { flex:1; padding:28px 20px 28px 32px; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:1; }
             .card-right { width:170px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; gap:12px; background:rgba(0,0,0,0.25); position:relative; z-index:1; border-left:1px solid rgba(245,158,11,0.35); }
             .header-row { display:flex; align-items:center; gap:10px; }
@@ -1836,6 +1838,7 @@ let hasExpired = false;
 </style></head><body>
         <p class="page-hint">Landscape print &bull; Laminate after printing &bull; Standard CR80 PVC card ratio</p>
         <div class="card">
+            <div class="holographic-sheen"></div>
             <div class="pvc-watermark">SECURE &middot; VERIFIED &middot; AUTHENTIC</div>
             <div class="pvc-secure-badge">&#10003; SECURE ID</div>
             <div class="card-left">
