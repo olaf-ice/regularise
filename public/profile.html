@@ -1557,9 +1557,27 @@ let hasExpired = false;
             .card-qr img { width:100%; height:100%; object-fit:contain; }
             .scan-label { font-size:9px; font-weight:800; color:#94a3b8; letter-spacing:1.5px; text-align:center; text-transform:uppercase; }
             .rider-id-small { font-size:10px; font-weight:700; color:#64748b; text-align:center; }
+            /* Card Back Styles */
+            .card-back {
+                background: linear-gradient(135deg, #050b14 0%, #0a1424 100%);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding: 30px 40px;
+                color: #94a3b8;
+                border-color: #334155;
+            }
+            .back-heading { color: white; font-size: 16px; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+            .back-text { font-size: 12px; line-height: 1.6; margin-bottom: 15px; }
+            .back-footer { margin-top: auto; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+            .back-logo { font-size: 14px; font-weight: 900; color: #60a5fa; letter-spacing: 2px; }
+            .back-phone { font-size: 14px; font-weight: 800; color: white; }
+            .mag-stripe { height: 45px; background: #000; width: 100%; position: absolute; top: 30px; left: 0; }
+            .back-content { margin-top: 70px; z-index: 1; position: relative; }
             @media print {
                 .page-hint { display:none; }
                 html, body { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+                .card { page-break-after: always; }
             }
         
         /* Tab Navigation */
@@ -1711,6 +1729,23 @@ let hasExpired = false;
                 <div class="card-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#333;">QR</div>'}</div>
                 <div class="scan-label">Scan for full<br>emergency profile</div>
                 <div class="rider-id-small">${d.riderId}</div>
+            </div>
+        </div>
+        
+        <!-- Card Back -->
+        <div class="card card-back">
+            <div class="mag-stripe"></div>
+            <div class="back-content">
+                <div class="back-heading">Terms & Conditions</div>
+                <div class="back-text">
+                    This card remains the property of MyVault NG. It is strictly non-transferable and must be surrendered upon request. <br><br>
+                    <strong>ATTENTION FIRST RESPONDERS:</strong> Scan the QR code on the reverse side of this card to instantly access vital medical information, blood type, allergies, and notify the cardholder's next of kin. <br><br>
+                    If found, please drop at the nearest Police Station or call our emergency hotline.
+                </div>
+                <div class="back-footer">
+                    <div class="back-logo">MYVAULT</div>
+                    <div class="back-phone">HOTLINE: 0800 MYVAULT</div>
+                </div>
             </div>
         </div>
         </body></html>`);
