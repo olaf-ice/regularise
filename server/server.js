@@ -581,7 +581,10 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             riderId: fullRider.riderId,
             userType: fullRider.userType || 'driver',
             emergencyContact: fullRider.emergencyContact,
-            medical: fullRider.medical ? { bloodGroup: fullRider.medical.bloodGroup } : {},
+            medical: fullRider.medical ? { 
+                bloodGroup: fullRider.medical.bloodGroup,
+                refusesBloodTransfusion: fullRider.medical.refusesBloodTransfusion
+            } : {},
             // Include photo for identity
             documents: fullRider.documents && fullRider.documents.passportPhoto ? { passportPhoto: fullRider.documents.passportPhoto } : {}
         };
@@ -603,7 +606,10 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             riderId: rider.riderId,
             userType: rider.userType || 'driver',
             emergencyContact: rider.emergencyContact,
-            medical: rider.medical ? { bloodGroup: rider.medical.bloodGroup } : {},
+            medical: rider.medical ? { 
+                bloodGroup: rider.medical.bloodGroup,
+                refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
+            } : {},
             documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
         };
         const level1Session = {
@@ -674,7 +680,8 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
     { name: 'licenseDoc', maxCount: 1 },
     { name: 'insuranceDoc', maxCount: 1 },
     { name: 'bikePapers', maxCount: 1 },
-    { name: 'ninDoc', maxCount: 1 }
+    { name: 'ninDoc', maxCount: 1 },
+    { name: 'advanceDirectiveDoc', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const riderId = req.params.riderId;
@@ -686,7 +693,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
         
-        const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber } = req.body;
+        const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber, refusesBloodTransfusion, advanceDirectiveStatement } = req.body;
         
         if (name && name.trim() !== '' && riderId === 'RID-71447') {
             rider.name = name.trim();
@@ -699,7 +706,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
             rider.documents.passportPhoto = { url: `/uploads/${req.files.passportPhoto[0].filename}` };
         }
         
-        const docFields = ['licenseDoc', 'insuranceDoc', 'bikePapers', 'ninDoc'];
+        const docFields = ['licenseDoc', 'insuranceDoc', 'bikePapers', 'ninDoc', 'advanceDirectiveDoc'];
         const docNumbers = { licenseDoc: licenseNumber, insuranceDoc: insuranceNumber, ninDoc: ninNumber };
         const docExpirations = { licenseDoc: licenseExpiry, insuranceDoc: insuranceExpiry };
         
@@ -742,6 +749,12 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         rider.medical = rider.medical || {};
         if (bloodType) rider.medical.bloodGroup = bloodType;
         if (allergies) rider.medical.allergies = allergies;
+        if (refusesBloodTransfusion !== undefined) {
+            rider.medical.refusesBloodTransfusion = refusesBloodTransfusion === 'true' || refusesBloodTransfusion === true;
+        }
+        if (advanceDirectiveStatement !== undefined) {
+            rider.medical.advanceDirectiveStatement = advanceDirectiveStatement;
+        }
         
         // Update emergency contact
         rider.emergencyContact = rider.emergencyContact || {};
@@ -776,7 +789,10 @@ app.get('/api/verify/:query', (req, res) => {
             vehicle: rider.vehicle,
             bike: rider.bike,
             emergencyContact: rider.emergencyContact,
-            medical: rider.medical ? { bloodGroup: rider.medical.bloodGroup } : {},
+            medical: rider.medical ? { 
+                bloodGroup: rider.medical.bloodGroup,
+                refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
+            } : {},
             // Only include passport photo, hide all other documents and expiry dates
             documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
         };

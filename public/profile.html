@@ -414,6 +414,7 @@
                     </div>
                     <div id="iceMedicalDirectiveBlock" class="level-2-data" style="grid-column: span 2; display: none; background: rgba(239, 68, 68, 0.15); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--error); margin-top: 0.5rem;">
                         <span style="color: var(--error); font-size: 0.7rem; text-transform: uppercase; display: block; font-weight: 800; margin-bottom: 0.3rem;">⚠️ ADVANCE DIRECTIVE (NO BLOOD)</span>
+                        <p id="iceMedicalStatement" style="font-size: 0.75rem; color: var(--text); margin-bottom: 0.5rem; font-style: italic;"></p>
                         <a id="iceMedicalDirectiveBtn" href="#" target="_blank" class="btn btn-outline" style="border-color: var(--error); color: var(--error); padding: 0.3rem 0.6rem; font-size: 0.7rem; width: 100%;">View Uploaded Document</a>
                     </div>
                 </div>
@@ -758,9 +759,19 @@
                         document.getElementById('iceGenotype').textContent = rider.medical.genotype || '---';
                         document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None reported';
                         document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
-                        if (rider.documents && rider.documents.medicalDirectiveDoc) {
+                        if (rider.medical.advanceDirectiveStatement) {
+                            document.getElementById('iceMedicalStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
                             document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
-                            document.getElementById('iceMedicalDirectiveBtn').href = rider.documents.medicalDirectiveDoc.url;
+                        } else {
+                            document.getElementById('iceMedicalStatement').style.display = 'none';
+                        }
+                        
+                        if (rider.documents && rider.documents.advanceDirectiveDoc) {
+                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
+                            document.getElementById('iceMedicalDirectiveBtn').href = rider.documents.advanceDirectiveDoc.url;
+                            document.getElementById('iceMedicalDirectiveBtn').style.display = 'inline-block';
+                        } else {
+                            document.getElementById('iceMedicalDirectiveBtn').style.display = 'none';
                         }
                     }
 
@@ -769,7 +780,8 @@
                     
                     // Show hidden elements
                     document.querySelectorAll('.level-2-data').forEach(el => {
-                        el.style.display = el.id === 'iceMedicalDirectiveBlock' && (!rider.documents || !rider.documents.medicalDirectiveDoc) ? 'none' : 'block';
+                        const showDirective = rider.medical.advanceDirectiveStatement || (rider.documents && rider.documents.advanceDirectiveDoc);
+                        el.style.display = el.id === 'iceMedicalDirectiveBlock' && !showDirective ? 'none' : 'block';
                     });
                     
                     // Update button state
@@ -1058,7 +1070,12 @@
                     if (rider.medical) {
                         const bg = rider.medical.bloodGroup || 'O+';
                         document.getElementById('iceBloodGroup').textContent = bg;
-                        document.getElementById('iceMedicalSummaryBadge').textContent = `${bg}`;
+                        let badgeText = `${bg}`;
+                        if (rider.medical.refusesBloodTransfusion) {
+                            badgeText += ' | 🚨 NO BLOOD';
+                            document.getElementById('iceMedicalSummaryBadge').style.background = '#7f1d1d';
+                        }
+                        document.getElementById('iceMedicalSummaryBadge').textContent = badgeText;
                     } else {
                         document.getElementById('emergencyIceHub').style.display = 'none';
                     }
@@ -1282,6 +1299,29 @@ let hasExpired = false;
             </div>
 
             <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">Advance Medical Directive (Optional)</h4>
+            <div class="input-group" style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="margin-bottom: 0;">Do you refuse blood transfusion?</label>
+                <label class="switch">
+                    <input type="checkbox" id="editRefusesBlood" name="refusesBloodTransfusion" value="true" onchange="document.getElementById('advanceDirectiveSection').style.display = this.checked ? 'block' : 'none';">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div id="advanceDirectiveSection" style="display: none; background: rgba(255,255,255,0.02); padding: 1rem; border: 1px solid var(--glass-border); border-radius: 0.5rem; margin-bottom: 1rem;">
+                <div class="input-group">
+                    <label>Declaration Statement</label>
+                    <textarea id="editDirectiveStatement" name="advanceDirectiveStatement" rows="3" placeholder="I, [Full Name], hereby refuse blood transfusion under any circumstance..." style="resize: vertical; width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text); padding: 0.75rem; font-family: inherit; font-size: 0.85rem;"></textarea>
+                </div>
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label>Official Directive Document (DPA / Hospital Forms)</label>
+                    <input type="file" name="advanceDirectiveDoc" accept="image/*,application/pdf">
+                </div>
+                <p style="font-size: 0.65rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">
+                    This information is user-provided and should be used alongside officially recognized medical directives.
+                </p>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
             <h4 style="margin-bottom: 1rem; color: var(--primary-light);">Update Vehicle Details</h4>
             
             <div class="input-group">
@@ -1358,6 +1398,15 @@ let hasExpired = false;
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
         document.getElementById('editAllergies').value = document.getElementById('iceAllergies').textContent;
         document.getElementById('editKinName').value = document.getElementById('iceKinName').textContent;
+        
+        // Advance Directive Prefill
+        const noBloodBadge = document.getElementById('iceMedicalSummaryBadge').textContent;
+        const refusesBlood = noBloodBadge.includes('NO BLOOD');
+        document.getElementById('editRefusesBlood').checked = refusesBlood;
+        document.getElementById('advanceDirectiveSection').style.display = refusesBlood ? 'block' : 'none';
+        
+        const statementText = document.getElementById('iceMedicalStatement') ? document.getElementById('iceMedicalStatement').textContent.replace(/^"|"$/g, '') : '';
+        document.getElementById('editDirectiveStatement').value = statementText;
         
         // Prefill vehicle details if available
         const brandModelText = document.getElementById('bikeBrandModel') ? document.getElementById('bikeBrandModel').textContent : '';

@@ -425,6 +425,11 @@
             </div>
         </div>
 
+        <div id="noBloodBanner" style="display:none; background: #7f1d1d; color: white; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; text-align: center; border: 2px solid #ef4444;">
+            <div style="font-size: 1.25rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 0.25rem;">🚨 NO BLOOD TRANSFUSION 🚨</div>
+            <div style="font-size: 0.85rem; font-weight: 600; opacity: 0.9;">Advance Medical Directive Active on Profile</div>
+        </div>
+
         <!-- Rider Identity -->
         <div class="card">
             <div class="card-title"><span>👤</span> RIDER / DRIVER IDENTITY</div>
@@ -491,6 +496,14 @@
                         <span class="detail-label">Preferred Hospital</span>
                         <span class="detail-value" id="hospital">---</span>
                     </div>
+                </div>
+
+                <div id="emergencyDirectiveBlock" style="display:none; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 0.5rem;">
+                    <div style="color: var(--error); font-weight: 800; font-size: 0.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <span>⚠️</span> ADVANCE MEDICAL DIRECTIVE
+                    </div>
+                    <div id="directiveStatement" style="font-size: 0.85rem; color: var(--text); font-style: italic; margin-bottom: 0.75rem; line-height: 1.4;"></div>
+                    <a id="directiveDocBtn" href="#" target="_blank" style="display:none; text-align: center; background: transparent; border: 1px solid var(--error); color: var(--error); padding: 0.5rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: 700; text-decoration: none;">VIEW OFFICIAL DOCUMENT</a>
                 </div>
             </div>
         </div>
@@ -835,6 +848,9 @@
                 // Medical (Level 1)
                 if (rider.medical) {
                     document.getElementById('bloodGroup').textContent = rider.medical.bloodGroup || '---';
+                    if (rider.medical.refusesBloodTransfusion) {
+                        document.getElementById('noBloodBanner').style.display = 'block';
+                    }
                 }
 
                 // Kin (Level 1)
@@ -890,6 +906,16 @@
                 document.getElementById('genotype').textContent = rider.medical.genotype || '---';
                 document.getElementById('allergies').textContent = rider.medical.allergies || 'None reported';
                 document.getElementById('hospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                
+                if (rider.medical.advanceDirectiveStatement) {
+                    document.getElementById('directiveStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
+                    document.getElementById('emergencyDirectiveBlock').style.display = 'block';
+                }
+            }
+            if (rider.documents && rider.documents.advanceDirectiveDoc) {
+                document.getElementById('emergencyDirectiveBlock').style.display = 'block';
+                document.getElementById('directiveDocBtn').href = rider.documents.advanceDirectiveDoc.url;
+                document.getElementById('directiveDocBtn').style.display = 'block';
             }
 
             // Location
