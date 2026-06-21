@@ -80,7 +80,10 @@ function authenticateToken(req, res, next) {
     if (!token) return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+        if (err) {
+            console.error('JWT Verify Error:', err.message, 'Token:', token);
+            return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+        }
         
         // Ensure single active session via tokenVersion
         if (user.riderId) {

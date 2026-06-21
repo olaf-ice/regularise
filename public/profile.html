@@ -1964,8 +1964,9 @@ let hasExpired = false;
                 headers: { 'Authorization': 'Bearer ' + localStorage.getItem('riderToken') },
                 body: formData
             });
-            if (res.status === 401) {
-                alert('Session expired. You have logged in from another device.');
+            if (res.status === 401 || res.status === 403) {
+                const isMultiDevice = res.status === 401;
+                alert(isMultiDevice ? 'Session expired. You have logged in from another device.' : 'Your session has expired. Please log in again.');
                 logoutRider();
                 return;
             }
