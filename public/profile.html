@@ -816,7 +816,7 @@
                         document.getElementById('iceGenotype').textContent = rider.medical.genotype || '---';
                         document.getElementById('iceConditions').textContent = rider.medical.conditions || 'None reported';
                         document.getElementById('iceMedications').textContent = rider.medical.medications || 'None reported';
-                        document.getElementById('iceDateOfBirth').textContent = rider.medical.dateOfBirth || 'Not specified';
+                        document.getElementById('iceDateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
                         document.getElementById('iceImmunizations').textContent = rider.medical.immunizations || 'None reported';
                         
                         const bodyArr = [];
@@ -1543,7 +1543,7 @@ let hasExpired = false;
         // Pre-fill
         const med = (window.globalRiderData && window.globalRiderData.medical) || {};
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
-        document.getElementById('editDateOfBirth').value = med.dateOfBirth || '';
+        document.getElementById('editDateOfBirth').value = med.dateOfBirth || window.globalRiderData.dob || '';
         document.getElementById('editConditions').value = med.conditions || '';
         document.getElementById('editMedications').value = med.medications || '';
         document.getElementById('editImmunizations').value = med.immunizations || '';
@@ -1666,7 +1666,7 @@ let hasExpired = false;
 
         const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
 
-        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: rider.phone || '', dob: rider.medical?.dateOfBirth || '' };
+        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: rider.phone || '', dob: rider.medical?.dateOfBirth || rider.dob || '' };
 
         // Update mini preview
         if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';

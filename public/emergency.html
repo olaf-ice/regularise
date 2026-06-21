@@ -978,7 +978,7 @@
                 document.getElementById('genotype').textContent = rider.medical.genotype || '---';
                 document.getElementById('conditions').textContent = rider.medical.conditions || 'None reported';
                 document.getElementById('medications').textContent = rider.medical.medications || 'None reported';
-                document.getElementById('dateOfBirth').textContent = rider.medical.dateOfBirth || 'Not specified';
+                document.getElementById('dateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
                 document.getElementById('immunizations').textContent = rider.medical.immunizations || 'None reported';
                 
                 const bodyArr = [];
