@@ -1190,7 +1190,7 @@ let hasExpired = false;
                     if (qrEl) {
                         qrEl.innerHTML = '';
                         try {
-                            const emergencyUrl = `${window.location.origin}/profile.html?q=${encodeURIComponent(rider.riderId)}&view=emergency`;
+                            const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
                             new QRCode(qrEl, {
                                 text: emergencyUrl,
                                 width: 140, height: 140,

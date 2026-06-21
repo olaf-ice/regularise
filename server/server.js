@@ -569,6 +569,53 @@ app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
     }
 });
 
+// ── GET /scan/:riderId ───────────────────────────────────────────────────────
+// Static QR code scan endpoint. Triggers SOS, creates a session, and redirects to emergency page.
+app.get('/scan/:riderId', async (req, res) => {
+    try {
+        const riderId = req.params.riderId;
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).send('Rider not found or deactivated.');
+
+        const sessionId = generateSessionId();
+        const numericId = sessionId.replace('MV-EMG-', '');
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const sessionUrl = `${baseUrl}/emergency/${numericId}`;
+
+        // Safe rider snapshot
+        const { pin, ...safeRider } = rider;
+
+        const session = {
+            sessionId,
+            numericId,
+            riderId,
+            sessionUrl,
+            createdAt: new Date().toISOString(),
+            location: null, // No exact location available immediately from a static scan
+            rider: safeRider
+        };
+
+        emergencySessions.set(sessionId, session);
+        emergencySessions.set(numericId, session);
+
+        // Notify emergency contact
+        if (rider.emergencyContact && rider.emergencyContact.phone) {
+            const msg = `🚨 EMERGENCY SCAN: ${rider.name}'s MyVault ID was just scanned. ` +
+                        `View their live emergency profile here: ${sessionUrl}`;
+            sendSMS(rider.emergencyContact.phone, msg).catch(() => {});
+            if (rider.emergencyContact.secondaryPhone) {
+                sendSMS(rider.emergencyContact.secondaryPhone, msg).catch(() => {});
+            }
+        }
+
+        console.log(`[SCAN] QR Code scanned for ${riderId}. Redirecting to ${sessionUrl}`);
+        res.redirect(`/emergency/${numericId}`);
+    } catch (err) {
+        console.error('Scan Error:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
 // ── GET Emergency Session (LEVEL 1 PUBLIC SCAN) ──────────────────────────────
 // GET /api/emergency/:sessionId  (public — no auth required)
 app.get('/api/emergency/:sessionId', (req, res) => {
