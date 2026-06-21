@@ -134,15 +134,19 @@
                             <input type="text" id="allergies" name="allergies" placeholder="e.g. Asthma, Penicillin Allergy (or type 'None')">
                         </div>
 
-                        <div class="input-group">
-                            <label for="emergencyContactName">Emergency Contact Name (Next of Kin)</label>
-                            <input type="text" id="emergencyContactName" name="emergencyContactName" placeholder="Jane Doe" required>
+                        <div id="emergencyContactsContainer">
+                            <div class="emergency-contact-item" style="border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 1rem;">
+                                <div class="input-group">
+                                    <label>Emergency Contact Name (Next of Kin)</label>
+                                    <input type="text" name="emergencyContactName[]" placeholder="Jane Doe" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Emergency Contact Phone Number</label>
+                                    <input type="tel" name="emergencyContactPhone[]" placeholder="080XXXXXXXX" required>
+                                </div>
+                            </div>
                         </div>
-
-                        <div class="input-group">
-                            <label for="emergencyContactPhone">Emergency Contact Phone Number</label>
-                            <input type="tel" id="emergencyContactPhone" name="emergencyContactPhone" placeholder="080XXXXXXXX" required>
-                        </div>
+                        <button type="button" id="addContactBtn" style="background:transparent; border: 1px dashed var(--primary); color: var(--primary); padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; width: 100%; margin-bottom: 1rem;">+ Add Another Emergency Contact</button>
                     </div>
 
 
@@ -195,6 +199,22 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
+            // Handle multiple emergency contacts
+            const names = formData.getAll('emergencyContactName[]');
+            const phones = formData.getAll('emergencyContactPhone[]');
+            const contacts = [];
+            for (let i = 0; i < names.length; i++) {
+                if (names[i] && phones[i]) {
+                    contacts.push({ name: names[i], phone: phones[i] });
+                }
+            }
+            if (contacts.length > 0) {
+                data.emergencyContactName = contacts[0].name;
+                data.emergencyContactPhone = contacts[0].phone;
+                data.emergencyContactsStr = JSON.stringify(contacts);
+            }
+
+
             try {
                 const response = await fetch('/api/register', {
                     method: 'POST',
@@ -242,6 +262,26 @@
         });
     </script>
 
+    <script>
+        document.getElementById('addContactBtn').addEventListener('click', function() {
+            const container = document.getElementById('emergencyContactsContainer');
+            const div = document.createElement('div');
+            div.className = 'emergency-contact-item';
+            div.style.cssText = 'border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 1rem; margin-top: 1rem; position: relative;';
+            div.innerHTML = `
+                <div class="input-group">
+                    <label>Emergency Contact Name</label>
+                    <input type="text" name="emergencyContactName[]" placeholder="Jane Doe" required>
+                </div>
+                <div class="input-group">
+                    <label>Emergency Contact Phone Number</label>
+                    <input type="tel" name="emergencyContactPhone[]" placeholder="080XXXXXXXX" required>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" style="background:transparent; border: none; color: var(--error); cursor: pointer; font-size: 0.875rem; text-decoration: underline;">Remove Contact</button>
+            `;
+            container.appendChild(div);
+        });
+    </script>
     <!--Start of Tawk.to Script-->
     <script type="text/javascript">
     var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();

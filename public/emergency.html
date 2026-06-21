@@ -495,6 +495,10 @@
                             <span class="detail-value" id="medications">---</span>
                         </div>
                         <div class="detail-item">
+                            <span class="detail-label">Date of Birth</span>
+                            <span class="detail-value" id="dateOfBirth">---</span>
+                        </div>
+                        <div class="detail-item">
                             <span class="detail-label">Immunizations</span>
                             <span class="detail-value" id="immunizations">---</span>
                         </div>
@@ -793,23 +797,31 @@
         }
         // --------------------
 
-        function buildKinCard(ec) {
-            if (!ec || !ec.phone) return;
+        function buildKinCards(contactsList, fallbackEc) {
             document.getElementById('kinCard').style.display = 'block';
             const list = document.getElementById('kinList');
             list.innerHTML = '';
-            const contacts = [
-                { name: ec.name, phone: ec.phone, rel: ec.relationship || 'Next of Kin' },
-                ec.secondaryPhone ? { name: ec.name || 'Contact', phone: ec.secondaryPhone, rel: 'Secondary Contact' } : null
-            ].filter(Boolean);
+            
+            let contacts = [];
+            if (contactsList && contactsList.length > 0) {
+                contacts = contactsList;
+            } else if (fallbackEc && fallbackEc.phone) {
+                contacts = [fallbackEc];
+            }
+            
+            if (contacts.length === 0) {
+                document.getElementById('kinCard').style.display = 'none';
+                return;
+            }
 
             contacts.forEach(c => {
+                if (!c.phone) return;
                 const row = document.createElement('div');
                 row.className = 'kin-row';
                 row.innerHTML = `
                     <div>
-                        <div class="kin-name">${c.name || 'Next of Kin'}</div>
-                        <div class="kin-rel">${c.rel}</div>
+                        <div class="kin-name">${c.name || 'Emergency Contact'}</div>
+                        <div class="kin-rel">${c.rel || c.relationship || 'Emergency Contact'}</div>
                     </div>
                     <a href="tel:${c.phone}" class="call-btn">📞 CALL</a>
                 `;
@@ -916,7 +928,7 @@
                 }
 
                 // Kin (Level 1)
-                buildKinCard(rider.emergencyContact);
+                buildKinCards(rider.emergencyContacts, rider.emergencyContact);
 
                 // Session timing
                 const created = new Date(s.createdAt);
@@ -966,6 +978,7 @@
                 document.getElementById('genotype').textContent = rider.medical.genotype || '---';
                 document.getElementById('conditions').textContent = rider.medical.conditions || 'None reported';
                 document.getElementById('medications').textContent = rider.medical.medications || 'None reported';
+                document.getElementById('dateOfBirth').textContent = rider.medical.dateOfBirth || 'Not specified';
                 document.getElementById('immunizations').textContent = rider.medical.immunizations || 'None reported';
                 
                 const bodyArr = [];

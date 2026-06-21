@@ -437,7 +437,12 @@ app.post('/api/agent/register-rider', authenticateAgentToken, [
             return res.status(403).json({ success: false, message: 'Registration is currently closed until July 1st. Join our early access waitlist!' });
         }
 
-        const { name, phone, altPhone, address, dob, plateNumber, userType, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, userType, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr } = req.body;
+        let emergencyContacts = [];
+        try { if (emergencyContactsStr) emergencyContacts = JSON.parse(emergencyContactsStr); } catch(e) {}
+        if (emergencyContacts.length === 0 && emergencyContactName) {
+            emergencyContacts.push({ name: emergencyContactName, phone: emergencyContactPhone });
+        }
         if (dbHelpers.getRiderByPhone(phone)) return res.status(400).json({ success: false, message: 'Phone number already registered' });
 
         // Generate random PIN if agent didn't provide one
@@ -458,7 +463,8 @@ app.post('/api/agent/register-rider', authenticateAgentToken, [
             vehicle: { type: vehicleType || (userType === 'non-driver' ? null : 'motorcycle'), plateNumber: plateNumber || '' },
             documents: {}, 
             medical: { bloodGroup: bloodType || '', allergies: allergies || 'None' },
-            emergencyContact: { name: emergencyContactName || '', phone: emergencyContactPhone || '' },
+            emergencyContacts: emergencyContacts,
+            emergencyContact: emergencyContacts[0] || { name: emergencyContactName || '', phone: emergencyContactPhone || '' },
             safety: { sosEnabled: false, theftStatus: 'Safe' },
             status: 'Pending', 
             reference,
@@ -551,16 +557,18 @@ app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
         emergencySessions.set(sessionId, session);
         emergencySessions.set(numericId, session);
 
-        // Fire-and-forget: notify emergency contact
-        if (rider.emergencyContact && rider.emergencyContact.phone) {
-            const locText = session.location?.name ? ` near ${session.location.name}` : '';
-            const msg = `🚨 EMERGENCY: ${rider.name} has triggered a SOS alert${locText}. ` +
-                        `View their emergency profile here: ${sessionUrl}`;
-            sendSMS(rider.emergencyContact.phone, msg).catch(() => {});
-            if (rider.emergencyContact.secondaryPhone) {
-                sendSMS(rider.emergencyContact.secondaryPhone, msg).catch(() => {});
+        // Fire-and-forget: notify emergency contacts
+        const contacts = rider.emergencyContacts || [];
+        if (contacts.length === 0 && rider.emergencyContact) contacts.push(rider.emergencyContact);
+        
+        contacts.forEach(contact => {
+            if (contact && contact.phone) {
+                const locText = session.location?.name ? ` near ${session.location.name}` : '';
+                const msg = `🚨 EMERGENCY: ${rider.name} has triggered a SOS alert${locText}. ` +
+                            `View their emergency profile here: ${sessionUrl}`;
+                sendSMS(contact.phone, msg).catch(() => {});
             }
-        }
+        });
 
         console.log(`[SOS] Emergency session created: ${sessionId} for rider ${riderId}`);
         res.json({ success: true, sessionId, numericId, sessionUrl });
@@ -599,15 +607,17 @@ app.get('/scan/:riderId', async (req, res) => {
         emergencySessions.set(sessionId, session);
         emergencySessions.set(numericId, session);
 
-        // Notify emergency contact
-        if (rider.emergencyContact && rider.emergencyContact.phone) {
-            const msg = `🚨 EMERGENCY SCAN: ${rider.name}'s MyVault ID was just scanned. ` +
-                        `View their live emergency profile here: ${sessionUrl}`;
-            sendSMS(rider.emergencyContact.phone, msg).catch(() => {});
-            if (rider.emergencyContact.secondaryPhone) {
-                sendSMS(rider.emergencyContact.secondaryPhone, msg).catch(() => {});
+        // Notify emergency contacts
+        const contacts = rider.emergencyContacts || [];
+        if (contacts.length === 0 && rider.emergencyContact) contacts.push(rider.emergencyContact);
+        
+        contacts.forEach(contact => {
+            if (contact && contact.phone) {
+                const msg = `🚨 EMERGENCY SCAN: ${rider.name}'s MyVault ID was just scanned. ` +
+                            `View their live emergency profile here: ${sessionUrl}`;
+                sendSMS(contact.phone, msg).catch(() => {});
             }
-        }
+        });
 
         console.log(`[SCAN] QR Code scanned for ${riderId}. Redirecting to ${sessionUrl}`);
         res.redirect(`/emergency/${numericId}`);
@@ -713,15 +723,19 @@ app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
         
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
         
-        if (!rider.emergencyContact || !rider.emergencyContact.phone) {
+        const contacts = rider.emergencyContacts || [];
+        if (contacts.length === 0 && rider.emergencyContact) contacts.push(rider.emergencyContact);
+        
+        if (contacts.length === 0) {
             return res.status(400).json({ success: false, message: 'No emergency contact on file for this rider.' });
         }
 
         const message = `URGENT: Someone has just accessed the Emergency Medical Profile for ${rider.name}. If this is unexpected, please try contacting them immediately.`;
-        await sendSMS(rider.emergencyContact.phone, message);
         
-        if (rider.emergencyContact.secondaryPhone) {
-            await sendSMS(rider.emergencyContact.secondaryPhone, message);
+        for (const contact of contacts) {
+            if (contact && contact.phone) {
+                await sendSMS(contact.phone, message).catch(() => {});
+            }
         }
 
         res.json({ success: true, message: 'Emergency SOS sent successfully.' });
@@ -751,7 +765,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
         
-        const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber, refusesBloodTransfusion, advanceDirectiveStatement, conditions, medications, immunizations, height, weight, gender, identifyingMarks, primaryDoctorName, primaryDoctorPhone, hospitalPreference, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions } = req.body;
+        const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber, refusesBloodTransfusion, advanceDirectiveStatement, conditions, medications, immunizations, height, weight, gender, dateOfBirth, identifyingMarks, primaryDoctorName, primaryDoctorPhone, hospitalPreference, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions } = req.body;
         
         if (name && name.trim() !== '' && riderId === 'RID-71447') {
             rider.name = name.trim();
@@ -819,6 +833,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         if (height !== undefined) rider.medical.height = height;
         if (weight !== undefined) rider.medical.weight = weight;
         if (gender !== undefined) rider.medical.gender = gender;
+        if (dateOfBirth !== undefined) rider.medical.dateOfBirth = dateOfBirth;
         if (identifyingMarks !== undefined) rider.medical.identifyingMarks = identifyingMarks;
         if (primaryDoctorName !== undefined) rider.medical.primaryDoctorName = primaryDoctorName;
         if (primaryDoctorPhone !== undefined) rider.medical.primaryDoctorPhone = primaryDoctorPhone;
@@ -831,10 +846,19 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         if (organDonor !== undefined) rider.medical.organDonor = organDonor === 'true' || organDonor === true;
         if (donorRestrictions !== undefined) rider.medical.donorRestrictions = donorRestrictions;
         
-        // Update emergency contact
-        rider.emergencyContact = rider.emergencyContact || {};
-        if (emergencyContactName) rider.emergencyContact.name = emergencyContactName;
-        if (emergencyContactPhone) rider.emergencyContact.phone = emergencyContactPhone;
+        // Update emergency contacts
+        let newContacts = [];
+        const { emergencyContactsStr } = req.body;
+        try { if (emergencyContactsStr) newContacts = JSON.parse(emergencyContactsStr); } catch(e) {}
+        
+        if (newContacts.length > 0) {
+            rider.emergencyContacts = newContacts;
+            rider.emergencyContact = newContacts[0];
+        } else {
+            rider.emergencyContact = rider.emergencyContact || {};
+            if (emergencyContactName) rider.emergencyContact.name = emergencyContactName;
+            if (emergencyContactPhone) rider.emergencyContact.phone = emergencyContactPhone;
+        }
         
         dbHelpers.updateRider(riderId, rider);
         saveToGoogleSheets(rider);
@@ -1023,7 +1047,12 @@ app.post('/api/register', authLimiter, [
             return res.status(403).json({ success: false, message: 'Registration is currently closed until July 1st. Join our early access waitlist!' });
         }
 
-        const { name, phone, altPhone, address, dob, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, userType } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr, userType } = req.body;
+        let emergencyContacts = [];
+        try { if (emergencyContactsStr) emergencyContacts = JSON.parse(emergencyContactsStr); } catch(e) {}
+        if (emergencyContacts.length === 0 && emergencyContactName) {
+            emergencyContacts.push({ name: emergencyContactName, phone: emergencyContactPhone });
+        }
         
         if (dbHelpers.getRiderByPhone(phone)) {
             return res.status(400).json({ success: false, message: 'Phone number already registered' });
@@ -1053,7 +1082,8 @@ app.post('/api/register', authLimiter, [
                 bloodGroup: bloodType || '',
                 allergies: allergies || 'None'
             },
-            emergencyContact: {
+            emergencyContacts: emergencyContacts,
+            emergencyContact: emergencyContacts[0] || {
                 name: emergencyContactName || '',
                 phone: emergencyContactPhone || ''
             },
@@ -1091,7 +1121,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
         const { 
             reference, 
             // Rider's own medical
-            riderBloodGroup, riderGenotype, riderAllergies, riderHospital, conditions, medications, immunizations, height, weight, gender, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions,
+            riderBloodGroup, riderGenotype, riderAllergies, riderHospital, conditions, medications, immunizations, height, weight, gender, dateOfBirth, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions,
             // Emergency contact
             emergencyName, emergencyPhone, emergencyRel, emergencyAltPhone,
             bloodGroup, genotype,
@@ -1124,7 +1154,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
             genotype: riderGenotype,
             allergies: riderAllergies || 'None',
             hospitalPreference: riderHospital || '',
-            conditions, medications, immunizations, height, weight, gender, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor: organDonor === 'true' || organDonor === true, donorRestrictions
+            conditions, medications, immunizations, height, weight, gender, dateOfBirth, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor: organDonor === 'true' || organDonor === true, donorRestrictions
         };
 
         // Update Emergency Contact
