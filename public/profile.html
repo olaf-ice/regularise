@@ -1193,9 +1193,9 @@ let hasExpired = false;
                             const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
                             new QRCode(qrEl, {
                                 text: emergencyUrl,
-                                width: 140, height: 140,
+                                width: 220, height: 220,
                                 colorDark: '#0f172a', colorLight: '#ffffff',
-                                correctLevel: QRCode.CorrectLevel.M
+                                correctLevel: QRCode.CorrectLevel.L
                             });
                         } catch(e) { console.warn('QR generation failed', e); }
                     }
