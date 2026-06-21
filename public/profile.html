@@ -247,7 +247,7 @@
 
     <div class="container animate-fade-in" style="max-width: 500px; position: relative; z-index: 1;">
         <header class="no-print">
-            <a href="index.html" style="text-decoration: none; color: var(--primary-light); font-weight: 800; font-size: 0.85rem; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 0.25rem;">← BACK TO SEARCH</a>
+            <a id="backToSearchBtn" href="index.html" style="text-decoration: none; color: var(--primary-light); font-weight: 800; font-size: 0.85rem; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 0.25rem;">← BACK TO SEARCH</a>
             <div style="text-align: center; margin-top: 1.5rem;">
                 <img src="assets/logo.png" alt="MyVault Logo" style="height: 3rem; width: auto; object-fit: contain;">
             </div>
@@ -1023,6 +1023,9 @@
                     
                     if (localStorage.getItem('riderToken') && !isEmergencyView) {
                         document.getElementById('ownerActions').style.display = 'flex';
+                        if (document.getElementById('backToSearchBtn')) {
+                            document.getElementById('backToSearchBtn').style.display = 'none';
+                        }
                     }
                     
                     document.getElementById('riderName').textContent = rider.name;
