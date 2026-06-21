@@ -1964,6 +1964,11 @@ let hasExpired = false;
                 headers: { 'Authorization': 'Bearer ' + localStorage.getItem('riderToken') },
                 body: formData
             });
+            if (res.status === 401) {
+                alert('Session expired. You have logged in from another device.');
+                logoutRider();
+                return;
+            }
             const result = await res.json();
             if (result.success) {
                 alert('Profile updated successfully!');

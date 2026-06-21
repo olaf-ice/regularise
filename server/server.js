@@ -81,6 +81,17 @@ function authenticateToken(req, res, next) {
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+        
+        // Ensure single active session via tokenVersion
+        if (user.riderId) {
+            const dbRider = dbHelpers.getRiderById(user.riderId);
+            if (!dbRider) return res.status(401).json({ success: false, message: 'User not found.' });
+            
+            if (dbRider.tokenVersion && dbRider.tokenVersion !== user.tokenVersion) {
+                return res.status(401).json({ success: false, message: 'Session expired. You have logged in from another device.' });
+            }
+        }
+
         req.user = user;
         next();
     });
@@ -900,7 +911,10 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
     try {
         const isMatch = await bcrypt.compare(pin, rider.pin);
         if (isMatch) {
-            const token = jwt.sign({ riderId: rider.riderId }, JWT_SECRET, { expiresIn: '24h' });
+            rider.tokenVersion = (rider.tokenVersion || 0) + 1;
+            dbHelpers.updateRider(rider.riderId, rider);
+
+            const token = jwt.sign({ riderId: rider.riderId, tokenVersion: rider.tokenVersion }, JWT_SECRET, { expiresIn: '24h' });
             res.json({ success: true, riderId: rider.riderId, token });
         } else {
             res.json({ success: false, message: 'Invalid phone number or PIN' });
