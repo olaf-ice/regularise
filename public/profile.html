@@ -665,8 +665,8 @@
                         <div style="width: 90px; height: 58px; border: 2px solid #f59e0b; border-radius: 4px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px; margin-bottom: 0.5rem; overflow: hidden;">
                             <div style="font-size: 0.28rem; font-weight: 900; color: #f59e0b; letter-spacing: 0.5px;">MYVAULT · EMERGENCY</div>
                             <div id="pvcPreviewName" style="font-size: 0.32rem; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">---</div>
-                            <div id="pvcPreviewMedical" style="font-size: 0.28rem; color: #ef4444; font-weight: 700;">Blood: --- | DOB: ---</div>
-                            <div id="pvcPreviewId" style="font-size: 0.25rem; color: #94a3b8;">ID: ---</div>
+                            <div id="pvcPreviewMedical" style="font-size: 0.26rem; color: #ef4444; font-weight: 700;">Blood: --- | Geno: ---</div>
+                            <div id="pvcPreviewId" style="font-size: 0.25rem; color: #94a3b8;">DOB: --- | ID: ---</div>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">PVC Emergency ID</span>
                         <button class="btn btn-outline" onclick="printPVCCard()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print PVC ID</button>
@@ -1670,8 +1670,8 @@ let hasExpired = false;
 
         // Update mini preview
         if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
-        if (document.getElementById('pvcPreviewMedical')) document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | DOB: ${_printRiderData.dob || '---'}`;
-        if (document.getElementById('pvcPreviewId')) document.getElementById('pvcPreviewId').textContent = `ID: ${rider.riderId}`;
+        if (document.getElementById('pvcPreviewMedical')) document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | Geno: ---`;
+        if (document.getElementById('pvcPreviewId')) document.getElementById('pvcPreviewId').textContent = `DOB: ${_printRiderData.dob || '---'} | ID: ${rider.riderId}`;
 
         // Generate live QR code in preview
         const qrContainer = document.getElementById('qrStickerPreview');
@@ -2107,8 +2107,8 @@ let hasExpired = false;
                         <div class="info-value blood-value">${d.bg}</div>
                     </div>
                     <div>
-                        <div class="info-label">Member ID</div>
-                        <div class="info-value" style="font-size:14px;">${d.riderId}</div>
+                        <div class="info-label">Genotype</div>
+                        <div class="info-value">---</div>
                     </div>
                     <div>
                         <div class="info-label">Phone</div>
