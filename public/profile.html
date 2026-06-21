@@ -864,6 +864,14 @@
                             document.getElementById('iceMedicalDirectiveBtn').style.display = 'none';
                         }
                     }
+                    
+                    // Update print data with full info
+                    if (typeof _printRiderData !== 'undefined') {
+                        _printRiderData.dob = (rider.medical && rider.medical.dateOfBirth) || rider.dob || '';
+                        if (document.getElementById('pvcPreviewId')) {
+                            document.getElementById('pvcPreviewId').textContent = `DOB: ${_printRiderData.dob || '---'} | ID: ${rider.riderId}`;
+                        }
+                    }
 
                     // Populate documents
                     populateDocuments(rider);
