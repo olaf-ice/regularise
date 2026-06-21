@@ -1425,9 +1425,9 @@ let hasExpired = false;
             kinPhone = rider.emergencyContact.phone || '---';
         }
 
-        const profileUrl = window.location.origin + '/profile.html?q=' + rider.riderId + '&view=emergency&v=2';
+        const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
 
-        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl, phone: rider.phone || '' };
+        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: rider.phone || '' };
 
         // Update mini preview
         if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
@@ -1439,7 +1439,8 @@ let hasExpired = false;
         if (qrContainer) {
             qrContainer.innerHTML = '';
             try {
-                new QRCode(qrContainer, { text: profileUrl, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+                // Use level L for faster scanning matching the overview QR code
+                new QRCode(qrContainer, { text: emergencyUrl, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
             } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
     }
