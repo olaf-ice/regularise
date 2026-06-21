@@ -477,30 +477,96 @@
                 </div>
             </div>
             
-            <div class="level-2-data" style="margin-top: 1rem;">
-                <div class="medical-vitals" style="margin-bottom: 0.85rem;">
-                    <div class="vital-box" style="grid-column: span 2; background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.22);">
-                        <span class="vital-label">Genotype</span>
-                        <span class="vital-value" style="color:var(--amber);" id="genotype">---</span>
-                    </div>
-                </div>
-                <div class="detail-grid">
-                    <div class="detail-item full">
-                        <span class="detail-label">Known Allergies</span>
-                        <span class="detail-value amber" id="allergies">---</span>
-                    </div>
-                    <div class="detail-item full">
-                        <span class="detail-label">Preferred Hospital</span>
-                        <span class="detail-value" id="hospital">---</span>
+            <div class="level-2-data" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
+                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">🩸 Core Medical Profile</h5>
+                    <div class="detail-grid">
+                        <div class="detail-item full" style="background:rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); border-radius: 0.5rem; padding: 0.5rem;">
+                            <span class="detail-label">Genotype</span>
+                            <span class="detail-value" style="color:var(--amber);font-weight:900;" id="genotype">---</span>
+                        </div>
+                        <div class="detail-item full">
+                            <span class="detail-label">Health Conditions</span>
+                            <span class="detail-value" id="conditions">---</span>
+                        </div>
+                        <div class="detail-item full">
+                            <span class="detail-label">Medications & Dosages</span>
+                            <span class="detail-value" id="medications">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Immunizations</span>
+                            <span class="detail-value" id="immunizations">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Body Metrics</span>
+                            <span class="detail-value" id="bodyMetrics">---</span>
+                        </div>
+                        <div class="detail-item full">
+                            <span class="detail-label">Identifying Marks</span>
+                            <span class="detail-value" id="identifyingMarks">---</span>
+                        </div>
                     </div>
                 </div>
 
-                <div id="emergencyDirectiveBlock" style="display:none; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 0.5rem;">
-                    <div style="color: var(--error); font-weight: 800; font-size: 0.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
-                        <span>⚠️</span> ADVANCE MEDICAL DIRECTIVE
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
+                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">🚨 Emergency & Critical Directives</h5>
+                    <div class="detail-grid">
+                        <div id="emergencyDirectiveBlock" class="detail-item full" style="display:none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 0.5rem; padding: 0.75rem;">
+                            <div style="color: var(--error); font-weight: 800; font-size: 0.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <span>⚠️</span> ADVANCE MEDICAL DIRECTIVE (NO BLOOD)
+                            </div>
+                            <div id="directiveStatement" style="font-size: 0.85rem; color: var(--text); font-style: italic; margin-bottom: 0.75rem; line-height: 1.4;"></div>
+                            <a id="directiveDocBtn" href="#" target="_blank" style="display:none; text-align: center; background: transparent; border: 1px solid var(--error); color: var(--error); padding: 0.5rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: 700; text-decoration: none;">VIEW OFFICIAL DOCUMENT</a>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Organ Donation</span>
+                            <span class="detail-value" id="organDonation">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Donor Restrictions</span>
+                            <span class="detail-value" id="donorRestrictions">---</span>
+                        </div>
                     </div>
-                    <div id="directiveStatement" style="font-size: 0.85rem; color: var(--text); font-style: italic; margin-bottom: 0.75rem; line-height: 1.4;"></div>
-                    <a id="directiveDocBtn" href="#" target="_blank" style="display:none; text-align: center; background: transparent; border: 1px solid var(--error); color: var(--error); padding: 0.5rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: 700; text-decoration: none;">VIEW OFFICIAL DOCUMENT</a>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
+                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">📋 Clinical History</h5>
+                    <div class="detail-grid">
+                        <div class="detail-item full">
+                            <span class="detail-label">Procedures & Surgeries</span>
+                            <span class="detail-value" id="surgeries">---</span>
+                        </div>
+                        <div class="detail-item full">
+                            <span class="detail-label">Recent Vitals</span>
+                            <span class="detail-value" id="recentVitals">---</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
+                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">🤝 Accessibility & Support</h5>
+                    <div class="detail-grid">
+                        <div class="detail-item full">
+                            <span class="detail-label">Communication Needs</span>
+                            <span class="detail-value" id="communicationNeeds">---</span>
+                        </div>
+                        <div class="detail-item full">
+                            <span class="detail-label">Primary Care Doctor</span>
+                            <span class="detail-value" id="primaryDoctor">---</span>
+                        </div>
+                        <div class="detail-item full">
+                            <span class="detail-label">Preferred Rescue Hospital</span>
+                            <span class="detail-value" id="hospital">---</span>
+                        </div>
+                        <div class="detail-item full">
+                            <span class="detail-label">Health Insurance</span>
+                            <span class="detail-value" id="healthInsurance">---</span>
+                        </div>
+                        <div class="detail-item full" id="healthInsuranceDocBlock" style="display: none; margin-top: 0.25rem;">
+                            <a id="healthInsuranceDocBtn" href="#" target="_blank" style="display:block; text-align: center; background: transparent; border: 1px solid var(--primary-light); color: var(--primary-light); padding: 0.5rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: 700; text-decoration: none;">VIEW INSURANCE CARD</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -898,8 +964,39 @@
             // Medical Details
             if (rider.medical) {
                 document.getElementById('genotype').textContent = rider.medical.genotype || '---';
-                document.getElementById('allergies').textContent = rider.medical.allergies || 'None reported';
+                document.getElementById('conditions').textContent = rider.medical.conditions || 'None reported';
+                document.getElementById('medications').textContent = rider.medical.medications || 'None reported';
+                document.getElementById('immunizations').textContent = rider.medical.immunizations || 'None reported';
+                
+                const bodyArr = [];
+                if (rider.medical.height) bodyArr.push(`H: ${rider.medical.height}`);
+                if (rider.medical.weight) bodyArr.push(`W: ${rider.medical.weight}`);
+                if (rider.medical.gender) bodyArr.push(`Sex: ${rider.medical.gender}`);
+                document.getElementById('bodyMetrics').textContent = bodyArr.length > 0 ? bodyArr.join(' | ') : 'Not specified';
+                
+                document.getElementById('identifyingMarks').textContent = rider.medical.identifyingMarks || 'None';
+                
+                // Directives
+                document.getElementById('organDonation').textContent = rider.medical.organDonor ? '✅ Yes' : '❌ No';
+                document.getElementById('donorRestrictions').textContent = rider.medical.donorRestrictions || 'None';
+                
+                // Clinical
+                document.getElementById('surgeries').textContent = rider.medical.surgeries || 'None reported';
+                document.getElementById('recentVitals').textContent = rider.medical.recentVitals || 'None reported';
+                
+                // Accessibility
+                document.getElementById('communicationNeeds').textContent = rider.medical.communicationNeeds || 'None reported';
+                const docStr = [rider.medical.primaryDoctorName, rider.medical.primaryDoctorPhone].filter(Boolean).join(' - ');
+                document.getElementById('primaryDoctor').textContent = docStr || 'Not specified';
                 document.getElementById('hospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                
+                const insStr = [rider.medical.healthInsuranceProvider, rider.medical.healthInsurancePolicy].filter(Boolean).join(' | No: ');
+                document.getElementById('healthInsurance').textContent = insStr || 'Not specified';
+
+                if (rider.documents && rider.documents.healthInsuranceDoc) {
+                    document.getElementById('healthInsuranceDocBlock').style.display = 'block';
+                    document.getElementById('healthInsuranceDocBtn').href = rider.documents.healthInsuranceDoc.url;
+                }
                 
                 if (rider.medical.advanceDirectiveStatement) {
                     document.getElementById('directiveStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';

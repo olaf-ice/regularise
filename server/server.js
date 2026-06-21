@@ -483,7 +483,8 @@ app.post('/api/agent/upload-docs/:riderId', authenticateAgentToken, upload.field
     { name: 'licenseDoc', maxCount: 1 },
     { name: 'bikePapers', maxCount: 1 },
     { name: 'insuranceDoc', maxCount: 1 },
-    { name: 'ninDoc', maxCount: 1 }
+    { name: 'ninDoc', maxCount: 1 },
+    { name: 'healthInsuranceDoc', maxCount: 1 }
 ]), (req, res) => {
     try {
         const riderId = req.params.riderId;
@@ -737,7 +738,8 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
     { name: 'insuranceDoc', maxCount: 1 },
     { name: 'bikePapers', maxCount: 1 },
     { name: 'ninDoc', maxCount: 1 },
-    { name: 'advanceDirectiveDoc', maxCount: 1 }
+    { name: 'advanceDirectiveDoc', maxCount: 1 },
+    { name: 'healthInsuranceDoc', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const riderId = req.params.riderId;
@@ -749,7 +751,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         const rider = dbHelpers.getRiderById(riderId);
         if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
         
-        const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber, refusesBloodTransfusion, advanceDirectiveStatement } = req.body;
+        const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber, refusesBloodTransfusion, advanceDirectiveStatement, conditions, medications, immunizations, height, weight, gender, identifyingMarks, primaryDoctorName, primaryDoctorPhone, hospitalPreference, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions } = req.body;
         
         if (name && name.trim() !== '' && riderId === 'RID-71447') {
             rider.name = name.trim();
@@ -762,7 +764,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
             rider.documents.passportPhoto = { url: `/uploads/${req.files.passportPhoto[0].filename}` };
         }
         
-        const docFields = ['licenseDoc', 'insuranceDoc', 'bikePapers', 'ninDoc', 'advanceDirectiveDoc'];
+        const docFields = ['licenseDoc', 'insuranceDoc', 'bikePapers', 'ninDoc', 'advanceDirectiveDoc', 'healthInsuranceDoc'];
         const docNumbers = { licenseDoc: licenseNumber, insuranceDoc: insuranceNumber, ninDoc: ninNumber };
         const docExpirations = { licenseDoc: licenseExpiry, insuranceDoc: insuranceExpiry };
         
@@ -811,6 +813,23 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         if (advanceDirectiveStatement !== undefined) {
             rider.medical.advanceDirectiveStatement = advanceDirectiveStatement;
         }
+        if (conditions !== undefined) rider.medical.conditions = conditions;
+        if (medications !== undefined) rider.medical.medications = medications;
+        if (immunizations !== undefined) rider.medical.immunizations = immunizations;
+        if (height !== undefined) rider.medical.height = height;
+        if (weight !== undefined) rider.medical.weight = weight;
+        if (gender !== undefined) rider.medical.gender = gender;
+        if (identifyingMarks !== undefined) rider.medical.identifyingMarks = identifyingMarks;
+        if (primaryDoctorName !== undefined) rider.medical.primaryDoctorName = primaryDoctorName;
+        if (primaryDoctorPhone !== undefined) rider.medical.primaryDoctorPhone = primaryDoctorPhone;
+        if (hospitalPreference !== undefined) rider.medical.hospitalPreference = hospitalPreference;
+        if (surgeries !== undefined) rider.medical.surgeries = surgeries;
+        if (recentVitals !== undefined) rider.medical.recentVitals = recentVitals;
+        if (communicationNeeds !== undefined) rider.medical.communicationNeeds = communicationNeeds;
+        if (healthInsuranceProvider !== undefined) rider.medical.healthInsuranceProvider = healthInsuranceProvider;
+        if (healthInsurancePolicy !== undefined) rider.medical.healthInsurancePolicy = healthInsurancePolicy;
+        if (organDonor !== undefined) rider.medical.organDonor = organDonor === 'true' || organDonor === true;
+        if (donorRestrictions !== undefined) rider.medical.donorRestrictions = donorRestrictions;
         
         // Update emergency contact
         rider.emergencyContact = rider.emergencyContact || {};
@@ -1065,13 +1084,14 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
     { name: 'proofOfOwnership', maxCount: 1 },
     { name: 'insuranceDoc', maxCount: 1 },
     { name: 'ninDoc', maxCount: 1 },
-    { name: 'medicalDirectiveDoc', maxCount: 1 }
+    { name: 'medicalDirectiveDoc', maxCount: 1 },
+    { name: 'healthInsuranceDoc', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const { 
             reference, 
             // Rider's own medical
-            riderBloodGroup, riderGenotype, riderAllergies, riderHospital,
+            riderBloodGroup, riderGenotype, riderAllergies, riderHospital, conditions, medications, immunizations, height, weight, gender, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions,
             // Emergency contact
             emergencyName, emergencyPhone, emergencyRel, emergencyAltPhone,
             bloodGroup, genotype,
@@ -1103,7 +1123,8 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
             bloodGroup: riderBloodGroup,
             genotype: riderGenotype,
             allergies: riderAllergies || 'None',
-            hospitalPreference: riderHospital || ''
+            hospitalPreference: riderHospital || '',
+            conditions, medications, immunizations, height, weight, gender, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor: organDonor === 'true' || organDonor === true, donorRestrictions
         };
 
         // Update Emergency Contact
@@ -1135,7 +1156,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
         };
 
         // Update Documents & Numbers
-        const fieldNames = ['passportPhoto', 'licenseDoc', 'bikePapers', 'proofOfOwnership', 'insuranceDoc', 'ninDoc', 'medicalDirectiveDoc'];
+        const fieldNames = ['passportPhoto', 'licenseDoc', 'bikePapers', 'proofOfOwnership', 'insuranceDoc', 'ninDoc', 'medicalDirectiveDoc', 'healthInsuranceDoc'];
         const docNumbers = {
             licenseDoc: licenseNumber,
             insuranceDoc: insuranceNumber,

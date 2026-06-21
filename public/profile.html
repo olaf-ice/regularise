@@ -390,29 +390,71 @@
                     <span id="iceMedicalSummaryBadge" style="font-size: 0.65rem; font-weight: 900; background: var(--error); color: white; padding: 0.15rem 0.5rem; border-radius: 0.25rem;">---</span>
                 </div>
                 
-                <!-- Medical Vitals Grid (Level 2 locked by default) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-                    <div>
-                        <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Blood Group</span>
-                        <span id="iceBloodGroup" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span>
+                <!-- Advanced Medical Data (Level 2 locked by default) -->
+                <div class="level-2-data" style="display: none; display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;">
+                    
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 1rem;">
+                        <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.35rem;">🩸 Core Medical Profile</h5>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Blood Group</span>
+                            <span id="iceBloodGroup" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Genotype</span>
+                            <span id="iceGenotype" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span></div>
+                            <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Health Conditions</span>
+                            <span id="iceConditions" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Medications</span>
+                            <span id="iceMedications" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Immunizations</span>
+                            <span id="iceImmunizations" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Body Metrics</span>
+                            <span id="iceBodyMetrics" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Identifying Marks</span>
+                            <span id="iceIdentifyingMarks" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                        </div>
                     </div>
-                    <div class="level-2-data" style="display: none;">
-                        <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Genotype</span>
-                        <span id="iceGenotype" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span>
+
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 1rem;">
+                        <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.35rem;">🚨 Emergency & Critical Directives</h5>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+                            <div id="iceMedicalDirectiveBlock" style="display: none; background: rgba(239, 68, 68, 0.15); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--error);">
+                                <span style="color: var(--error); font-size: 0.7rem; text-transform: uppercase; display: block; font-weight: 800; margin-bottom: 0.3rem;">⚠️ ADVANCE DIRECTIVE (NO BLOOD)</span>
+                                <p id="iceMedicalStatement" style="font-size: 0.75rem; color: var(--text); margin-bottom: 0.5rem; font-style: italic;"></p>
+                                <a id="iceMedicalDirectiveBtn" href="#" target="_blank" class="btn btn-outline" style="border-color: var(--error); color: var(--error); padding: 0.3rem 0.6rem; font-size: 0.7rem; width: 100%;">View Uploaded Document</a>
+                            </div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Organ Donation</span>
+                            <span id="iceOrganDonation" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Donor Restrictions</span>
+                            <span id="iceDonorRestrictions" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                        </div>
                     </div>
-                    <div class="level-2-data" style="grid-column: span 2; display: none;">
-                        <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Known Allergies</span>
-                        <span id="iceAllergies" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span>
+
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 1rem;">
+                        <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.35rem;">📋 Clinical History</h5>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Procedures & Surgeries</span>
+                            <span id="iceSurgeries" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Recent Vitals</span>
+                            <span id="iceRecentVitals" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                        </div>
                     </div>
-                    <div class="level-2-data" style="grid-column: span 2; display: none;">
-                        <span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block; font-weight: 600;">Preferred Rescue Hospital</span>
-                        <span id="iceHospital" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span>
+
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.75rem; padding: 1rem;">
+                        <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.35rem;">🤝 Accessibility & Support</h5>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Communication Needs</span>
+                            <span id="iceCommunicationNeeds" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Primary Care Doctor</span>
+                            <span id="icePrimaryDoctor" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Preferred Hospital</span>
+                            <span id="iceHospital" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Health Insurance</span>
+                            <span id="iceHealthInsurance" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div id="iceHealthInsuranceDocBlock" style="grid-column: span 2; display: none; margin-top: 0.25rem;">
+                                <a id="iceHealthInsuranceDocBtn" href="#" target="_blank" class="btn btn-outline" style="border-color: var(--primary-light); color: var(--primary-light); padding: 0.3rem 0.6rem; font-size: 0.7rem; width: 100%;">View Insurance Card</a>
+                            </div>
+                        </div>
                     </div>
-                    <div id="iceMedicalDirectiveBlock" class="level-2-data" style="grid-column: span 2; display: none; background: rgba(239, 68, 68, 0.15); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--error); margin-top: 0.5rem;">
-                        <span style="color: var(--error); font-size: 0.7rem; text-transform: uppercase; display: block; font-weight: 800; margin-bottom: 0.3rem;">⚠️ ADVANCE DIRECTIVE (NO BLOOD)</span>
-                        <p id="iceMedicalStatement" style="font-size: 0.75rem; color: var(--text); margin-bottom: 0.5rem; font-style: italic;"></p>
-                        <a id="iceMedicalDirectiveBtn" href="#" target="_blank" class="btn btn-outline" style="border-color: var(--error); color: var(--error); padding: 0.3rem 0.6rem; font-size: 0.7rem; width: 100%;">View Uploaded Document</a>
-                    </div>
+
                 </div>
 
                 <!-- Next of Kin Primary Call Button -->
@@ -753,8 +795,40 @@
                     // Populate hidden data
                     if (rider.medical) {
                         document.getElementById('iceGenotype').textContent = rider.medical.genotype || '---';
-                        document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None reported';
+                        document.getElementById('iceConditions').textContent = rider.medical.conditions || 'None reported';
+                        document.getElementById('iceMedications').textContent = rider.medical.medications || 'None reported';
+                        document.getElementById('iceImmunizations').textContent = rider.medical.immunizations || 'None reported';
+                        
+                        const bodyArr = [];
+                        if (rider.medical.height) bodyArr.push(`H: ${rider.medical.height}`);
+                        if (rider.medical.weight) bodyArr.push(`W: ${rider.medical.weight}`);
+                        if (rider.medical.gender) bodyArr.push(`Sex: ${rider.medical.gender}`);
+                        document.getElementById('iceBodyMetrics').textContent = bodyArr.length > 0 ? bodyArr.join(' | ') : 'Not specified';
+                        
+                        document.getElementById('iceIdentifyingMarks').textContent = rider.medical.identifyingMarks || 'None';
+                        
+                        // Directives
+                        document.getElementById('iceOrganDonation').textContent = rider.medical.organDonor ? '✅ Yes' : '❌ No';
+                        document.getElementById('iceDonorRestrictions').textContent = rider.medical.donorRestrictions || 'None';
+                        
+                        // Clinical
+                        document.getElementById('iceSurgeries').textContent = rider.medical.surgeries || 'None reported';
+                        document.getElementById('iceRecentVitals').textContent = rider.medical.recentVitals || 'None reported';
+                        
+                        // Accessibility
+                        document.getElementById('iceCommunicationNeeds').textContent = rider.medical.communicationNeeds || 'None reported';
+                        const docStr = [rider.medical.primaryDoctorName, rider.medical.primaryDoctorPhone].filter(Boolean).join(' - ');
+                        document.getElementById('icePrimaryDoctor').textContent = docStr || 'Not specified';
                         document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                        
+                        const insStr = [rider.medical.healthInsuranceProvider, rider.medical.healthInsurancePolicy].filter(Boolean).join(' | No: ');
+                        document.getElementById('iceHealthInsurance').textContent = insStr || 'Not specified';
+
+                        if (rider.documents && rider.documents.healthInsuranceDoc) {
+                            document.getElementById('iceHealthInsuranceDocBlock').style.display = 'block';
+                            document.getElementById('iceHealthInsuranceDocBtn').href = rider.documents.healthInsuranceDoc.url;
+                        }
+
                         if (rider.medical.advanceDirectiveStatement) {
                             document.getElementById('iceMedicalStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
                             document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
@@ -983,6 +1057,7 @@
 
                 if (data.success) {
                     const rider = data.rider;
+                    window.globalRiderData = rider; // Store globally for edit modal
                     currentRiderId = rider.riderId;
                     currentRiderName = rider.name;
                     const vehicleInfo = rider.vehicle || rider.bike || {};
@@ -1244,6 +1319,8 @@ let hasExpired = false;
                 <label>Upload New Profile Picture</label>
                 <input type="file" id="editPic" name="passportPhoto" accept="image/*">
             </div>
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">🩸 Core Medical Profile</h4>
             <div class="input-group">
                 <label>Blood Type</label>
                 <select id="editBloodType" name="bloodType">
@@ -1255,9 +1332,87 @@ let hasExpired = false;
                 </select>
             </div>
             <div class="input-group">
-                <label>Allergies / Conditions</label>
-                <input type="text" id="editAllergies" name="allergies">
+                <label>Health Conditions</label>
+                <textarea id="editConditions" name="conditions" placeholder="e.g. Asthma, Diabetes..." rows="2" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text); padding: 0.75rem; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
             </div>
+            <div class="input-group">
+                <label>Medications & Dosages</label>
+                <textarea id="editMedications" name="medications" placeholder="e.g. Inhaler twice daily" rows="2" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text); padding: 0.75rem; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
+            </div>
+            <div class="input-group">
+                <label>Immunizations</label>
+                <input type="text" id="editImmunizations" name="immunizations" placeholder="e.g. Tetanus, Hep B">
+            </div>
+            <div class="input-group">
+                <label>Body Metrics</label>
+                <div style="display:flex;gap:0.5rem;">
+                    <input type="text" id="editHeight" name="height" placeholder="Height">
+                    <input type="text" id="editWeight" name="weight" placeholder="Weight">
+                    <input type="text" id="editGender" name="gender" placeholder="Gender">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Identifying Marks (Scars, Tattoos)</label>
+                <input type="text" id="editIdentifyingMarks" name="identifyingMarks">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">🚨 Emergency Directives</h4>
+            <div class="input-group" style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="margin-bottom: 0;">Organ Donor</label>
+                <label class="switch">
+                    <input type="checkbox" id="editOrganDonor" name="organDonor" value="true">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="input-group">
+                <label>Donor Restrictions (Optional)</label>
+                <input type="text" id="editDonorRestrictions" name="donorRestrictions">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">📋 Clinical History</h4>
+            <div class="input-group">
+                <label>Procedures & Surgeries</label>
+                <textarea id="editSurgeries" name="surgeries" rows="2" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text); padding: 0.75rem; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
+            </div>
+            <div class="input-group">
+                <label>Recent Vitals / Baselines</label>
+                <input type="text" id="editRecentVitals" name="recentVitals" placeholder="e.g. BP 120/80">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">🤝 Accessibility & Support</h4>
+            <div class="input-group">
+                <label>Communication Needs (Hearing, Autism, Speech)</label>
+                <input type="text" id="editCommunicationNeeds" name="communicationNeeds">
+            </div>
+            <div class="input-group">
+                <label>Primary Care Doctor</label>
+                <div style="display:flex;gap:0.5rem;">
+                    <input type="text" id="editPrimaryDoctorName" name="primaryDoctorName" placeholder="Dr. Name">
+                    <input type="tel" id="editPrimaryDoctorPhone" name="primaryDoctorPhone" placeholder="Phone">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Preferred Hospital</label>
+                <input type="text" id="editHospitalPreference" name="hospitalPreference">
+            </div>
+            <div class="input-group">
+                <label>Health Insurance Provider</label>
+                <input type="text" id="editHealthInsuranceProvider" name="healthInsuranceProvider">
+            </div>
+            <div class="input-group">
+                <label>Health Insurance Policy No.</label>
+                <input type="text" id="editHealthInsurancePolicy" name="healthInsurancePolicy">
+            </div>
+            <div class="input-group">
+                <label>Upload Health Insurance Card</label>
+                <input type="file" id="editHealthInsuranceDoc" name="healthInsuranceDoc" accept="image/*,application/pdf">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 1.5rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-light);">Emergency Contact (Next of Kin)</h4>
             <div class="input-group">
                 <label>Emergency Contact Name</label>
                 <input type="text" id="editKinName" name="emergencyContactName">
@@ -1364,8 +1519,26 @@ let hasExpired = false;
         }
 
         // Pre-fill
+        const med = (window.globalRiderData && window.globalRiderData.medical) || {};
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
-        document.getElementById('editAllergies').value = document.getElementById('iceAllergies').textContent;
+        document.getElementById('editConditions').value = med.conditions || '';
+        document.getElementById('editMedications').value = med.medications || '';
+        document.getElementById('editImmunizations').value = med.immunizations || '';
+        document.getElementById('editHeight').value = med.height || '';
+        document.getElementById('editWeight').value = med.weight || '';
+        document.getElementById('editGender').value = med.gender || '';
+        document.getElementById('editIdentifyingMarks').value = med.identifyingMarks || '';
+        document.getElementById('editOrganDonor').checked = !!med.organDonor;
+        document.getElementById('editDonorRestrictions').value = med.donorRestrictions || '';
+        document.getElementById('editSurgeries').value = med.surgeries || '';
+        document.getElementById('editRecentVitals').value = med.recentVitals || '';
+        document.getElementById('editCommunicationNeeds').value = med.communicationNeeds || '';
+        document.getElementById('editPrimaryDoctorName').value = med.primaryDoctorName || '';
+        document.getElementById('editPrimaryDoctorPhone').value = med.primaryDoctorPhone || '';
+        document.getElementById('editHospitalPreference').value = med.hospitalPreference || '';
+        document.getElementById('editHealthInsuranceProvider').value = med.healthInsuranceProvider || '';
+        document.getElementById('editHealthInsurancePolicy').value = med.healthInsurancePolicy || '';
+        
         document.getElementById('editKinName').value = document.getElementById('iceKinName').textContent;
         
         // Advance Directive Prefill
