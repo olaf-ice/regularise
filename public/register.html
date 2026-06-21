@@ -103,16 +103,7 @@
                         </div>
                     </div>
 
-                    <div class="input-group">
-                        <label for="union">Union Affiliation</label>
-                        <select id="union" name="union" required>
-                            <option value="">Select Union</option>
-                            <option value="none">Independent</option>
-                            <option value="ANR">Amalgamated Network Riders</option>
-                            <option value="MRON">Motorcycle Riders Association of Nigeria</option>
-                            <option value="OTHER">Other</option>
-                        </select>
-                    </div>
+
 
                     <div class="input-group">
                         <label for="pin">Create 4-Digit Profile PIN</label>
@@ -141,20 +132,15 @@
             const userType = document.getElementById('userType').value;
             const vehicleTypeGroup = document.getElementById('vehicleType').closest('.input-group');
             const plateNumberGroup = document.getElementById('plateNumber').closest('.input-group');
-            const unionGroup = document.getElementById('union').closest('.input-group');
             
             if (userType === 'non-driver') {
                 vehicleTypeGroup.style.display = 'none';
                 document.getElementById('vehicleType').removeAttribute('required');
                 plateNumberGroup.style.display = 'none';
-                unionGroup.style.display = 'none';
-                document.getElementById('union').removeAttribute('required');
             } else {
                 vehicleTypeGroup.style.display = 'block';
                 document.getElementById('vehicleType').setAttribute('required', 'true');
                 plateNumberGroup.style.display = 'block';
-                unionGroup.style.display = 'block';
-                document.getElementById('union').setAttribute('required', 'true');
             }
         }
 

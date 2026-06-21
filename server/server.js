@@ -191,7 +191,6 @@ async function saveToGoogleSheets(rider) {
             address: rider.address || '',
             dob: rider.dob || '',
             plateNumber: rider.plateNumber,
-            union: rider.union,
             status: rider.status,
             reference: rider.reference,
             expiryDate: rider.expiryDate || '',
@@ -258,10 +257,6 @@ setInterval(() => {
                 { name: 'Vehicle Insurance', doc: rider.documents.insuranceDoc }
             ];
 
-            // Also check Union Dues if we have an expiry date for it
-            if (rider.unionDuesExpiry === targetDateStr) {
-                sendSMS(rider.phone, `Hello ${rider.name}, your Union Dues will expire in 14 days (${targetDateStr}). Please renew to stay compliant.`);
-            }
 
             docsToCheck.forEach(item => {
                 if (item.doc && item.doc.expiryDate === targetDateStr) {
@@ -442,7 +437,7 @@ app.post('/api/agent/register-rider', authenticateAgentToken, [
             return res.status(403).json({ success: false, message: 'Registration is currently closed until July 1st. Join our early access waitlist!' });
         }
 
-        const { name, phone, altPhone, address, dob, plateNumber, union, userType, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, userType, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone } = req.body;
         if (dbHelpers.getRiderByPhone(phone)) return res.status(400).json({ success: false, message: 'Phone number already registered' });
 
         // Generate random PIN if agent didn't provide one
@@ -454,7 +449,7 @@ app.post('/api/agent/register-rider', authenticateAgentToken, [
         const reference = `PAY-${Date.now()}`;
         
         const newRider = {
-            riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '', union: union || '',
+            riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '',
             pin: hashedPin,
             userType: userType || 'driver',
             registrationDate: new Date().toISOString().split('T')[0],
@@ -795,7 +790,6 @@ app.get('/api/verify/:query', (req, res) => {
             phone: rider.phone,
             riderId: rider.riderId,
             userType: rider.userType || 'driver',
-            union: rider.union,
             status: rider.status,
             expiryDate: rider.expiryDate,
             vehicleType: rider.vehicleType,
@@ -963,7 +957,7 @@ app.post('/api/register', authLimiter, [
             return res.status(403).json({ success: false, message: 'Registration is currently closed until July 1st. Join our early access waitlist!' });
         }
 
-        const { name, phone, altPhone, address, dob, plateNumber, union, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, userType } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, userType } = req.body;
         
         if (dbHelpers.getRiderByPhone(phone)) {
             return res.status(400).json({ success: false, message: 'Phone number already registered' });
@@ -976,7 +970,7 @@ app.post('/api/register', authLimiter, [
         const riderId = `RID-${Math.floor(10000 + Math.random() * 90000)}`;
         const reference = `PAY-${Date.now()}`;
         const newRider = {
-            riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '', union: union || '',
+            riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '',
             pin: hashedPin,
             userType: userType || 'driver',
             registrationDate: new Date().toISOString().split('T')[0],
@@ -1119,9 +1113,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
             }
         });
 
-        if (req.body.unionDuesExpiry) {
-            rider.unionDuesExpiry = req.body.unionDuesExpiry;
-        }
+
 
         dbHelpers.updateRider(riderId, rider);
         saveToGoogleSheets(rider); 

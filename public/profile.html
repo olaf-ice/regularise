@@ -333,10 +333,6 @@
                         <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Phone</span>
                         <span id="riderPhone" style="font-weight: 600;">---</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
-                        <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Union Branch</span>
-                        <span id="riderUnion" style="font-weight: 600;">---</span>
-                    </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">MyVault Validity</span>
                         <span id="riderExpiry" style="font-weight: 700; color: var(--primary-light);">---</span>
@@ -1032,14 +1028,12 @@
                     document.getElementById('riderPlate').textContent = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
                     document.getElementById('riderId').textContent = rider.riderId;
                     document.getElementById('riderPhone').textContent = rider.phone;
-                    document.getElementById('riderUnion').textContent = rider.union;
                     document.getElementById('riderExpiry').textContent = rider.expiryDate ? "VALID UNTIL " + rider.expiryDate : 'EXPIRED / INACTIVE';
 
                     // Terminology Adaptation
                     if (isNonDriver) {
                         document.getElementById('riderPlate').style.display = 'none';
                         document.getElementById('bikeSection').style.display = 'none';
-                        document.getElementById('riderUnion').parentElement.style.display = 'none';
                         document.getElementById('checkpointSummaryRing').style.display = 'none';
                         document.getElementById('stickerDescriptionText').textContent = 'Get print-ready assets for your personal emergency ID.';
                         const stickerLabel = document.getElementById('stickerTitleLabel');
@@ -1121,8 +1115,7 @@
                             bikePapers: { title: isCar ? "Car Reg. Papers" : "Motorcycle Reg. Papers", icon: "📑" },
                             proofOfOwnership: { title: "Proof of Ownership", icon: "📜" },
                             insuranceDoc: { title: "Insurance Certificate", icon: "🛡️" },
-                            ninDoc: { title: "NIN Slip / National ID", icon: "🆔" },
-                            unionId: { title: isCar ? "Driver Union ID Card" : "Union ID Card", icon: "🤝" }
+                            ninDoc: { title: "NIN Slip / National ID", icon: "🆔" }
                         };
 
                         let hasDocs = false;
@@ -1158,33 +1151,6 @@
                                     docList.appendChild(docDiv);
                                 }
                             }
-                        }
-
-                        if (fullRider.unionDuesExpiry) {
-                            hasDocs = true;
-                            const comp = getCompliance(fullRider.unionDuesExpiry);
-                            const docDiv = document.createElement('div');
-                            docDiv.className = 'wallet-card';
-                            docDiv.style.borderLeft = `4px solid ${comp.color}`;
-                            
-                            docDiv.innerHTML = `
-                                <div class="wallet-card-header">
-                                    <span class="wallet-card-title">Union Membership</span>
-                                    <span class="wallet-card-icon">🤝</span>
-                                </div>
-                                <div class="wallet-card-body">
-                                    <div class="wallet-card-info">
-                                        <span class="wallet-card-label">Status</span>
-                                        <span class="wallet-card-value" style="color: var(--primary-light);">Verified Member</span>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div class="wallet-card-status" style="background: ${comp.color}20; color: ${comp.color}; margin-bottom: 0.5rem;">
-                                            ${comp.ring || '🤝'} ${comp.label}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            docList.appendChild(docDiv);
                         }
 
                         if (!hasDocs) {
