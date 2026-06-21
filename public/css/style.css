@@ -468,43 +468,64 @@ input:focus, select:focus {
     color: var(--text-muted);
 }
 
-/* Risks Section */
+/* Premium Risks Section */
 .risks-section {
-    background: rgba(239, 68, 68, 0.05);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin: 2rem 0;
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.08), rgba(0, 0, 0, 0.2));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    border-radius: 20px;
+    padding: 2rem;
+    margin: 2.5rem 0;
     text-align: left;
+    box-shadow: 0 10px 30px -10px rgba(239, 68, 68, 0.1);
 }
 
 .risks-title {
     color: #ef4444;
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 1.75rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    letter-spacing: -0.5px;
 }
 
 .risk-item {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.9rem;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
     color: var(--text-muted);
-    line-height: 1.5;
+    line-height: 1.6;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .risk-item:last-child {
     margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
 }
 
 .risk-icon {
-    color: #ef4444;
-    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 10px;
+    font-size: 1.2rem;
     flex-shrink: 0;
-    margin-top: 0.1rem;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.risk-content strong {
+    display: block;
+    color: #f8fafc;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
 }
