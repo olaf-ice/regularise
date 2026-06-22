@@ -7,7 +7,7 @@
     <!-- Open Graph / WhatsApp / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://myvault.com.ng/">
-    <meta property="og:title" content="MyVault | Your Life. Secured in One Vault.">
+    <meta property="og:title" content="MyVault | When Emergencies Happen, You're Not Unknown">
     <meta property="og:description" content="Secure and authenticate your digital identity with MyVault.">
     <meta property="og:image" itemprop="image" content="https://myvault.com.ng/assets/logo.png">
     <meta property="og:image:type" content="image/png">
@@ -17,12 +17,25 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://myvault.com.ng/">
-    <meta property="twitter:title" content="MyVault | Your Life. Secured in One Vault.">
+    <meta property="twitter:title" content="MyVault | When Emergencies Happen, You're Not Unknown">
     <meta property="twitter:description" content="Secure and authenticate your digital identity with MyVault.">
     <meta property="twitter:image" content="https://myvault.com.ng/assets/logo.png">
 
     <!-- Use similar aesthetics as main site, but distinct header -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Prevent Copy & Right Click -->
+    <style>
+        body {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+        }
+    </style>
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('copy', event => event.preventDefault());
+    </script>
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen font-sans">
 
