@@ -267,6 +267,7 @@
             <button class="tab-btn" onclick="switchTab('wallet')">Document Vault 🔒</button>
             <button class="tab-btn" onclick="switchTab('emergency')">Emergency</button>
             <button class="tab-btn" onclick="switchTab('printables')">Printables 🔒</button>
+            <button class="tab-btn" onclick="switchTab('security')">Security 🔒</button>
         </div>
         
         <div id="tab-overview" class="tab-content active">
@@ -644,6 +645,30 @@
             </div>
 
             </div>
+
+<div id="tab-security" class="tab-content">
+    <div class="glass-card no-print" style="padding: 1.5rem; text-align: left; margin-top: 1.5rem;">
+        <h4 style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 0.88rem; letter-spacing: 1px; font-weight: 800;">🔒 SECURITY & LOGIN</h4>
+        <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1.25rem;">Change your login PIN to keep your account secure.</p>
+        <form id="changePinForm" onsubmit="handleChangePin(event)">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 600;">Current PIN</label>
+                <input type="password" id="currentPin" required maxlength="4" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; letter-spacing: 5px; text-align: center; font-size: 1.5rem;" inputmode="numeric" pattern="[0-9]*">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 600;">New PIN (4 Digits)</label>
+                <input type="password" id="newPin" required maxlength="4" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; letter-spacing: 5px; text-align: center; font-size: 1.5rem;" inputmode="numeric" pattern="[0-9]*">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 600;">Confirm New PIN</label>
+                <input type="password" id="confirmNewPin" required maxlength="4" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; letter-spacing: 5px; text-align: center; font-size: 1.5rem;" inputmode="numeric" pattern="[0-9]*">
+            </div>
+            <button type="submit" class="btn btn-primary" id="changePinBtn" style="width: 100%;">Update PIN</button>
+            <div id="changePinMsg" style="margin-top: 10px; font-size: 0.8rem; text-align: center; font-weight: bold;"></div>
+        </form>
+    </div>
+</div>
+
 <div id="tab-printables" class="tab-content"><div class="glass-card no-print" id="physicalAssetsCard" style="padding: 1.5rem; text-align: left; margin-top: 1.5rem;">
                 <h4 style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 0.88rem; letter-spacing: 1px; font-weight: 800;">🎫 PHYSICAL-DIGITAL TAG GENERATOR</h4>
                 <p id="stickerDescriptionText" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1.25rem;">Get print-ready assets to connect your bike, helmet, or physical wristband directly to MyVault.</p>
@@ -2200,5 +2225,58 @@ let hasExpired = false;
             btn.textContent = 'Save Changes'; btn.disabled = false;
         }
     });
+
+    async function handleChangePin(e) {
+        e.preventDefault();
+        const currentPin = document.getElementById('currentPin').value;
+        const newPin = document.getElementById('newPin').value;
+        const confirmNewPin = document.getElementById('confirmNewPin').value;
+        const msgEl = document.getElementById('changePinMsg');
+        const btn = document.getElementById('changePinBtn');
+
+        msgEl.textContent = '';
+        msgEl.style.color = '';
+
+        if (newPin !== confirmNewPin) {
+            msgEl.textContent = 'New PIN and confirm PIN do not match.';
+            msgEl.style.color = 'var(--error)';
+            return;
+        }
+        if (newPin.length < 4) {
+            msgEl.textContent = 'New PIN must be at least 4 digits.';
+            msgEl.style.color = 'var(--error)';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Updating...';
+
+        try {
+            const res = await fetch('/api/rider/change-pin', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('riderToken') 
+                },
+                body: JSON.stringify({ currentPin, newPin })
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                msgEl.textContent = 'PIN successfully updated!';
+                msgEl.style.color = '#34d399'; // Success color
+                document.getElementById('changePinForm').reset();
+            } else {
+                msgEl.textContent = result.message || 'Failed to update PIN.';
+                msgEl.style.color = 'var(--error)';
+            }
+        } catch (err) {
+            msgEl.textContent = 'Connection error. Please try again.';
+            msgEl.style.color = 'var(--error)';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Update PIN';
+        }
+    }
 </script>
 </body></html>

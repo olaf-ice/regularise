@@ -1246,6 +1246,33 @@ app.post('/api/payment/verify', async (req, res) => {
     }
 });
 
+// 5. Change PIN Route
+app.post('/api/rider/change-pin', authenticateToken, async (req, res) => {
+    try {
+        const { currentPin, newPin } = req.body;
+        const riderId = req.user.riderId;
+        const rider = dbHelpers.getRiderById(riderId);
+
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+        
+        if (rider.pin !== currentPin) {
+            return res.status(400).json({ success: false, message: 'Current PIN is incorrect' });
+        }
+
+        if (!newPin || newPin.length < 4) {
+            return res.status(400).json({ success: false, message: 'New PIN must be at least 4 digits' });
+        }
+
+        rider.pin = newPin;
+        dbHelpers.updateRider(riderId, rider);
+
+        res.json({ success: true, message: 'PIN updated successfully' });
+    } catch (err) {
+        console.error('Change PIN error:', err);
+        res.status(500).json({ success: false, message: 'Failed to update PIN' });
+    }
+});
+
 // Start Server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://127.0.0.1:${PORT}`);
