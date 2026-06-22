@@ -1255,7 +1255,8 @@ app.post('/api/rider/change-pin', authenticateToken, async (req, res) => {
 
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
         
-        if (rider.pin !== currentPin) {
+        const isMatch = await bcrypt.compare(currentPin, rider.pin);
+        if (!isMatch) {
             return res.status(400).json({ success: false, message: 'Current PIN is incorrect' });
         }
 
@@ -1263,7 +1264,8 @@ app.post('/api/rider/change-pin', authenticateToken, async (req, res) => {
             return res.status(400).json({ success: false, message: 'New PIN must be at least 4 digits' });
         }
 
-        rider.pin = newPin;
+        const salt = await bcrypt.genSalt(10);
+        rider.pin = await bcrypt.hash(newPin, salt);
         dbHelpers.updateRider(riderId, rider);
 
         res.json({ success: true, message: 'PIN updated successfully' });
