@@ -1152,11 +1152,43 @@ document.addEventListener('DOMContentLoaded', () => {
         banner.style.display = 'none';
     });
 
-    document.getElementById('ndpr-reject').addEventListener('click', () => {
-        localStorage.setItem('ndpr_consent', 'rejected');
-        banner.style.display = 'none';
+        document.getElementById('ndpr-reject').addEventListener('click', () => {
+            localStorage.setItem('ndpr_consent', 'rejected');
+            banner.style.display = 'none';
+        });
     });
-});
+
+    // --- Security Features (Anti-Screenshot) ---
+    (function initSecurityFeatures() {
+        // Anti-Screenshot Overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'screenshot-overlay';
+        overlay.innerHTML = 'Content hidden for security purposes.';
+        Object.assign(overlay.style, {
+            display: 'none', position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'black', color: 'white', zIndex: 99999, alignItems: 'center',
+            justifyContent: 'center', fontSize: '1.5rem', textAlign: 'center', padding: '2rem'
+        });
+        document.body.appendChild(overlay);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                overlay.style.display = 'flex';
+            } else {
+                overlay.style.display = 'none';
+            }
+        });
+
+        // Anti-Copy/Print
+        const style = document.createElement('style');
+        style.innerHTML = `
+            body { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
+            @media print { body { display: none !important; } }
+        `;
+        document.head.appendChild(style);
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+    })();
 </script>
 
 </body>

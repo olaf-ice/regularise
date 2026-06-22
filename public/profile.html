@@ -689,6 +689,22 @@
             <div id="changePinMsg" style="margin-top: 10px; font-size: 0.8rem; text-align: center; font-weight: bold;"></div>
         </form>
     </div>
+    
+    <div class="glass-card no-print" style="padding: 1.5rem; text-align: left; margin-top: 1.5rem;">
+        <h4 style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 0.88rem; letter-spacing: 1px; font-weight: 800;">🚨 ONE-TIME EMERGENCY LINK</h4>
+        <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1.25rem;">Generate a temporary, one-time link that gives first responders access to your emergency profile. The link expires after one use.</p>
+        <button class="btn btn-primary" id="generateEmergencyLinkBtn" onclick="generateEmergencyLink()" style="width: 100%; background: #fbbf24; color: black; border: none; box-shadow: none;">Generate Link</button>
+        <div id="emergencyLinkContainer" style="display: none; margin-top: 1rem; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border); word-break: break-all; font-family: monospace; font-size: 0.85rem; color: var(--primary-light);"></div>
+    </div>
+
+    <div class="glass-card no-print" style="padding: 1.5rem; text-align: left; margin-top: 1.5rem;">
+        <h4 style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 0.88rem; letter-spacing: 1px; font-weight: 800;">🕵️ ACCESS LOGS</h4>
+        <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1.25rem;">See who accessed your data, when, and from where.</p>
+        <button class="btn" onclick="fetchAccessLogs()" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: white;">Refresh Logs</button>
+        <div id="accessLogsContainer" style="margin-top: 1rem; max-height: 250px; overflow-y: auto; font-size: 0.75rem; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(0,0,0,0.2);">
+            <div style="padding: 1rem; text-align: center; color: var(--text-muted);">No logs fetched yet.</div>
+        </div>
+    </div>
 </div>
 
 <div id="tab-printables" class="tab-content"><div class="glass-card no-print" id="physicalAssetsCard" style="padding: 1.5rem; text-align: left; margin-top: 1.5rem;">
@@ -2384,11 +2400,132 @@ document.addEventListener('DOMContentLoaded', () => {
         banner.style.display = 'none';
     });
 
-    document.getElementById('ndpr-reject').addEventListener('click', () => {
-        localStorage.setItem('ndpr_consent', 'rejected');
-        banner.style.display = 'none';
+        document.getElementById('ndpr-reject').addEventListener('click', () => {
+            localStorage.setItem('ndpr_consent', 'rejected');
+            banner.style.display = 'none';
+        });
     });
-});
+
+    async function fetchAccessLogs() {
+        const container = document.getElementById('accessLogsContainer');
+        container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Loading logs...</div>';
+        
+        try {
+            const res = await fetch(`/api/riders/${currentRiderId}/access-logs`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                if (data.logs.length === 0) {
+                    container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">No access logs found.</div>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; text-align: left;">';
+                html += '<tr style="border-bottom: 1px solid var(--glass-border);"><th style="padding: 0.5rem;">Time</th><th style="padding: 0.5rem;">Action</th><th style="padding: 0.5rem;">IP</th></tr>';
+                
+                data.logs.forEach(log => {
+                    const date = new Date(log.timestamp).toLocaleString();
+                    html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.5rem;">${date}</td>
+                        <td style="padding: 0.5rem; color: var(--primary-light);">${log.location || 'Access'}</td>
+                        <td style="padding: 0.5rem; color: var(--text-muted);">${log.ip}</td>
+                    </tr>`;
+                });
+                
+                html += '</table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<div style="padding: 1rem; text-align: center; color: #ef4444;">${data.message}</div>`;
+            }
+        } catch (err) {
+            container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #ef4444;">Failed to fetch logs.</div>';
+        }
+    }
+    
+    async function generateEmergencyLink() {
+        const btn = document.getElementById('generateEmergencyLinkBtn');
+        const container = document.getElementById('emergencyLinkContainer');
+        
+        btn.textContent = 'Generating...';
+        btn.disabled = true;
+        
+        try {
+            const res = await fetch(`/api/riders/${currentRiderId}/emergency-link`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                container.style.display = 'block';
+                container.innerHTML = `<strong>One-Time Link (Valid for 1 view):</strong><br><br><a href="${data.link}" target="_blank" style="color: var(--primary-light);">${data.link}</a>`;
+            } else {
+                alert(data.message || 'Failed to generate link');
+            }
+        } catch (err) {
+            alert('Error generating link');
+        } finally {
+            btn.textContent = 'Generate Link';
+            btn.disabled = false;
+        }
+    }
+
+    // --- Security Features (Auto Logout & Anti-Screenshot) ---
+    (function initSecurityFeatures() {
+        // Anti-Screenshot Overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'screenshot-overlay';
+        overlay.innerHTML = 'Content hidden for security purposes.';
+        Object.assign(overlay.style, {
+            display: 'none', position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'black', color: 'white', zIndex: 99999, alignItems: 'center',
+            justifyContent: 'center', fontSize: '1.5rem', textAlign: 'center', padding: '2rem'
+        });
+        document.body.appendChild(overlay);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                overlay.style.display = 'flex';
+            } else {
+                overlay.style.display = 'none';
+            }
+        });
+
+        // Anti-Copy/Print
+        const style = document.createElement('style');
+        style.innerHTML = `
+            body { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
+            @media print { body { display: none !important; } }
+        `;
+        document.head.appendChild(style);
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+
+        // Auto-Logout
+        let inactivityTimer;
+        const LOGOUT_TIME_MS = 5 * 60 * 1000; // 5 minutes
+
+        function resetTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(logout, LOGOUT_TIME_MS);
+        }
+
+        function logout() {
+            localStorage.removeItem('riderToken');
+            localStorage.removeItem('riderId');
+            alert('You have been logged out due to inactivity for your security.');
+            window.location.href = 'login.html';
+        }
+
+        // Reset timer on any user interaction
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        document.onclick = resetTimer;
+        document.ontouchstart = resetTimer;
+    })();
 </script>
 
 </body></html>

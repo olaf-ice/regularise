@@ -920,6 +920,8 @@ app.post('/api/verify/:query/unlock', apiLimiter, (req, res) => {
     const rider = dbHelpers.findRiderByQuery(query);
     if (rider) {
         const { pin, ...safeRiderData } = rider;
+        // Log access
+        dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Level 2 Unlock');
         res.json({ success: true, rider: safeRiderData });
     } else {
         res.json({ success: false, message: 'Rider not found' });
@@ -1014,6 +1016,9 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
         if (isMatch) {
             rider.tokenVersion = (rider.tokenVersion || 0) + 1;
             dbHelpers.updateRider(rider.riderId, rider);
+
+            // Log login
+            dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Owner Login');
 
             const token = jwt.sign({ riderId: rider.riderId, tokenVersion: rider.tokenVersion }, JWT_SECRET, { expiresIn: '24h' });
             res.json({ success: true, riderId: rider.riderId, token });
@@ -1257,6 +1262,55 @@ app.post('/api/payment/verify', async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ success: false, message: 'Verification failed' });
+    }
+});
+
+// Security & Emergency Endpoints
+app.post('/api/riders/:id/emergency-link', authenticateToken, (req, res) => {
+    try {
+        if (req.user.riderId !== req.params.id) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+        const linkId = dbHelpers.createEmergencyLink(req.user.riderId);
+        const url = `${req.protocol}://${req.get('host')}/api/emergency/onetime/${linkId}`;
+        res.json({ success: true, link: url });
+    } catch (e) {
+        console.error('Create link error:', e);
+        res.status(500).json({ success: false, message: 'Failed to create link' });
+    }
+});
+
+app.get('/api/emergency/onetime/:linkId', (req, res) => {
+    const link = dbHelpers.consumeEmergencyLink(req.params.linkId);
+    if (link) {
+        dbHelpers.logAccess(link.riderId, req.ip, req.headers['user-agent'] || '', 'One-Time Emergency Link');
+        
+        const sessionId = generateSessionId();
+        const numericId = sessionId.split('-')[2];
+        const session = {
+            riderId: link.riderId,
+            createdAt: new Date().toISOString(),
+            status: 'active'
+        };
+        emergencySessions.set(sessionId, session);
+        emergencySessions.set(numericId, session);
+        
+        res.redirect(`/emergency/${numericId}`);
+    } else {
+        res.status(404).send('Invalid or expired emergency link.');
+    }
+});
+
+app.get('/api/riders/:id/access-logs', authenticateToken, (req, res) => {
+    try {
+        if (req.user.riderId !== req.params.id) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+        const logs = dbHelpers.getAccessLogs(req.params.id);
+        res.json({ success: true, logs });
+    } catch (e) {
+        console.error('Fetch logs error:', e);
+        res.status(500).json({ success: false, message: 'Failed to fetch logs' });
     }
 });
 

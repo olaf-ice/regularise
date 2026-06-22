@@ -44,6 +44,20 @@ db.exec(`
     wantsWhatsapp INTEGER,
     timestamp TEXT
   );
+  CREATE TABLE IF NOT EXISTS access_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    riderId TEXT NOT NULL,
+    ip TEXT,
+    userAgent TEXT,
+    location TEXT,
+    timestamp TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS emergency_links (
+    linkId TEXT PRIMARY KEY,
+    riderId TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    used INTEGER DEFAULT 0
+  );
 `);
 
 // Migration script
@@ -163,6 +177,31 @@ const dbHelpers = {
             agents.push(parseSecureData(row.data));
         }
         return agents;
+    },
+    // Security & Emergency features
+    logAccess: (riderId, ip, userAgent, location = '') => {
+        const stmt = db.prepare('INSERT INTO access_logs (riderId, ip, userAgent, location, timestamp) VALUES (?, ?, ?, ?, ?)');
+        stmt.run(riderId, ip || '', userAgent || '', location, new Date().toISOString());
+    },
+    getAccessLogs: (riderId) => {
+        const stmt = db.prepare('SELECT * FROM access_logs WHERE riderId = ? ORDER BY timestamp DESC LIMIT 50');
+        return stmt.all(riderId);
+    },
+    createEmergencyLink: (riderId) => {
+        const linkId = require('crypto').randomBytes(16).toString('hex');
+        const stmt = db.prepare('INSERT INTO emergency_links (linkId, riderId, createdAt, used) VALUES (?, ?, ?, 0)');
+        stmt.run(linkId, riderId, new Date().toISOString());
+        return linkId;
+    },
+    consumeEmergencyLink: (linkId) => {
+        const stmt = db.prepare('SELECT * FROM emergency_links WHERE linkId = ? AND used = 0');
+        const link = stmt.get(linkId);
+        if (link) {
+            const updateStmt = db.prepare('UPDATE emergency_links SET used = 1 WHERE linkId = ?');
+            updateStmt.run(linkId);
+            return link;
+        }
+        return null;
     }
 };
 
