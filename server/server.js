@@ -313,6 +313,17 @@ app.get('/api/admin/riders', authenticateAdminToken, (req, res) => {
     }
 });
 
+// Get Analytics (Admin)
+app.get('/api/admin/analytics', authenticateAdminToken, (req, res) => {
+    try {
+        const data = dbHelpers.getAnalyticsData();
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error("Analytics Error: ", error);
+        res.status(500).json({ success: false, message: 'Failed to fetch analytics' });
+    }
+});
+
 // Add Agent (Admin)
 app.post('/api/admin/add-agent', authenticateAdminToken, async (req, res) => {
     const { name, phone, pin } = req.body;

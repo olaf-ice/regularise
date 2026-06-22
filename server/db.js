@@ -202,6 +202,26 @@ const dbHelpers = {
             return link;
         }
         return null;
+    },
+    getAnalyticsData: () => {
+        const stmtRiders = db.prepare('SELECT data FROM riders');
+        const registrations = [];
+        for (const row of stmtRiders.iterate()) {
+            const parsed = parseSecureData(row.data);
+            if (parsed.registrationDate) {
+                registrations.push(parsed.registrationDate);
+            }
+        }
+        
+        const stmtLogs = db.prepare('SELECT timestamp FROM access_logs');
+        const scans = [];
+        for (const row of stmtLogs.iterate()) {
+            if (row.timestamp) {
+                scans.push(row.timestamp.split('T')[0]);
+            }
+        }
+        
+        return { registrations, scans };
     }
 };
 

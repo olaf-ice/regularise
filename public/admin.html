@@ -24,6 +24,7 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .admin-table-container {
             width: 100%;
@@ -229,6 +230,29 @@
                 </table>
             </div>
 
+            <!-- Analytics Dashboard -->
+            <div style="margin-top: 4rem;">
+                <h1 style="margin-bottom: 0.5rem;">Analytics Dashboard</h1>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Visualize system growth and activity over time.</p>
+                
+                <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+                    <button class="action-btn" id="btn-week" onclick="renderCharts('week')" style="border-color: var(--primary-light); color: var(--primary-light);">Weekly</button>
+                    <button class="action-btn" id="btn-month" onclick="renderCharts('month')">Monthly</button>
+                    <button class="action-btn" id="btn-year" onclick="renderCharts('year')">Yearly</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 300px; background: var(--glass-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <h3 style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted);">Registrations</h3>
+                        <canvas id="registrationsChart"></canvas>
+                    </div>
+                    <div style="flex: 1; min-width: 300px; background: var(--glass-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <h3 style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted);">Profile Access Scans</h3>
+                        <canvas id="scansChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <!-- Agent Management Section -->
             <div style="margin-top: 4rem;">
                 <h1 style="margin-bottom: 0.5rem;">Agent Management</h1>
@@ -330,6 +354,7 @@
             document.getElementById('dashboardContent').style.display = 'block';
             fetchRiders();
             fetchAgents();
+            fetchAnalytics();
         }
 
         async function fetchRiders() {
