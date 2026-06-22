@@ -563,3 +563,14 @@ input:focus, select:focus {
         margin-bottom: 0.5rem;
     }
 }
+
+
+/* --- Dark Theme --- */
+[data-theme="dark"] {
+    --background: #0f172a;
+    --surface: #1e293b;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass: rgba(30, 41, 59, 0.9);
+}
