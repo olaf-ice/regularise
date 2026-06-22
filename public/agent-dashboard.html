@@ -152,7 +152,15 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
-                if (res.status === 401 || res.status === 403) return logout();
+                if (res.status === 401 || res.status === 403) {
+                    const data = await res.json().catch(() => ({}));
+                    if (data.message && data.message.includes('another device')) {
+                        alert('Session expired. You have logged in from another device.');
+                    } else if (res.status === 401) {
+                        alert('Session expired. Please log in again.');
+                    }
+                    return logout();
+                }
 
                 const data = await res.json();
                 if (data.success) {

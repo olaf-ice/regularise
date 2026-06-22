@@ -38,6 +38,7 @@ setInterval(purgeExpiredSessions, 30 * 60 * 1000);
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_key_change_in_prod';
 const PORT = process.env.PORT || 3001;
+let adminTokenVersion = 0;
 
 // Persistence Configuration for Render
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -107,6 +108,9 @@ function authenticateAdminToken(req, res, next) {
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err || user.role !== 'admin') return res.status(403).json({ success: false, message: 'Invalid or expired admin token.' });
+        if (user.tokenVersion !== adminTokenVersion) {
+            return res.status(401).json({ success: false, message: 'Session expired. You have logged in from another device.' });
+        }
         req.user = user;
         next();
     });
@@ -119,6 +123,13 @@ function authenticateAgentToken(req, res, next) {
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err || user.role !== 'agent') return res.status(403).json({ success: false, message: 'Invalid or expired agent token.' });
+        
+        const dbAgent = dbHelpers.getAgentById(user.agentId);
+        if (!dbAgent) return res.status(401).json({ success: false, message: 'Agent not found.' });
+        if (dbAgent.tokenVersion && dbAgent.tokenVersion !== user.tokenVersion) {
+            return res.status(401).json({ success: false, message: 'Session expired. You have logged in from another device.' });
+        }
+
         req.user = user;
         next();
     });
@@ -282,7 +293,8 @@ app.post('/api/admin/login', authLimiter, (req, res) => {
     const adminPass = process.env.ADMIN_PASSWORD || 'adminpass123';
 
     if (username === adminUser && password === adminPass) {
-        const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '12h' });
+        adminTokenVersion++;
+        const token = jwt.sign({ role: 'admin', tokenVersion: adminTokenVersion }, JWT_SECRET, { expiresIn: '12h' });
         res.json({ success: true, token });
     } else {
         res.status(401).json({ success: false, message: 'Invalid admin credentials' });
@@ -376,7 +388,9 @@ app.post('/api/agent/login', authLimiter, async (req, res) => {
     try {
         const isMatch = await bcrypt.compare(pin, agent.pin);
         if (isMatch) {
-            const token = jwt.sign({ agentId: agent.agentId, role: 'agent' }, JWT_SECRET, { expiresIn: '12h' });
+            agent.tokenVersion = (agent.tokenVersion || 0) + 1;
+            dbHelpers.updateAgent(agent.agentId, agent);
+            const token = jwt.sign({ agentId: agent.agentId, role: 'agent', tokenVersion: agent.tokenVersion }, JWT_SECRET, { expiresIn: '12h' });
             res.json({ success: true, token, agent: { name: agent.name, agentId: agent.agentId } });
         } else {
             res.json({ success: false, message: 'Invalid phone number or PIN' });
