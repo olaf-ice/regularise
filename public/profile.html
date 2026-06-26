@@ -2089,7 +2089,7 @@ let hasExpired = false;
             </style>
             
             <div class="pdf-card" id="pdfCardFront">
-                ${passportSrc ? \`<img src="\${passportSrc}" class="ghost-image" />\` : ''}
+                ${passportSrc ? `<img src="${passportSrc}" class="ghost-image" />` : ''}
                 <div class="pvc-watermark">SECURE &middot; VERIFIED &middot; AUTHENTIC</div>
                 <div class="hologram-seal"></div>
                 <div class="card-left">
@@ -2098,13 +2098,13 @@ let hasExpired = false;
                             <span class="brand-badge">MYVAULT</span>
                             <span class="emergency-badge">&#x1F6A8; EMERGENCY ID</span>
                         </div>
-                        <div class="rider-name">\${d.name}</div>
-                        <div class="rider-plate">\${d.plate || 'NO PLATE'}</div>
+                        <div class="rider-name">${d.name}</div>
+                        <div class="rider-plate">${d.plate || 'NO PLATE'}</div>
                     </div>
                     <div class="info-grid">
                         <div>
                             <div class="info-label">Blood Group</div>
-                            <div class="info-value blood-value">\${d.bg}</div>
+                            <div class="info-value blood-value">${d.bg}</div>
                         </div>
                         <div>
                             <div class="info-label">Genotype</div>
@@ -2112,29 +2112,29 @@ let hasExpired = false;
                         </div>
                         <div>
                             <div class="info-label">Phone</div>
-                            <div class="info-value" style="font-size:22px;">\${d.phone}</div>
+                            <div class="info-value" style="font-size:22px;">${d.phone}</div>
                         </div>
                         <div>
                             <div class="info-label">DOB</div>
-                            <div class="info-value" style="font-size:22px;">\${d.dob || '---'}</div>
+                            <div class="info-value" style="font-size:22px;">${d.dob || '---'}</div>
                         </div>
                         <div>
                             <div class="info-label">Valid Thru</div>
-                            <div class="info-value" style="font-size:22px;">\${d.expiryDate || '---'}</div>
+                            <div class="info-value" style="font-size:22px;">${d.expiryDate || '---'}</div>
                         </div>
                     </div>
-                    \${d.allergies && d.allergies !== 'None' ? \`<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: \${d.allergies}</div></div>\` : ''}
+                    ${d.allergies && d.allergies !== 'None' ? `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies}</div></div>` : ''}
                     <div class="kin-block">
                         <div class="kin-label">Emergency Contact</div>
-                        <div class="kin-value">\${d.kinName} &middot; \${d.kinPhone}</div>
+                        <div class="kin-value">${d.kinName} &middot; ${d.kinPhone}</div>
                     </div>
                 </div>
                 <div class="card-right">
-                    <div class="card-qr">\${qrDataUrl ? \`<img src="\${qrDataUrl}" />\` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#333;">QR</div>'}</div>
+                    <div class="card-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#333;">QR</div>'}</div>
                     <div class="scan-label" style="margin-top:16px;">Scan for full<br>emergency profile</div>
                     <div class="verified-id-row">
                         <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                        <span>\${d.riderId}</span>
+                        <span>${d.riderId}</span>
                     </div>
                 </div>
             </div>
@@ -2167,14 +2167,14 @@ let hasExpired = false;
 
                 // Download front
                 let link1 = document.createElement('a');
-                link1.download = `rider_id_card_\${d.riderId}_front.svg`;
+                link1.download = `rider_id_card_${d.riderId}_front.svg`;
                 link1.href = frontSvg;
                 link1.click();
 
                 // Download back
                 setTimeout(() => {
                     let link2 = document.createElement('a');
-                    link2.download = `rider_id_card_\${d.riderId}_back.svg`;
+                    link2.download = `rider_id_card_${d.riderId}_back.svg`;
                     link2.href = backSvg;
                     link2.click();
                 }, 500);
@@ -2189,14 +2189,14 @@ let hasExpired = false;
                 if (format === 'png') {
                     // Download front
                     let link1 = document.createElement('a');
-                    link1.download = `rider_id_card_\${d.riderId}_front.png`;
+                    link1.download = `rider_id_card_${d.riderId}_front.png`;
                     link1.href = frontImg;
                     link1.click();
 
                     // Download back
                     setTimeout(() => {
                         let link2 = document.createElement('a');
-                        link2.download = `rider_id_card_\${d.riderId}_back.png`;
+                        link2.download = `rider_id_card_${d.riderId}_back.png`;
                         link2.href = backImg;
                         link2.click();
                     }, 500);
@@ -2212,7 +2212,7 @@ let hasExpired = false;
                     pdf.addPage([85.6, 54], 'landscape');
                     pdf.addImage(backImg, 'PNG', 0, 0, 85.6, 54, '', 'FAST');
 
-                    pdf.save(`rider_id_card_\${d.riderId}.pdf`);
+                    pdf.save(`rider_id_card_${d.riderId}.pdf`);
                 }
             }
 
