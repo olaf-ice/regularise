@@ -23,6 +23,9 @@
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/5.2.1/html-to-image.min.js"></script>
     <style>
         /* Custom styled switch slider */
         .switch {
@@ -741,6 +744,11 @@
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">PVC Emergency ID</span>
                         <button class="btn btn-outline" onclick="printPVCCard()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print PVC ID</button>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                            <button class="btn btn-outline" onclick="downloadPVC(event, 'pdf')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #3b82f6; color: #3b82f6;">📄 PDF</button>
+                            <button class="btn btn-outline" onclick="downloadPVC(event, 'png')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #10b981; color: #10b981;">🖼️ PNG</button>
+                            <button class="btn btn-outline" onclick="downloadPVC(event, 'svg')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #f59e0b; color: #f59e0b;">✨ SVG</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1978,6 +1986,244 @@ let hasExpired = false;
         pw.document.close();
         pw.focus();
         setTimeout(() => { pw.print(); pw.close(); }, 900);
+    }
+
+    async function downloadPVC(event, format) {
+        const d = _printRiderData;
+        if (!d.riderId) { alert('Please wait for profile data to load.'); return; }
+
+        let qrDataUrl = '';
+        const qrCanvas = document.querySelector('#qrStickerPreview canvas');
+        if (qrCanvas) qrDataUrl = qrCanvas.toDataURL();
+        else {
+            const qrImg = document.querySelector('#qrStickerPreview img');
+            if (qrImg && qrImg.src) qrDataUrl = qrImg.src;
+            if (!qrDataUrl || qrDataUrl.trim() === '') {
+                qrDataUrl = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23f5f5f5"/%3E%3Ctext x="50" y="50" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="%23999"%3EQR%3C/text%3E%3C/svg%3E';
+            }
+        }
+
+        let passportSrc = '';
+        const pptImg = document.querySelector('#passportImg');
+        if (pptImg && pptImg.src) passportSrc = pptImg.src;
+
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined' || typeof htmlToImage === 'undefined') {
+            alert('PDF/Image libraries not fully loaded yet. Please try again in a few seconds.');
+            return;
+        }
+
+        const btn = event ? event.currentTarget : null;
+        const origText = btn ? btn.innerHTML : '';
+        if (btn) btn.innerHTML = '⏳ Processing...';
+
+        try {
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.top = '-9999px';
+            container.style.left = '-9999px';
+            document.body.appendChild(container);
+
+            container.innerHTML = `
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+                .pdf-card {
+                    width: 1040px; height: 656px;
+                    border-radius: 35px;
+                    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #0f172a 100%);
+                    border: 5px solid #f59e0b;
+                    display: flex; overflow: hidden; position: relative;
+                    font-family: 'Inter', sans-serif; box-sizing: border-box; margin-bottom: 20px;
+                }
+                .pdf-card::before { 
+                    content:''; position:absolute; inset:0; 
+                    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+                    z-index: 0;
+                }
+                .ghost-image {
+                    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    width: 480px; height: 480px; object-fit: cover; opacity: 0.12;
+                    filter: grayscale(100%) contrast(150%) blur(2px);
+                    border-radius: 50%; pointer-events: none; z-index: 0; mix-blend-mode: screen;
+                }
+                .pvc-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-30deg); font-size:90px; font-weight:900; color:rgba(255,255,255,0.03); white-space:nowrap; pointer-events:none; z-index:0; letter-spacing:12px; text-transform:uppercase; }
+                .hologram-seal {
+                    position: absolute; top: 32px; right: 304px;
+                    width: 72px; height: 72px; border-radius: 50%;
+                    background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+                    display: flex; align-items: center; justify-content: center; z-index: 2;
+                    border: 3px solid rgba(255,255,255,0.4);
+                }
+                .hologram-seal::before { content: '✓'; font-size: 38px; font-weight: 900; color: #aa771c; text-shadow: 1px 1px 0px rgba(255,255,255,0.8); }
+                .card-left { flex:1; padding:45px 32px 45px 50px; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:1; }
+                .card-right { width:270px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; gap:19px; background:rgba(0,0,0,0.25); position:relative; z-index:1; border-left:1px solid rgba(245,158,11,0.35); }
+                .header-row { display:flex; align-items:center; gap:16px; }
+                .brand-badge { font-size:20px; font-weight:900; color:#f59e0b; letter-spacing:3px; text-transform:uppercase; }
+                .emergency-badge { font-size:16px; font-weight:900; color:#ef4444; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.5); padding:5px 16px; border-radius:8px; letter-spacing:1px; }
+                .rider-name { font-size:48px; font-weight:900; color:white; line-height:1.1; margin-top:12px; text-transform:uppercase; }
+                .rider-plate { font-size:28px; font-weight:900; color:#60a5fa; letter-spacing:6px; margin-top:6px; }
+                .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 32px; margin-top:22px; }
+                .info-label { font-size:14px; font-weight:700; color:#94a3b8; letter-spacing:2px; text-transform:uppercase; }
+                .info-value { font-size:27px; font-weight:800; color:white; margin-top:3px; }
+                .blood-value { color:#ef4444; font-size:41px; }
+                .kin-block { padding-top:19px; border-top:1px solid rgba(255,255,255,0.12); margin-top: 15px; }
+                .kin-label { font-size:14px; font-weight:700; color:#94a3b8; letter-spacing:2px; text-transform:uppercase; }
+                .kin-value { font-size:22px; font-weight:800; color:white; margin-top:3px; }
+                .allergy-bar { padding:8px 16px; background:rgba(239,68,68,0.15); border-left:4px solid #ef4444; border-radius:4px; margin-top:16px; }
+                .allergy-text { font-size:17px; font-weight:800; color:#ef4444; }
+                .card-qr { width:200px; height:200px; background:white; border-radius:16px; padding:8px; position: relative; }
+                .card-qr::before { content:''; position:absolute; top:-6px; left:-6px; right:-6px; bottom:-6px; background:linear-gradient(135deg, #f59e0b, #60a5fa); border-radius:22px; z-index:-1; opacity:0.8; }
+                .card-qr img { width:100%; height:100%; object-fit:contain; border-radius:12px; }
+                .scan-label { font-size:14px; font-weight:800; color:#94a3b8; letter-spacing:2px; text-align:center; text-transform:uppercase; }
+                .verified-id-row { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
+                .verified-id-row span { font-size:17px; font-weight:800; color:#10b981; }
+                .verified-id-row svg { width:22px; height:22px; fill:#10b981; }
+                
+                .pdf-card-back { background: linear-gradient(135deg, #050b14 0%, #0a1424 100%); display: flex; flex-direction: column; justify-content: center; padding: 48px 64px; color: #94a3b8; border: none; }
+                .back-heading { color: white; font-size: 25px; font-weight: 800; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1.5px; }
+                .back-text { font-size: 19px; line-height: 1.6; margin-bottom: 24px; }
+                .back-footer { margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+                .back-logo { font-size: 22px; font-weight: 900; color: #60a5fa; letter-spacing: 3px; }
+                .back-phone { font-size: 22px; font-weight: 800; color: white; }
+                .mag-stripe { height: 72px; background: #000; width: 100%; position: absolute; top: 48px; left: 0; }
+                .back-content { margin-top: 112px; z-index: 1; position: relative; }
+            </style>
+            
+            <div class="pdf-card" id="pdfCardFront">
+                ${passportSrc ? \`<img src="\${passportSrc}" class="ghost-image" />\` : ''}
+                <div class="pvc-watermark">SECURE &middot; VERIFIED &middot; AUTHENTIC</div>
+                <div class="hologram-seal"></div>
+                <div class="card-left">
+                    <div>
+                        <div class="header-row">
+                            <span class="brand-badge">MYVAULT</span>
+                            <span class="emergency-badge">&#x1F6A8; EMERGENCY ID</span>
+                        </div>
+                        <div class="rider-name">\${d.name}</div>
+                        <div class="rider-plate">\${d.plate || 'NO PLATE'}</div>
+                    </div>
+                    <div class="info-grid">
+                        <div>
+                            <div class="info-label">Blood Group</div>
+                            <div class="info-value blood-value">\${d.bg}</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Genotype</div>
+                            <div class="info-value">---</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Phone</div>
+                            <div class="info-value" style="font-size:22px;">\${d.phone}</div>
+                        </div>
+                        <div>
+                            <div class="info-label">DOB</div>
+                            <div class="info-value" style="font-size:22px;">\${d.dob || '---'}</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Valid Thru</div>
+                            <div class="info-value" style="font-size:22px;">\${d.expiryDate || '---'}</div>
+                        </div>
+                    </div>
+                    \${d.allergies && d.allergies !== 'None' ? \`<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: \${d.allergies}</div></div>\` : ''}
+                    <div class="kin-block">
+                        <div class="kin-label">Emergency Contact</div>
+                        <div class="kin-value">\${d.kinName} &middot; \${d.kinPhone}</div>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-qr">\${qrDataUrl ? \`<img src="\${qrDataUrl}" />\` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#333;">QR</div>'}</div>
+                    <div class="scan-label" style="margin-top:16px;">Scan for full<br>emergency profile</div>
+                    <div class="verified-id-row">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        <span>\${d.riderId}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pdf-card pdf-card-back" id="pdfCardBack">
+                <div class="mag-stripe"></div>
+                <div class="back-content">
+                    <div class="back-heading">Terms & Conditions</div>
+                    <div class="back-text">
+                        This card remains the property of MyVault NG. It is strictly non-transferable and must be surrendered upon request. <br><br>
+                        <strong>ATTENTION FIRST RESPONDERS:</strong> Scan the QR code on the reverse side of this card to instantly access vital medical information, blood type, allergies, and notify the cardholder's next of kin. <br><br>
+                        If found, please drop at the nearest Police Station or call our emergency hotline.
+                    </div>
+                    <div class="back-footer">
+                        <div class="back-logo">MYVAULT</div>
+                        <div class="back-phone">HOTLINE: 0800 MYVAULT</div>
+                    </div>
+                </div>
+            </div>
+            `;
+
+            await new Promise(r => setTimeout(r, 600));
+
+            const frontEl = document.getElementById('pdfCardFront');
+            const backEl = document.getElementById('pdfCardBack');
+
+            if (format === 'svg') {
+                const frontSvg = await htmlToImage.toSvg(frontEl);
+                const backSvg = await htmlToImage.toSvg(backEl);
+
+                // Download front
+                let link1 = document.createElement('a');
+                link1.download = `rider_id_card_\${d.riderId}_front.svg`;
+                link1.href = frontSvg;
+                link1.click();
+
+                // Download back
+                setTimeout(() => {
+                    let link2 = document.createElement('a');
+                    link2.download = `rider_id_card_\${d.riderId}_back.svg`;
+                    link2.href = backSvg;
+                    link2.click();
+                }, 500);
+
+            } else {
+                const frontCanvas = await html2canvas(frontEl, { scale: 3, useCORS: true, backgroundColor: null });
+                const backCanvas = await html2canvas(backEl, { scale: 3, useCORS: true, backgroundColor: null });
+
+                const frontImg = frontCanvas.toDataURL('image/png', 1.0);
+                const backImg = backCanvas.toDataURL('image/png', 1.0);
+
+                if (format === 'png') {
+                    // Download front
+                    let link1 = document.createElement('a');
+                    link1.download = `rider_id_card_\${d.riderId}_front.png`;
+                    link1.href = frontImg;
+                    link1.click();
+
+                    // Download back
+                    setTimeout(() => {
+                        let link2 = document.createElement('a');
+                        link2.download = `rider_id_card_\${d.riderId}_back.png`;
+                        link2.href = backImg;
+                        link2.click();
+                    }, 500);
+                } else if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'mm',
+                        format: [85.6, 54]
+                    });
+
+                    pdf.addImage(frontImg, 'PNG', 0, 0, 85.6, 54, '', 'FAST');
+                    pdf.addPage([85.6, 54], 'landscape');
+                    pdf.addImage(backImg, 'PNG', 0, 0, 85.6, 54, '', 'FAST');
+
+                    pdf.save(`rider_id_card_\${d.riderId}.pdf`);
+                }
+            }
+
+            document.body.removeChild(container);
+
+        } catch (e) {
+            console.error('Generation failed', e);
+            alert('Failed to generate file. See console for details.');
+        } finally {
+            if (btn) btn.innerHTML = origText;
+        }
     }
 
     function printPVCCard() {
