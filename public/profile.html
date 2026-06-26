@@ -2007,8 +2007,8 @@ let hasExpired = false;
         const pptImg = document.querySelector('#passportImg');
         if (pptImg && pptImg.src) passportSrc = pptImg.src;
 
-        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined' || typeof htmlToImage === 'undefined') {
-            alert('PDF/Image libraries not fully loaded yet. Please try again in a few seconds.');
+        if (!window.html2canvas || !window.jspdf || !window.htmlToImage) {
+            alert('PDF/Image libraries not fully loaded yet.\nhtml2canvas: ' + !!window.html2canvas + '\njspdf: ' + !!window.jspdf + '\nhtmlToImage: ' + !!window.htmlToImage + '\n\nPlease hard refresh (Ctrl+F5).');
             return;
         }
 
