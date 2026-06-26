@@ -325,32 +325,40 @@
             
 
 <!-- Profile Wallet Card -->
-            <div class="glass-card" id="riderWalletCard" style="padding: 1.75rem 1.5rem; text-align: center; position: relative; transition: all 0.3s ease;">
+            <div class="glass-card" id="riderWalletCard" style="padding: 1.75rem 1.5rem; text-align: center; position: relative; transition: all 0.3s ease; overflow: hidden; border: 2px solid var(--primary-light);">
+                <!-- Premium Background Pattern -->
+                <div style="position: absolute; inset: 0; background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%233b82f6\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); z-index: 0; pointer-events: none;"></div>
                 
-                <!-- Status Badge -->
-                <div id="statusBadge" class="badge badge-pending" style="position: absolute; top: 1.25rem; right: 1.25rem; font-size: 0.75rem; padding: 0.25rem 0.75rem;">PENDING</div>
+                <!-- Ghost Image for digital card (synced via JS) -->
+                <img id="walletGhostImg" src="" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 250px; height: 250px; object-fit: cover; opacity: 0; filter: grayscale(100%) contrast(150%) blur(1px); border-radius: 50%; pointer-events: none; z-index: 0; mix-blend-mode: screen; transition: opacity 0.3s ease;" alt="">
+                
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-25deg); font-size: 2.5rem; font-weight: 900; color: rgba(255,255,255,0.03); white-space: nowrap; pointer-events: none; z-index: 0; letter-spacing: 5px;">SECURE DIGITAL ID</div>
 
-                <!-- Passport Photo -->
-                
-                
-                
-                
+                <!-- Status Badge -->
+                <div id="statusBadge" class="badge badge-pending" style="position: absolute; top: 1.25rem; right: 1.25rem; font-size: 0.75rem; padding: 0.25rem 0.75rem; z-index: 2;">PENDING</div>
+
+                <!-- Hologram Seal -->
+                <div style="position: absolute; top: 1.25rem; left: 1.25rem; width: 35px; height: 35px; border-radius: 50%; background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); box-shadow: 0 0 10px rgba(191, 149, 63, 0.4), inset 0 0 5px rgba(255, 255, 255, 0.8); display: flex; align-items: center; justify-content: center; z-index: 2; border: 2px solid rgba(255,255,255,0.3); animation: holo-rotate 4s infinite linear;">
+                    <span style="font-size: 16px; font-weight: 900; color: #aa771c; text-shadow: 1px 1px 0px rgba(255,255,255,0.8);">✓</span>
+                </div>
+
                 <!-- Compliance Summary Ring (shows up in Roadside mode) -->
-                <div id="checkpointSummaryRing" style="display: none; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1.25rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); padding: 0.6rem; border-radius: 0.5rem; transition: all 0.3s ease;">
+                <div id="checkpointSummaryRing" style="display: none; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1.25rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); padding: 0.6rem; border-radius: 0.5rem; transition: all 0.3s ease; position: relative; z-index: 1;">
                     <span style="font-size: 0.95rem;">🟢</span>
                     <span id="checkpointStatusText" style="font-size: 0.82rem; font-weight: 800; color: var(--primary-light); letter-spacing: 0.5px;">ALL CREDENTIALS COMPLIANT</span>
                 </div>
 
-                
-
                 <!-- QR Code for quick check -->
-                <div style="background: white; border-radius: 1rem; padding: 0.75rem; display: inline-block; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div style="background: white; border-radius: 1rem; padding: 0.75rem; display: inline-block; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; z-index: 1;">
                     <div id="qrCode" style="display: flex; justify-content: center;"></div>
                 </div>
-                <div id="riderIdBlock" style="text-align: left; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.25rem; border: 1px solid var(--glass-border);">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                <div id="riderIdBlock" style="text-align: left; background: rgba(255,255,255,0.04); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.25rem; border: 1px solid var(--glass-border); position: relative; z-index: 1; backdrop-filter: blur(4px);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; align-items: center;">
                         <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Rider ID</span>
-                        <span id="riderId" style="font-weight: 700; color: var(--accent);">---</span>
+                        <div style="display: flex; align-items: center; gap: 0.3rem;">
+                            <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:var(--success);"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            <span id="riderId" style="font-weight: 800; color: var(--success); font-family: monospace; font-size: 1.1rem;">---</span>
+                        </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
                         <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Phone</span>
@@ -358,7 +366,7 @@
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">MyVault Validity</span>
-                        <span id="riderExpiry" style="font-weight: 700; color: var(--primary-light);">---</span>
+                        <span id="riderExpiry" style="font-weight: 800; color: var(--primary-light);">---</span>
                     </div>
                 </div>
 
@@ -1231,6 +1239,8 @@
                     if (rider.documents && rider.documents.passportPhoto) {
                         const photoSrc = rider.documents.passportPhoto.url || rider.documents.passportPhoto;
                         document.getElementById('passportImg').src = photoSrc;
+                        const ghostImg = document.getElementById('walletGhostImg');
+                        if (ghostImg) { ghostImg.src = photoSrc; ghostImg.style.opacity = '0.12'; }
                     }
 
                     // Populate Emergency ICE Card details (Level 1 only)
@@ -1739,7 +1749,7 @@ let hasExpired = false;
 
         const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
 
-        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: rider.phone || '', dob: rider.medical?.dateOfBirth || rider.dob || '' };
+        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: rider.phone || '', dob: rider.medical?.dateOfBirth || rider.dob || '', expiryDate: rider.expiryDate || '' };
 
         // Update mini preview
         if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
@@ -1985,6 +1995,10 @@ let hasExpired = false;
             }
         }
 
+        let passportSrc = '';
+        const pptImg = document.querySelector('#passportImg');
+        if (pptImg && pptImg.src) passportSrc = pptImg.src;
+
         const pw = window.open('', '', 'height=700,width=1000');
         pw.document.write(`<!DOCTYPE html><html><head><title>PVC Emergency ID - ${d.name}</title>
         <style>
@@ -2004,9 +2018,41 @@ let hasExpired = false;
                 box-shadow: 0 12px 48px rgba(0,0,0,0.4);
                 position: relative;
             }
-            .card::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(59,130,246,0.04) 20px,rgba(59,130,246,0.04) 22px); }
+            .card::before { 
+                content:''; position:absolute; inset:0; 
+                background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+                z-index: 0;
+            }
+            .ghost-image {
+                position: absolute;
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                width: 300px; height: 300px;
+                object-fit: cover;
+                opacity: 0.12;
+                filter: grayscale(100%) contrast(150%) blur(1px);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 0;
+                mix-blend-mode: screen;
+            }
             .pvc-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-30deg); font-size:56px; font-weight:900; color:rgba(255,255,255,0.03); white-space:nowrap; pointer-events:none; z-index:0; letter-spacing:8px; text-transform:uppercase; }
-            .pvc-secure-badge { position:absolute; top:20px; right:190px; border:1px solid #10b981; color:#10b981; padding:4px 10px; font-size:9px; font-weight:900; border-radius:4px; letter-spacing:1.5px; background:rgba(16,185,129,0.1); z-index:2; transform: rotate(5deg); }
+            .hologram-seal {
+                position: absolute;
+                top: 20px; right: 190px;
+                width: 45px; height: 45px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+                box-shadow: 0 0 10px rgba(191, 149, 63, 0.5), inset 0 0 5px rgba(255, 255, 255, 0.8);
+                display: flex; align-items: center; justify-content: center;
+                z-index: 2;
+                border: 2px solid rgba(255,255,255,0.4);
+                animation: holo-rotate 4s infinite linear;
+            }
+            .hologram-seal::before {
+                content: '✓'; font-size: 24px; font-weight: 900; color: #aa771c; text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+            }
+            @keyframes holo-rotate { 0% { filter: hue-rotate(0deg) brightness(1); } 50% { filter: hue-rotate(15deg) brightness(1.2); } 100% { filter: hue-rotate(0deg) brightness(1); } }
             .holographic-sheen { position:absolute; inset:0; z-index:10; pointer-events:none; background:linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 25%, rgba(255,100,200,0.15) 28%, rgba(100,200,255,0.15) 32%, transparent 40%); background-size: 200% 200%; animation: holo-shine 6s infinite linear; mix-blend-mode: color-dodge; }
             @keyframes holo-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
             .card-left { flex:1; padding:28px 20px 28px 32px; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:1; }
@@ -2025,10 +2071,14 @@ let hasExpired = false;
             .kin-value { font-size:14px; font-weight:800; color:white; margin-top:2px; }
             .allergy-bar { padding:5px 10px; background:rgba(239,68,68,0.15); border-left:3px solid #ef4444; border-radius:3px; margin-top:10px; }
             .allergy-text { font-size:11px; font-weight:800; color:#ef4444; }
-            .card-qr { width:126px; height:126px; background:white; border-radius:10px; padding:5px; }
-            .card-qr img { width:100%; height:100%; object-fit:contain; }
+            .card-qr { width:126px; height:126px; background:white; border-radius:10px; padding:5px; position: relative; }
+            .card-qr::before { content:''; position:absolute; top:-4px; left:-4px; right:-4px; bottom:-4px; background:linear-gradient(135deg, #f59e0b, #60a5fa); border-radius:14px; z-index:-1; opacity:0.8; }
+            .card-qr img { width:100%; height:100%; object-fit:contain; border-radius:8px; }
             .scan-label { font-size:9px; font-weight:800; color:#94a3b8; letter-spacing:1.5px; text-align:center; text-transform:uppercase; }
             .rider-id-small { font-size:10px; font-weight:700; color:#64748b; text-align:center; }
+            .verified-id-row { display:flex; align-items:center; justify-content:center; gap:5px; margin-top:5px; }
+            .verified-id-row span { font-size:11px; font-weight:800; color:#10b981; }
+            .verified-id-row svg { width:14px; height:14px; fill:#10b981; }
             /* Card Back Styles */
             .card-back {
                 background: linear-gradient(135deg, #050b14 0%, #0a1424 100%);
@@ -2051,122 +2101,13 @@ let hasExpired = false;
                 html, body { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
                 .card { page-break-after: always; }
             }
-        
-        /* Tab Navigation */
-        .tab-nav {
-            display: flex;
-            overflow-x: auto;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 0.5rem;
-            scrollbar-width: none; /* Firefox */
-        }
-        .tab-nav::-webkit-scrollbar { display: none; } /* Chrome */
-        .tab-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid transparent;
-            color: var(--text-muted);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            transition: all 0.3s ease;
-        }
-        .tab-btn.active {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.5);
-            color: #60a5fa;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
-        }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        
-        /* Realistic Digital Wallet Card */
-        .wallet-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            padding: 1rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            margin-bottom: 1rem;
-        }
-        .wallet-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        .wallet-card::before {
-            content: '';
-            position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.1) 50%, transparent 55%);
-            background-size: 200% 200%;
-            animation: shimmer 3s infinite linear;
-            pointer-events: none;
-        }
-        @keyframes shimmer {
-            0% { background-position: -200% -200%; }
-            100% { background-position: 200% 200%; }
-        }
-        .wallet-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 0.5rem;
-        }
-        .wallet-card-title {
-            font-size: 0.85rem;
-            font-weight: 800;
-            color: var(--primary-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .wallet-card-icon {
-            font-size: 1.2rem;
-            opacity: 0.8;
-        }
-        .wallet-card-body {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-        .wallet-card-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        .wallet-card-label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .wallet-card-value {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--text);
-            font-family: monospace;
-            letter-spacing: 1px;
-        }
-        .wallet-card-status {
-            font-size: 0.7rem;
-            font-weight: 800;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-        }
-</style></head><body>
+        </style></head><body>
         <p class="page-hint">Landscape print &bull; Laminate after printing &bull; Standard CR80 PVC card ratio</p>
         <div class="card">
+            ${passportSrc ? `<img src="${passportSrc}" class="ghost-image" />` : ''}
             <div class="holographic-sheen"></div>
             <div class="pvc-watermark">SECURE &middot; VERIFIED &middot; AUTHENTIC</div>
-            <div class="pvc-secure-badge">&#10003; SECURE ID</div>
+            <div class="hologram-seal"></div>
             <div class="card-left">
                 <div>
                     <div class="header-row">
@@ -2193,6 +2134,10 @@ let hasExpired = false;
                         <div class="info-label">DOB</div>
                         <div class="info-value" style="font-size:14px;">${d.dob || '---'}</div>
                     </div>
+                    <div>
+                        <div class="info-label">Valid Thru</div>
+                        <div class="info-value" style="font-size:14px;">${d.expiryDate || '---'}</div>
+                    </div>
                 </div>
                 ${d.allergies && d.allergies !== 'None' ? `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies}</div></div>` : ''}
                 <div class="kin-block">
@@ -2202,8 +2147,11 @@ let hasExpired = false;
             </div>
             <div class="card-right">
                 <div class="card-qr">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#333;">QR</div>'}</div>
-                <div class="scan-label">Scan for full<br>emergency profile</div>
-                <div class="rider-id-small">${d.riderId}</div>
+                <div class="scan-label" style="margin-top:10px;">Scan for full<br>emergency profile</div>
+                <div class="verified-id-row">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    <span>${d.riderId}</span>
+                </div>
             </div>
         </div>
         
