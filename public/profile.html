@@ -298,10 +298,6 @@
                         </div>
                     </div>
                     
-                    <!-- Scroll Instruction -->
-                    <div id="scrollInstruction" style="display: none; margin-top: 0.75rem; text-align: center; z-index: 1; padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 2rem; animation: pulse 2s infinite;">
-                        <p style="color: #fca5a5; font-size: 0.75rem; font-weight: 600; margin: 0;">👇 Scroll down & hold the red circle to unlock medical profile</p>
-                    </div>
                 </div>
 
                 <div class="tab-nav no-print">
@@ -1215,8 +1211,6 @@
                     const isEmergencyView = urlParams.get('view') === 'emergency';
                     
                     if (isEmergencyView) {
-                        const scrollInst = document.getElementById('scrollInstruction');
-                        if (scrollInst) scrollInst.style.display = 'block';
                         
                         const elementsToBlur = [
                             document.getElementById('riderIdBlock'),
