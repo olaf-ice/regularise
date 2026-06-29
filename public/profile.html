@@ -743,11 +743,16 @@
                             <div id="pvcPreviewId" style="font-size: 0.25rem; color: #94a3b8;">DOB: --- | ID: ---</div>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">PVC Emergency ID</span>
-                        <button class="btn btn-outline" onclick="printPVCCard()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print PVC ID</button>
-                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                            <button class="btn btn-outline" onclick="downloadPVC(event, 'pdf')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #3b82f6; color: #3b82f6;">📄 PDF</button>
-                            <button class="btn btn-outline" onclick="downloadPVC(event, 'png')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #10b981; color: #10b981;">🖼️ PNG</button>
-                            <button class="btn btn-outline" onclick="downloadPVC(event, 'svg')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #f59e0b; color: #f59e0b;">✨ SVG</button>
+                        <div id="pvcActionsContainer" style="width: 100%;">
+                            <button id="requestPvcBtn" class="btn btn-outline" onclick="window.location.href='mailto:support@myvault.com.ng?subject=PVC Request&body=I would like to request a physical PVC card for ID: ' + currentRiderId" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">📬 Request for PVC</button>
+                            <div id="printPvcActions" style="display: none; width: 100%; flex-direction: column;">
+                                <button class="btn btn-outline" onclick="printPVCCard()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print PVC ID</button>
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                    <button class="btn btn-outline" onclick="downloadPVC(event, 'pdf')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #3b82f6; color: #3b82f6;">📄 PDF</button>
+                                    <button class="btn btn-outline" onclick="downloadPVC(event, 'png')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #10b981; color: #10b981;">🖼️ PNG</button>
+                                    <button class="btn btn-outline" onclick="downloadPVC(event, 'svg')" style="flex: 1; padding: 0.35rem 0; font-size: 0.68rem; border-color: #f59e0b; color: #f59e0b;">✨ SVG</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1112,7 +1117,12 @@
                         '🕐 *Time:* ' + timeStr + '\n\n' +
                         'View full emergency profile:\n' + data.sessionUrl
                     );
-                    document.getElementById('modalWaBtn').href = 'https://api.whatsapp.com/send?text=' + waText;
+                    
+                    let waPhone = '';
+                    if (window.globalRiderData && window.globalRiderData.emergencyContact && window.globalRiderData.emergencyContact.phone) {
+                        waPhone = 'phone=' + window.globalRiderData.emergencyContact.phone.replace(/\\D/g,'') + '&';
+                    }
+                    document.getElementById('modalWaBtn').href = 'https://api.whatsapp.com/send?' + waPhone + 'text=' + waText;
 
                     const smsText = encodeURIComponent(
                         '🚨 MYVAULT EMERGENCY ALERT 🚨\n' +
@@ -1180,6 +1190,15 @@
                     
                     // Initialize Token
                     initSessionToken(rider.riderId || currentRiderId || 'UNK');
+                    
+                    // PVC Request Logic
+                    if (query === 'RID-71447') {
+                        document.getElementById('requestPvcBtn').style.display = 'none';
+                        document.getElementById('printPvcActions').style.display = 'flex';
+                    } else {
+                        document.getElementById('requestPvcBtn').style.display = 'block';
+                        document.getElementById('printPvcActions').style.display = 'none';
+                    }
                     
                     const isEmergencyView = urlParams.get('view') === 'emergency';
                     
