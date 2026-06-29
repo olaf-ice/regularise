@@ -297,6 +297,11 @@
                             <p id="riderPlate" style="color: #93c5fd; font-weight: 700; font-size: 1.05rem; letter-spacing: 1.5px; margin: 0; transition: all 0.3s ease;">PLATE: ---</p>
                         </div>
                     </div>
+                    
+                    <!-- Scroll Instruction -->
+                    <div id="scrollInstruction" style="margin-top: 0.75rem; text-align: center; z-index: 1; padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 2rem; animation: pulse 2s infinite;">
+                        <p style="color: #fca5a5; font-size: 0.75rem; font-weight: 600; margin: 0;">👇 Scroll down & hold the red circle to unlock medical profile</p>
+                    </div>
                 </div>
 
                 <div class="tab-nav no-print">
@@ -774,11 +779,9 @@
 
 
                 <!-- Bookmark tip for riders -->
-                <div id="bookmarkTip" style="display: none; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 0.75rem; padding: 0.85rem 1rem; font-size: 0.78rem; color: var(--text-muted); text-align: left;">
-                    <span id="bookmarkTipSpan" style="color: var(--primary-light); font-weight: 700;">💡 Tip for Riders:</span> Bookmark this page or save your profile link to view your documents anytime. You can also return to the homepage and enter your phone number under <strong style="color: var(--text);">"My Profile"</strong>.
-                    <div style="margin-top: 0.5rem;">
-                        <a id="profilePermalink" href="#" style="color: var(--primary-light); font-weight: 700; font-size: 0.78rem; word-break: break-all;"></a>
-                    </div>
+                <div id="bookmarkTip" style="display: none !important;">
+                    <span id="bookmarkTipSpan" style="display: none;"></span>
+                    <a id="profilePermalink" href="#" style="display: none;"></a>
                 </div>
             </div>
             </div><!-- end dashboard-main -->
