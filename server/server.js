@@ -475,7 +475,7 @@ app.post('/api/agent/register-rider', authenticateAgentToken, [
         const salt = await bcrypt.genSalt(10);
         const hashedPin = await bcrypt.hash(plainPin, salt);
 
-        const riderId = `RID-${Math.floor(10000 + Math.random() * 90000)}`;
+        const riderId = `SID-${Math.floor(10000 + Math.random() * 90000)}`;
         const reference = `PAY-${Date.now()}`;
         
         const newRider = {
@@ -1111,7 +1111,7 @@ app.post('/api/register', authLimiter, [
         const salt = await bcrypt.genSalt(10);
         const hashedPin = await bcrypt.hash(pin, salt);
 
-        const riderId = `RID-${Math.floor(10000 + Math.random() * 90000)}`;
+        const riderId = `SID-${Math.floor(10000 + Math.random() * 90000)}`;
         const reference = `PAY-${Date.now()}`;
         const newRider = {
             riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '',

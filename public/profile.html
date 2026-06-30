@@ -1247,7 +1247,17 @@
                     document.getElementById('riderPlate').textContent = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
                     document.getElementById('riderId').textContent = rider.riderId;
                     document.getElementById('riderPhone').textContent = rider.phone;
-                    document.getElementById('riderExpiry').textContent = rider.expiryDate ? "VALID UNTIL " + rider.expiryDate : 'EXPIRED / INACTIVE';
+                    let overviewExpiry = rider.expiryDate || '';
+                    if (!overviewExpiry && rider.createdAt) {
+                        let d = new Date(rider.createdAt);
+                        d.setFullYear(d.getFullYear() + 1);
+                        overviewExpiry = d.toISOString().split('T')[0];
+                    } else if (!overviewExpiry) {
+                        let d = new Date();
+                        d.setFullYear(d.getFullYear() + 1);
+                        overviewExpiry = d.toISOString().split('T')[0];
+                    }
+                    document.getElementById('riderExpiry').textContent = "VALID UNTIL " + overviewExpiry;
 
                     // Terminology Adaptation
                     if (isNonDriver) {
