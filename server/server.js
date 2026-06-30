@@ -1177,7 +1177,9 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
             // Bike
             bikeBrand, bikeModel, bikeColor, ownershipType,
             // Doc numbers
-            licenseNumber, insuranceNumber, ninNumber
+            licenseNumber, insuranceNumber, ninNumber,
+            // Onboarding essentials
+            address, altPhone, plateNumber
         } = req.body;
         
         // Use the authenticated riderId from JWT, NOT the request body
@@ -1205,6 +1207,12 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
             hospitalPreference: riderHospital || '',
             conditions, medications, immunizations, height, weight, gender, dateOfBirth, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor: organDonor === 'true' || organDonor === true, donorRestrictions
         };
+
+        // Update core info from onboarding if provided
+        if (address) rider.address = address;
+        if (altPhone) rider.altPhone = altPhone;
+        if (dateOfBirth) rider.dob = dateOfBirth;
+        if (plateNumber) rider.plateNumber = plateNumber;
 
         // Update Emergency Contact
         rider.emergencyContact = { 
