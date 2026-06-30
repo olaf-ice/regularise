@@ -405,10 +405,44 @@
             const distance = targetDate - now;
 
             if (distance < 0) {
-                daysEl.innerText = "00";
-                hoursEl.innerText = "00";
-                minutesEl.innerText = "00";
-                secondsEl.innerText = "00";
+                if (daysEl) daysEl.innerText = "00";
+                if (hoursEl) hoursEl.innerText = "00";
+                if (minutesEl) minutesEl.innerText = "00";
+                if (secondsEl) secondsEl.innerText = "00";
+                
+                // Launch State UI Changes
+                const countdownEl = document.getElementById('countdown');
+                const waitlistForm = document.getElementById('waitlistForm');
+                const urgencyText = document.querySelector('.urgency-text');
+                
+                if (countdownEl) countdownEl.style.display = 'none';
+                if (waitlistForm) waitlistForm.style.display = 'none';
+                if (urgencyText) urgencyText.style.display = 'none';
+                
+                let launchMsg = document.getElementById('launchMessage');
+                if (!launchMsg) {
+                    launchMsg = document.createElement('div');
+                    launchMsg.id = 'launchMessage';
+                    launchMsg.innerHTML = `
+                        <div style="padding: 2.5rem 1.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent); border-radius: 16px; margin: 2rem 0; animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+                            <h2 style="color: var(--accent); font-size: 2.2rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">🎉 We Are Live!</h2>
+                            <p style="font-size: 1.15rem; color: var(--text-main); margin-bottom: 2rem; line-height: 1.6;">The wait is officially over. MyVault is now active. Secure your digital identity and ensure your voice is heard.</p>
+                            <a href="register.html" class="cta-btn" style="display: block; text-decoration: none; text-align: center; background: var(--accent); color: #000; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">Register Now</a>
+                        </div>
+                    `;
+                    if (waitlistForm && waitlistForm.parentNode) {
+                        waitlistForm.parentNode.insertBefore(launchMsg, waitlistForm);
+                    }
+                    
+                    const badge = document.querySelector('.badge');
+                    if(badge) {
+                        badge.textContent = "Live Now";
+                        badge.style.borderColor = "var(--accent)";
+                        badge.style.color = "var(--accent)";
+                        badge.style.background = "rgba(16, 185, 129, 0.1)";
+                        badge.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.4)";
+                    }
+                }
                 return;
             }
 
