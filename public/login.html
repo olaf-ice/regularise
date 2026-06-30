@@ -84,7 +84,7 @@
                     
                     <div class="form-input-container">
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <input type="tel" id="riderPhone" placeholder="Registered Phone Number (e.g. 080...)">
+                            <input type="text" id="riderPhone" placeholder="Registered Phone Number or Safety ID">
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                             <input type="password" id="riderPin" placeholder="Enter 4-Digit Security PIN" pattern="\d{4}">
@@ -163,7 +163,7 @@
             <!-- Step 1: Request OTP -->
             <div id="fpStep1">
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Enter your registered phone number to receive a 6-digit OTP via SMS.</p>
-                <input type="tel" id="fpPhone" placeholder="Registered Phone No." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; margin-bottom: 1rem;">
+                <input type="text" id="fpPhone" placeholder="Registered Phone No. or Safety ID" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; margin-bottom: 1rem;">
                 <button class="btn btn-primary" id="fpBtn1" onclick="requestOTP()" style="width: 100%;">Send OTP</button>
             </div>
 
@@ -217,7 +217,7 @@
                     const res = await fetch('/api/rider/login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone, pin })
+                        body: JSON.stringify({ loginId: phone, pin })
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -272,7 +272,7 @@
             try {
                 const res = await fetch('/api/rider/forgot-pin', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone })
+                    body: JSON.stringify({ loginId: phone })
                 });
                 const data = await res.json();
                 if(data.success) {
@@ -297,7 +297,7 @@
             try {
                 const res = await fetch('/api/rider/verify-otp', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, otp })
+                    body: JSON.stringify({ loginId: phone, otp })
                 });
                 const data = await res.json();
                 if(data.success) {
@@ -324,7 +324,7 @@
             try {
                 const res = await fetch('/api/rider/reset-pin', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, otp, newPin })
+                    body: JSON.stringify({ loginId: phone, otp, newPin })
                 });
                 const data = await res.json();
                 if(data.success) {

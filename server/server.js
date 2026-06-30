@@ -943,52 +943,70 @@ app.post('/api/verify/:query/unlock', apiLimiter, (req, res) => {
 const otpStore = new Map(); // phone -> { otp, expiresAt }
 
 app.post('/api/rider/forgot-pin', authLimiter, async (req, res) => {
-    const { phone } = req.body;
-    const rider = dbHelpers.getRiderByPhone(phone);
+    const { loginId, phone } = req.body;
+    const identifier = loginId || phone;
+    const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
     
     if (!rider) {
         // We return success anyway to prevent number enumeration
-        return res.json({ success: true, message: 'If the number is registered, an OTP will be sent.' });
+        return res.json({ success: true, message: 'If the account exists, an OTP will be sent to the registered phone number.' });
     }
 
+    const targetPhone = rider.phone;
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    otpStore.set(phone, { otp, expiresAt });
+    otpStore.set(targetPhone, { otp, expiresAt });
 
     // Send SMS
     const msg = `Your Regularise PIN reset OTP is ${otp}. It expires in 10 minutes.`;
-    await sendSMS(phone, msg);
-
-    res.json({ success: true, message: 'If the number is registered, an OTP will be sent.' });
+    await sendSMS(targetPhone, msg);
+    
+    res.json({ success: true, message: 'OTP sent successfully' });
 });
 
 app.post('/api/rider/verify-otp', authLimiter, (req, res) => {
-    const { phone, otp } = req.body;
-    const stored = otpStore.get(phone);
+    const { loginId, phone, otp } = req.body;
+    const identifier = loginId || phone;
+    const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
+    const targetPhone = rider ? rider.phone : identifier;
 
-    if (!stored || stored.otp !== otp || stored.expiresAt < Date.now()) {
-        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    const record = otpStore.get(targetPhone);
+
+    if (!record) {
+        return res.json({ success: false, message: 'No OTP requested or expired' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+        otpStore.delete(targetPhone);
+        return res.json({ success: false, message: 'OTP expired' });
+    }
+
+    if (record.otp !== otp) {
+        return res.json({ success: false, message: 'Invalid OTP' });
     }
 
     res.json({ success: true, message: 'OTP verified' });
 });
 
 app.post('/api/rider/reset-pin', authLimiter, async (req, res) => {
-    const { phone, otp, newPin } = req.body;
-    const stored = otpStore.get(phone);
+    const { loginId, phone, otp, newPin } = req.body;
+    const identifier = loginId || phone;
+    const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
+    
+    if (!rider) {
+        return res.json({ success: false, message: 'User not found' });
+    }
+    const targetPhone = rider.phone;
 
-    if (!stored || stored.otp !== otp || stored.expiresAt < Date.now()) {
-        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    const record = otpStore.get(targetPhone);
+
+    if (!record || Date.now() > record.expiresAt || record.otp !== otp) {
+        return res.json({ success: false, message: 'Invalid or expired OTP' });
     }
 
     if (!newPin || newPin.length !== 4) {
         return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits' });
-    }
-
-    const rider = dbHelpers.getRiderByPhone(phone);
-    if (!rider) {
-        return res.status(404).json({ success: false, message: 'Rider not found' });
     }
 
     try {
@@ -999,7 +1017,7 @@ app.post('/api/rider/reset-pin', authLimiter, async (req, res) => {
         dbHelpers.updateRider(rider.riderId, rider);
         
         // Clear OTP
-        otpStore.delete(phone);
+        otpStore.delete(targetPhone);
 
         res.json({ success: true, message: 'PIN updated successfully' });
     } catch (err) {
@@ -1010,12 +1028,13 @@ app.post('/api/rider/reset-pin', authLimiter, async (req, res) => {
 
 // Rider Login Endpoint
 app.post('/api/rider/login', authLimiter, async (req, res) => {
-    const { phone, pin } = req.body;
+    const { loginId, phone, pin } = req.body;
+    const identifier = loginId || phone;
     
-    const rider = dbHelpers.getRiderByPhone(phone);
+    const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
     
     if (!rider) {
-        return res.json({ success: false, message: 'Invalid phone number or PIN' });
+        return res.json({ success: false, message: 'Invalid Phone Number, User ID or PIN' });
     }
 
     if (!rider.pin) {
