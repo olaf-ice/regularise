@@ -656,7 +656,8 @@ app.get('/scan/:riderId', async (req, res) => {
 // GET /api/emergency/:sessionId  (public — no auth required)
 app.get('/api/emergency/:sessionId', (req, res) => {
     const key = req.params.sessionId;
-    const session = emergencySessions.get(key);
+    let session = emergencySessions.get(key);
+    if (!session && !isNaN(key)) session = emergencySessions.get(parseInt(key, 10));
 
     if (!session) {
         return res.status(404).json({ success: false, message: 'Session not found or expired' });
@@ -718,7 +719,8 @@ app.get('/api/emergency/:sessionId', (req, res) => {
 // POST /api/emergency/:sessionId/unlock
 app.post('/api/emergency/:sessionId/unlock', apiLimiter, (req, res) => {
     const key = req.params.sessionId;
-    const session = emergencySessions.get(key);
+    let session = emergencySessions.get(key);
+    if (!session && !isNaN(key)) session = emergencySessions.get(parseInt(key, 10));
 
     if (!session) {
         return res.status(404).json({ success: false, message: 'Session not found or expired' });
