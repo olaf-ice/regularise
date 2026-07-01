@@ -970,8 +970,8 @@
                 );
                 
                 let kinPhone = '';
-                if (rider.emergencyContact) kinPhone = rider.emergencyContact.phone;
-                else if (rider.emergencyContacts && rider.emergencyContacts.length > 0) kinPhone = rider.emergencyContacts[0].phone;
+                if (rider.emergencyContact && rider.emergencyContact.phone) kinPhone = String(rider.emergencyContact.phone);
+                else if (rider.emergencyContacts && rider.emergencyContacts.length > 0 && rider.emergencyContacts[0].phone) kinPhone = String(rider.emergencyContacts[0].phone);
                 
                 let waParam = '';
                 if (kinPhone) {
@@ -1085,8 +1085,8 @@
             );
             
             let kinPhone2 = '';
-            if (rider.emergencyContact) kinPhone2 = rider.emergencyContact.phone;
-            else if (rider.emergencyContacts && rider.emergencyContacts.length > 0) kinPhone2 = rider.emergencyContacts[0].phone;
+            if (rider.emergencyContact && rider.emergencyContact.phone) kinPhone2 = String(rider.emergencyContact.phone);
+            else if (rider.emergencyContacts && rider.emergencyContacts.length > 0 && rider.emergencyContacts[0].phone) kinPhone2 = String(rider.emergencyContacts[0].phone);
             
             let waParam2 = '';
             if (kinPhone2) {
