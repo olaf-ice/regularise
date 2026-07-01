@@ -453,15 +453,19 @@
             <p style="color: #fca5a5; font-size: 0.85rem; font-weight: 700; margin: 0; letter-spacing: 0.5px;">👇 Tap here to automatically scroll down to the unlock circle</p>
         </div>
 
-        <!-- Rider Identity -->
+        <!-- Citizen Identity -->
         <div class="card">
-            <div class="card-title"><span>👤</span> RIDER / DRIVER IDENTITY</div>
+            <div class="card-title"><span>👤</span> CITIZEN IDENTITY</div>
             <div class="rider-identity">
-                <img id="riderPhoto" class="rider-photo" src="/assets/default-avatar.png" alt="Rider" onerror="this.src='/assets/default-avatar.png'">
+                <img id="riderPhoto" class="rider-photo" src="/assets/default-avatar.png" alt="Citizen" onerror="this.src='/assets/default-avatar.png'">
                 <div class="rider-info">
                     <div class="rider-name" id="riderName">Loading...</div>
                     <div class="rider-plate" id="riderPlate">---</div>
-                    <span class="rider-id-badge" id="riderIdBadge">ID: ---</span>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem;">
+                        <span class="rider-id-badge" id="riderIdBadge">ID: ---</span>
+                        <span class="rider-id-badge" id="riderSexBadge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); display: none;">Sex: ---</span>
+                        <span class="rider-id-badge" id="riderAgeBadge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3); display: none;">Age: ---</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -936,6 +940,23 @@
                     document.getElementById('riderPlate').textContent = plate;
                 }
                 document.getElementById('riderIdBadge').textContent = 'ID: ' + (rider.riderId || '---');
+
+                if (rider.medical && rider.medical.gender) {
+                    const sBadge = document.getElementById('riderSexBadge');
+                    sBadge.textContent = 'Sex: ' + rider.medical.gender;
+                    sBadge.style.display = 'inline-block';
+                }
+                if (rider.medical && rider.medical.dateOfBirth) {
+                    const dob = new Date(rider.medical.dateOfBirth);
+                    if (!isNaN(dob)) {
+                        const ageDiff = Date.now() - dob.getTime();
+                        const ageDate = new Date(ageDiff);
+                        const calculatedAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+                        const aBadge = document.getElementById('riderAgeBadge');
+                        aBadge.textContent = 'Age: ' + calculatedAge;
+                        aBadge.style.display = 'inline-block';
+                    }
+                }
 
                 if (rider.documents && rider.documents.passportPhoto) {
                     const src = rider.documents.passportPhoto.url || rider.documents.passportPhoto;

@@ -676,7 +676,9 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             emergencyContact: fullRider.emergencyContact,
             medical: fullRider.medical ? { 
                 bloodGroup: fullRider.medical.bloodGroup,
-                refusesBloodTransfusion: fullRider.medical.refusesBloodTransfusion
+                refusesBloodTransfusion: fullRider.medical.refusesBloodTransfusion,
+                gender: fullRider.medical.gender,
+                dateOfBirth: fullRider.medical.dateOfBirth
             } : {},
             // Include photo for identity
             documents: fullRider.documents && fullRider.documents.passportPhoto ? { passportPhoto: fullRider.documents.passportPhoto } : {}
