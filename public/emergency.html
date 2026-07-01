@@ -968,7 +968,18 @@
                     '🕐 *Time:* ' + fmt(s.createdAt) + '\n\n' +
                     'View full emergency profile:\n' + currentUrl
                 );
-                document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText;
+                
+                let kinPhone = '';
+                if (rider.emergencyContact) kinPhone = rider.emergencyContact.phone;
+                else if (rider.emergencyContacts && rider.emergencyContacts.length > 0) kinPhone = rider.emergencyContacts[0].phone;
+                
+                let waParam = '';
+                if (kinPhone) {
+                    let d = kinPhone.replace(/\D/g, '');
+                    if (d.startsWith('0')) d = '234' + d.substring(1);
+                    waParam = '&phone=' + d;
+                }
+                document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText + waParam;
 
             } catch(err) {
                 console.error(err);
@@ -1072,7 +1083,18 @@
                 '🕐 *Time:* ' + fmt(s.createdAt) + '\n\n' +
                 'View full emergency profile:\n' + currentUrl
             );
-            document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText;
+            
+            let kinPhone2 = '';
+            if (rider.emergencyContact) kinPhone2 = rider.emergencyContact.phone;
+            else if (rider.emergencyContacts && rider.emergencyContacts.length > 0) kinPhone2 = rider.emergencyContacts[0].phone;
+            
+            let waParam2 = '';
+            if (kinPhone2) {
+                let d = kinPhone2.replace(/\D/g, '');
+                if (d.startsWith('0')) d = '234' + d.substring(1);
+                waParam2 = '&phone=' + d;
+            }
+            document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText + waParam2;
         }
 
         loadSession();
