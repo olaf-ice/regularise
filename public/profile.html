@@ -1075,10 +1075,19 @@
                 const pos = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000 });
                 });
+                let locName = 'GPS Location';
+                try {
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18&addressdetails=1`);
+                    const geoData = await geoRes.json();
+                    if (geoData && geoData.display_name) {
+                        locName = geoData.display_name.split(',').slice(0, 3).join(',').trim();
+                    }
+                } catch(e) { console.error('Geocode err', e); }
+
                 locationPayload = {
                     latitude: pos.coords.latitude,
                     longitude: pos.coords.longitude,
-                    name: 'GPS Location'
+                    name: locName
                 };
             } catch (geoErr) {
                 // Geolocation denied or unavailable — proceed without it
