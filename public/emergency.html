@@ -936,9 +936,20 @@
                 // Overpass API Query: 5km radius for hospitals and police stations
                 const radius = 5000;
                 const query = `[out:json];(node["amenity"="hospital"](around:${radius},${lat},${lng});node["amenity"="clinic"](around:${radius},${lat},${lng});node["amenity"="police"](around:${radius},${lat},${lng}););out 10;`;
-                const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+                const url = 'https://overpass-api.de/api/interpreter';
                 
-                const res = await fetch(url);
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'text/plain'
+                    },
+                    body: query
+                });
+                
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
                 const data = await res.json();
                 
                 if (!data.elements || data.elements.length === 0) {
