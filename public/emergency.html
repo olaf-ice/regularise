@@ -910,40 +910,86 @@
             });
         }
 
-        function renderHelpNetwork() {
+        function calcDist(lat1, lon1, lat2, lon2) {
+            const R = 6371; // km
+            const dLat = (lat2-lat1) * Math.PI/180;
+            const dLon = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI/180)*Math.cos(lat2 * Math.PI/180) *
+                      Math.sin(dLon/2)*Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        async function renderHelpNetwork(lat, lng) {
             const list = document.getElementById('helpNetworkList');
             if (!list) return;
             
-            // Mock Data for concept
-            const facilities = [
-                { type: 'hospital', name: 'General Hospital, Ikeja', dist: '1.2 km away', time: '4 min drive', phone: '+234800000000', lat: 6.596, lng: 3.342 },
-                { type: 'police', name: 'Area F Police Command', dist: '2.5 km away', time: '8 min drive', phone: '+234800000001', lat: 6.601, lng: 3.350 }
-            ];
-            
-            let html = '';
-            facilities.forEach(f => {
-                const icon = f.type === 'hospital' ? '🏥' : '🚓';
-                const callText = 'CALL';
-                const navText = 'NAVIGATE';
-                html += `
-                    <div class="help-card ${f.type}">
-                        <div class="help-icon">${icon}</div>
-                        <div class="help-info">
-                            <div class="help-name">${f.name}</div>
-                            <div class="help-meta">
-                                <span class="help-dist">${f.dist}</span>
-                                <span>• ${f.time}</span>
-                            </div>
-                            <div style="margin-top:0.3rem;"><span class="help-status">OPEN 24/7</span></div>
-                            <div class="help-actions">
-                                <a href="tel:${f.phone}" class="btn-help call">📞 ${callText}</a>
-                                <a href="https://www.google.com/maps?q=${f.lat},${f.lng}" target="_blank" class="btn-help nav">🗺️ ${navText}</a>
+            if (!lat || !lng) {
+                list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 1rem;">Location not shared. Cannot fetch nearby facilities.</div>';
+                return;
+            }
+
+            list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 1rem;">Searching for nearby help... <span class="spinner" style="display:inline-block; width:12px; height:12px; vertical-align:middle; margin-left:5px; border-width:2px;"></span></div>';
+
+            try {
+                // Overpass API Query: 5km radius for hospitals and police stations
+                const radius = 5000;
+                const query = `[out:json];(node["amenity"="hospital"](around:${radius},${lat},${lng});node["amenity"="clinic"](around:${radius},${lat},${lng});node["amenity"="police"](around:${radius},${lat},${lng}););out 10;`;
+                const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+                
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if (!data.elements || data.elements.length === 0) {
+                    list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 1rem;">No facilities found within 5km.</div>';
+                    return;
+                }
+
+                let facilities = data.elements.map(el => {
+                    const type = el.tags.amenity === 'police' ? 'police' : 'hospital';
+                    const name = el.tags.name || (type === 'police' ? 'Police Station' : 'Medical Facility');
+                    const phone = el.tags.phone || el.tags['contact:phone'] || null;
+                    const dist = calcDist(lat, lng, el.lat, el.lon);
+                    return { type, name, dist, phone, lat: el.lat, lng: el.lon };
+                });
+
+                // Sort by distance and take top 4
+                facilities.sort((a,b) => a.dist - b.dist);
+                facilities = facilities.slice(0, 4);
+
+                let html = '';
+                facilities.forEach(f => {
+                    const icon = f.type === 'hospital' ? '🏥' : '🚓';
+                    const callText = 'CALL';
+                    const navText = 'NAVIGATE';
+                    const distStr = f.dist.toFixed(1) + ' km away';
+                    const timeStr = Math.max(1, Math.round(f.dist * 3)) + ' min drive';
+                    
+                    const callBtnHtml = f.phone ? `<a href="tel:${f.phone}" class="btn-help call">📞 ${callText}</a>` : '';
+                    
+                    html += `
+                        <div class="help-card ${f.type}">
+                            <div class="help-icon">${icon}</div>
+                            <div class="help-info">
+                                <div class="help-name">${f.name}</div>
+                                <div class="help-meta">
+                                    <span class="help-dist">${distStr}</span>
+                                    <span>• ${timeStr}</span>
+                                </div>
+                                <div class="help-actions">
+                                    ${callBtnHtml}
+                                    <a href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${f.lat},${f.lng}" target="_blank" class="btn-help nav" style="${f.phone ? '' : 'flex: 1;'}">🗺️ ${navText}</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-            });
-            list.innerHTML = html;
+                    `;
+                });
+                list.innerHTML = html;
+            } catch(e) {
+                console.error(e);
+                list.innerHTML = '<div style="font-size:0.75rem; color:var(--red); text-align:center; padding: 1rem;">Error fetching nearby facilities.</div>';
+            }
         }
 
         async function sendKinAlert() {
@@ -1093,7 +1139,7 @@
                 document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText + waParam;
 
                 // Render Help Network concept
-                renderHelpNetwork();
+                renderHelpNetwork(s.location?.latitude, s.location?.longitude);
 
             } catch(err) {
                 console.error(err);
