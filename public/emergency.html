@@ -992,6 +992,42 @@
             }
         }
 
+        async function requestBrowserLocation() {
+            const list = document.getElementById('helpNetworkList');
+            if (!list) return;
+
+            list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 1rem;">Asking for location permission...</div>';
+
+            if (!navigator.geolocation) {
+                list.innerHTML = '<div style="font-size:0.75rem; color:var(--amber); text-align:center; padding: 1rem;">Geolocation is not supported by your browser.</div>';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Update the location card display to show we got it from the browser
+                    const locNameEl = document.getElementById('locationName');
+                    if (locNameEl && locNameEl.textContent === 'Location not shared') {
+                        locNameEl.textContent = 'Current Scanner Location';
+                        document.getElementById('locationCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+                        document.getElementById('locationTime').textContent = '⏱ Captured: Just now';
+                        const ml = document.getElementById('mapsLink');
+                        ml.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+                        ml.style.display = 'inline-flex';
+                    }
+
+                    renderHelpNetwork(lat, lng);
+                },
+                (error) => {
+                    list.innerHTML = '<div style="font-size:0.75rem; color:var(--amber); text-align:center; padding: 1rem;">Location access denied or unavailable. Cannot fetch nearby help.</div>';
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
         async function sendKinAlert() {
             const btn = document.getElementById('kinAlertBtn');
             if (!sessionData) return;
@@ -1139,7 +1175,23 @@
                 document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText + waParam;
 
                 // Render Help Network concept
-                renderHelpNetwork(s.location?.latitude, s.location?.longitude);
+                if (s.location && s.location.latitude && s.location.longitude) {
+                    renderHelpNetwork(s.location.latitude, s.location.longitude);
+                } else {
+                    const list = document.getElementById('helpNetworkList');
+                    if (list) {
+                        list.innerHTML = `
+                            <div style="text-align:center; padding: 1.5rem 1rem;">
+                                <div style="font-size:1.5rem; margin-bottom:0.5rem;">📍</div>
+                                <div style="font-size:0.8rem; color:var(--text); font-weight:700; margin-bottom:0.75rem;">Location Not Shared</div>
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">Since this is a static QR scan, we need your location to find nearby hospitals and police stations.</div>
+                                <button onclick="requestBrowserLocation()" style="background:var(--primary); color:white; border:none; padding:0.6rem 1rem; border-radius:0.5rem; font-size:0.75rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(59,130,246,0.3);">
+                                    SHARE LOCATION NOW
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
 
             } catch(err) {
                 console.error(err);
