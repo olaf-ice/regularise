@@ -3,15 +3,15 @@ const lng = 3.342;
 const radius = 5000;
 const query = `[out:json];(node["amenity"="hospital"](around:${radius},${lat},${lng});node["amenity"="clinic"](around:${radius},${lat},${lng});node["amenity"="police"](around:${radius},${lat},${lng}););out 10;`;
 const url = 'https://overpass-api.de/api/interpreter';
-console.log("Fetching url via POST plain body:", url);
+console.log("Fetching url via POST urlencoded:", url);
 
 fetch(url, {
   method: 'POST',
   headers: {
       'Accept': 'application/json',
-      'User-Agent': 'MyVault/1.0'
+      'Content-Type': 'application/x-www-form-urlencoded'
   },
-  body: query
+  body: 'data=' + encodeURIComponent(query)
 })
   .then(res => res.text())
   .then(text => {

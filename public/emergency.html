@@ -936,21 +936,35 @@
                 // Overpass API Query: 5km radius for hospitals and police stations
                 const radius = 5000;
                 const query = `[out:json];(node["amenity"="hospital"](around:${radius},${lat},${lng});node["amenity"="clinic"](around:${radius},${lat},${lng});node["amenity"="police"](around:${radius},${lat},${lng}););out 10;`;
-                const url = 'https://overpass-api.de/api/interpreter';
+                const encodedQuery = encodeURIComponent(query);
                 
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'text/plain'
-                    },
-                    body: query
-                });
+                // Try primary endpoint, fallback to others if CORS/network fails
+                const endpoints = [
+                    'https://overpass-api.de/api/interpreter?data=',
+                    'https://overpass.kumi.systems/api/interpreter?data=',
+                    'https://lz4.overpass-api.de/api/interpreter?data='
+                ];
                 
-                if (!res.ok) {
-                    throw new Error('Network response was not ok');
+                let data = null;
+                let lastError = null;
+                
+                for (let ep of endpoints) {
+                    try {
+                        const res = await fetch(ep + encodedQuery);
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}`);
+                        }
+                        data = await res.json();
+                        break; // Success
+                    } catch (e) {
+                        lastError = e;
+                        console.warn(`Endpoint ${ep} failed:`, e);
+                    }
                 }
-                const data = await res.json();
+                
+                if (!data) {
+                    throw lastError || new Error('All Overpass API endpoints failed');
+                }
                 
                 if (!data.elements || data.elements.length === 0) {
                     list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 1rem;">No facilities found within 5km.</div>';
