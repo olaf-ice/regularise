@@ -384,6 +384,49 @@
         .level-2-data { display: none; }
         .level-2-data.unlocked { display: block; animation: fade-in 0.5s ease-out forwards; }
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Help Network Concept */
+        .help-network-grid {
+            display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin-top: 0.5rem;
+        }
+        .help-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 0.75rem; padding: 1rem; display: flex; align-items: flex-start; gap: 0.85rem;
+            transition: all 0.2s ease; position: relative; overflow: hidden;
+        }
+        .help-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .help-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+            background: var(--primary); opacity: 0.8;
+        }
+        .help-card.hospital::before { background: var(--red); }
+        .help-card.police::before { background: var(--primary); }
+        
+        .help-icon {
+            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; flex-shrink: 0;
+        }
+        .help-card.hospital .help-icon { background: rgba(239,68,68,0.15); color: var(--red); }
+        .help-card.police .help-icon { background: rgba(59,130,246,0.15); color: var(--primary-light); }
+        
+        .help-info { flex: 1; min-width: 0; }
+        .help-name { font-size: 0.9rem; font-weight: 800; color: var(--text); margin-bottom: 0.2rem; }
+        .help-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; }
+        .help-dist { font-weight: 700; color: var(--amber); }
+        .help-status { font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 999px; background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); font-weight: 800; letter-spacing: 0.5px; }
+        
+        .help-actions { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
+        .btn-help {
+            flex: 1; padding: 0.5rem; border-radius: 0.4rem; font-size: 0.7rem; font-weight: 800;
+            text-align: center; text-decoration: none; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 0.3rem; border: none; font-family: inherit;
+        }
+        .btn-help.call { background: var(--surface); color: var(--text); border: 1px solid var(--glass-border); }
+        .btn-help.call:hover { background: rgba(255,255,255,0.08); }
+        .btn-help.nav { background: rgba(59,130,246,0.15); color: var(--primary-light); border: 1px solid rgba(59,130,246,0.3); }
+        .btn-help.nav:hover { background: rgba(59,130,246,0.25); }
+        .help-card.hospital .btn-help.nav { background: rgba(239,68,68,0.15); color: var(--red); border-color: rgba(239,68,68,0.3); }
+        .help-card.hospital .btn-help.nav:hover { background: rgba(239,68,68,0.25); }
     </style>
     <link rel="stylesheet" href="css/theme.css">
 </head>
@@ -624,6 +667,17 @@
             <div id="kinList"></div>
         </div>
         
+        <!-- Nearby Help Network (Level 1 - Concept) -->
+        <div class="card" id="helpNetworkCard">
+            <div class="card-title"><span>🏥</span> NEARBY HELP NETWORK</div>
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom: 0.75rem; line-height: 1.4;">
+                Connecting you to the closest emergency response facilities.
+            </p>
+            <div class="help-network-grid" id="helpNetworkList">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+        
         <!-- Unlock Section -->
         <div class="unlock-container" id="unlockContainer">
             <button class="hold-btn" id="holdUnlockBtn">
@@ -856,6 +910,42 @@
             });
         }
 
+        function renderHelpNetwork() {
+            const list = document.getElementById('helpNetworkList');
+            if (!list) return;
+            
+            // Mock Data for concept
+            const facilities = [
+                { type: 'hospital', name: 'General Hospital, Ikeja', dist: '1.2 km away', time: '4 min drive', phone: '+234800000000', lat: 6.596, lng: 3.342 },
+                { type: 'police', name: 'Area F Police Command', dist: '2.5 km away', time: '8 min drive', phone: '+234800000001', lat: 6.601, lng: 3.350 }
+            ];
+            
+            let html = '';
+            facilities.forEach(f => {
+                const icon = f.type === 'hospital' ? '🏥' : '🚓';
+                const callText = 'CALL';
+                const navText = 'NAVIGATE';
+                html += `
+                    <div class="help-card ${f.type}">
+                        <div class="help-icon">${icon}</div>
+                        <div class="help-info">
+                            <div class="help-name">${f.name}</div>
+                            <div class="help-meta">
+                                <span class="help-dist">${f.dist}</span>
+                                <span>• ${f.time}</span>
+                            </div>
+                            <div style="margin-top:0.3rem;"><span class="help-status">OPEN 24/7</span></div>
+                            <div class="help-actions">
+                                <a href="tel:${f.phone}" class="btn-help call">📞 ${callText}</a>
+                                <a href="https://www.google.com/maps?q=${f.lat},${f.lng}" target="_blank" class="btn-help nav">🗺️ ${navText}</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
         async function sendKinAlert() {
             const btn = document.getElementById('kinAlertBtn');
             if (!sessionData) return;
@@ -1001,6 +1091,9 @@
                     waParam = '&phone=' + d;
                 }
                 document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText + waParam;
+
+                // Render Help Network concept
+                renderHelpNetwork();
 
             } catch(err) {
                 console.error(err);
