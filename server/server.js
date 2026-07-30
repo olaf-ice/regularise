@@ -387,6 +387,57 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
     }
 });
 
+// Admin Free Registration Links Endpoints
+app.post('/api/admin/free-links/generate', authenticateAdminToken, (req, res) => {
+    try {
+        const count = parseInt(req.body.count) || 300;
+        const notes = req.body.notes || '';
+        const result = dbHelpers.createFreeLinks(count, notes);
+        const stats = dbHelpers.getFreeLinksStats();
+        res.json({ success: true, message: `Successfully generated ${result.count} free registration links.`, result, stats });
+    } catch (error) {
+        console.error('Error generating free links:', error);
+        res.status(500).json({ success: false, message: 'Failed to generate free registration links' });
+    }
+});
+
+app.get('/api/admin/free-links', authenticateAdminToken, (req, res) => {
+    try {
+        const { status, search, page, limit } = req.query;
+        const linksData = dbHelpers.getFreeLinks({ status, search, page: parseInt(page) || 1, limit: parseInt(limit) || 50 });
+        const stats = dbHelpers.getFreeLinksStats();
+        res.json({ success: true, ...linksData, stats });
+    } catch (error) {
+        console.error('Error fetching free links:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch free links' });
+    }
+});
+
+app.post('/api/admin/free-links/delete', authenticateAdminToken, (req, res) => {
+    try {
+        const { ids, clearUnused } = req.body;
+        const result = dbHelpers.deleteFreeLinks({ ids, clearUnused });
+        const stats = dbHelpers.getFreeLinksStats();
+        res.json({ success: true, message: `Deleted ${result.deletedCount} links.`, stats });
+    } catch (error) {
+        console.error('Error deleting free links:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete free links' });
+    }
+});
+
+// Public Free Registration Link Validation Endpoint
+app.get('/api/free-token/validate', apiLimiter, (req, res) => {
+    try {
+        const token = req.query.token;
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        const validation = dbHelpers.claimOrValidateFreeLink(token, clientIp);
+        res.json(validation);
+    } catch (error) {
+        console.error('Error validating token:', error);
+        res.status(500).json({ valid: false, message: 'Server error validating link' });
+    }
+});
+
 // ---------------------------------------------------------
 // AGENT ROUTES
 // ---------------------------------------------------------
@@ -1100,7 +1151,7 @@ app.post('/api/register', authLimiter, [
             return res.status(403).json({ success: false, message: 'Registration is currently closed until July 1st. Join our early access waitlist!' });
         }
 
-        const { name, phone, altPhone, address, dob, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr, userType } = req.body;
+        const { name, phone, altPhone, address, dob, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr, userType, freeToken } = req.body;
         let emergencyContacts = [];
         try { if (emergencyContactsStr) emergencyContacts = JSON.parse(emergencyContactsStr); } catch(e) {}
         if (emergencyContacts.length === 0 && emergencyContactName) {
@@ -1111,17 +1162,33 @@ app.post('/api/register', authLimiter, [
             return res.status(400).json({ success: false, message: 'Phone number already registered' });
         }
 
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        let isFreeRegistration = false;
+
+        if (freeToken) {
+            const validation = dbHelpers.claimOrValidateFreeLink(freeToken, clientIp);
+            if (!validation.valid) {
+                return res.status(400).json({ success: false, message: validation.message });
+            }
+            isFreeRegistration = true;
+        }
+
         // Hash the PIN
         const salt = await bcrypt.genSalt(10);
         const hashedPin = await bcrypt.hash(pin, salt);
 
         const riderId = `SID-${Math.floor(10000 + Math.random() * 90000)}`;
-        const reference = `PAY-${Date.now()}`;
+        const reference = isFreeRegistration ? `FREE-${Date.now()}` : `PAY-${Date.now()}`;
+        
+        const expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + 12);
+
         const newRider = {
             riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '',
             pin: hashedPin,
             userType: userType || 'driver',
             registrationDate: new Date().toISOString().split('T')[0],
+            expiryDate: isFreeRegistration ? expiry.toISOString().split('T')[0] : null,
             vehicleType: vehicleType || (userType === 'non-driver' ? null : 'motorcycle'),
             bike: {
                 plateNumber: plateNumber || ''
@@ -1144,14 +1211,20 @@ app.post('/api/register', authLimiter, [
                 sosEnabled: false,
                 theftStatus: 'Safe'
             },
-            status: 'Pending', 
+            status: isFreeRegistration ? 'Active' : 'Pending',
+            isFree: isFreeRegistration,
             reference 
         };
         dbHelpers.insertRider(newRider);
+
+        if (isFreeRegistration && freeToken) {
+            dbHelpers.useFreeLink(freeToken, riderId, clientIp);
+        }
+
         const token = jwt.sign({ riderId }, JWT_SECRET, { expiresIn: '24h' });
 
         res.json({
-            success: true, riderId, reference, token,
+            success: true, riderId, reference, token, isFree: isFreeRegistration,
             paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY
         });
     } catch (error) {

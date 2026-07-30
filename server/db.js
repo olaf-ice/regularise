@@ -58,6 +58,18 @@ db.exec(`
     createdAt TEXT NOT NULL,
     used INTEGER DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS free_registration_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    createdAt TEXT NOT NULL,
+    claimedAt TEXT,
+    claimedIp TEXT,
+    usedAt TEXT,
+    usedIp TEXT,
+    riderId TEXT,
+    notes TEXT
+  );
 `);
 
 // Migration script
@@ -222,6 +234,141 @@ const dbHelpers = {
         }
         
         return { registrations, scans };
+    },
+    // Free Registration Links Helpers
+    createFreeLinks: (count = 300, notes = '') => {
+        const crypto = require('crypto');
+        const insertStmt = db.prepare('INSERT INTO free_registration_links (token, status, createdAt, notes) VALUES (?, ?, ?, ?)');
+        const now = new Date().toISOString();
+        const createdTokens = [];
+        
+        const insertBatch = db.transaction((qty) => {
+            for (let i = 0; i < qty; i++) {
+                const token = 'FREE-' + crypto.randomBytes(12).toString('hex').toUpperCase();
+                insertStmt.run(token, 'active', now, notes || `Batch generated ${now.split('T')[0]}`);
+                createdTokens.push(token);
+            }
+        });
+        
+        insertBatch(count);
+        return { count: createdTokens.length, createdAt: now };
+    },
+    getFreeLinks: ({ status = 'all', search = '', page = 1, limit = 50 } = {}) => {
+        let sql = 'SELECT * FROM free_registration_links';
+        const params = [];
+        const conditions = [];
+
+        if (status && status !== 'all') {
+            conditions.push('status = ?');
+            params.push(status);
+        }
+
+        if (search) {
+            conditions.push('(token LIKE ? OR claimedIp LIKE ? OR usedIp LIKE ? OR riderId LIKE ? OR notes LIKE ?)');
+            const s = `%${search}%`;
+            params.push(s, s, s, s, s);
+        }
+
+        if (conditions.length > 0) {
+            sql += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        sql += ' ORDER BY id DESC';
+
+        const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total');
+        const totalRow = db.prepare(countSql).get(...params);
+        const total = totalRow ? totalRow.total : 0;
+
+        const offset = (Math.max(1, page) - 1) * limit;
+        sql += ' LIMIT ? OFFSET ?';
+        params.push(limit, offset);
+
+        const rows = db.prepare(sql).all(...params);
+        return { rows, total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / limit) || 1 };
+    },
+    getFreeLinkByToken: (token) => {
+        if (!token) return null;
+        const stmt = db.prepare('SELECT * FROM free_registration_links WHERE token = ?');
+        return stmt.get(token) || null;
+    },
+    claimOrValidateFreeLink: (token, clientIp) => {
+        if (!token) return { valid: false, message: 'No registration token provided.' };
+        const stmt = db.prepare('SELECT * FROM free_registration_links WHERE token = ?');
+        const link = stmt.get(token);
+
+        if (!link) {
+            return { valid: false, message: 'Invalid registration link.' };
+        }
+
+        if (link.status === 'used') {
+            return { valid: false, message: 'This registration link has already been used.' };
+        }
+
+        if (link.status === 'nullified') {
+            return { valid: false, message: 'This link was accessed from a different IP address and has been nullified.' };
+        }
+
+        const now = new Date().toISOString();
+        const cleanIp = (clientIp || '').replace(/^.*:/, '');
+
+        if (link.status === 'active' || !link.claimedIp) {
+            const claimStmt = db.prepare('UPDATE free_registration_links SET status = ?, claimedAt = ?, claimedIp = ? WHERE id = ?');
+            claimStmt.run('claimed', now, cleanIp, link.id);
+            return { valid: true, link: { ...link, status: 'claimed', claimedIp: cleanIp } };
+        }
+
+        const existingClaimedIp = (link.claimedIp || '').replace(/^.*:/, '');
+        if (existingClaimedIp && cleanIp && existingClaimedIp !== cleanIp) {
+            const nullifyStmt = db.prepare('UPDATE free_registration_links SET status = ? WHERE id = ?');
+            nullifyStmt.run('nullified', link.id);
+            return { valid: false, message: 'Access denied: Link accessed from a different IP address and has been nullified.' };
+        }
+
+        return { valid: true, link };
+    },
+    useFreeLink: (token, riderId, clientIp) => {
+        if (!token) return { success: false, message: 'No token provided' };
+        const link = dbHelpers.getFreeLinkByToken(token);
+        if (!link) return { success: false, message: 'Invalid token' };
+
+        if (link.status === 'used') return { success: false, message: 'Token already used' };
+        if (link.status === 'nullified') return { success: false, message: 'Token nullified' };
+
+        const cleanIp = (clientIp || '').replace(/^.*:/, '');
+        const existingClaimedIp = (link.claimedIp || '').replace(/^.*:/, '');
+
+        if (existingClaimedIp && cleanIp && existingClaimedIp !== cleanIp) {
+            const nullifyStmt = db.prepare('UPDATE free_registration_links SET status = ? WHERE id = ?');
+            nullifyStmt.run('nullified', link.id);
+            return { success: false, message: 'IP mismatch detected. Link nullified.' };
+        }
+
+        const now = new Date().toISOString();
+        const stmt = db.prepare('UPDATE free_registration_links SET status = ?, usedAt = ?, usedIp = ?, riderId = ? WHERE id = ?');
+        stmt.run('used', now, cleanIp, riderId, link.id);
+        return { success: true };
+    },
+    deleteFreeLinks: ({ ids = [], clearUnused = false } = {}) => {
+        if (clearUnused) {
+            const stmt = db.prepare("DELETE FROM free_registration_links WHERE status IN ('active', 'claimed')");
+            const result = stmt.run();
+            return { deletedCount: result.changes };
+        } else if (Array.isArray(ids) && ids.length > 0) {
+            const placeholders = ids.map(() => '?').join(',');
+            const stmt = db.prepare(`DELETE FROM free_registration_links WHERE id IN (${placeholders})`);
+            const result = stmt.run(...ids);
+            return { deletedCount: result.changes };
+        }
+        return { deletedCount: 0 };
+    },
+    getFreeLinksStats: () => {
+        const total = db.prepare('SELECT COUNT(*) as count FROM free_registration_links').get().count;
+        const active = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'active'").get().count;
+        const claimed = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'claimed'").get().count;
+        const used = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'used'").get().count;
+        const nullified = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'nullified'").get().count;
+
+        return { total, active, claimed, used, nullified };
     }
 };
 

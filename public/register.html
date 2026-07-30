@@ -96,6 +96,8 @@
         <main>
             <div class="glass-card" style="padding: 2rem;">
                 
+                <div id="freeTokenBanner" style="display: none; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; text-align: center;"></div>
+
                 <form id="registrationForm">
                     <div class="input-group">
                         <label for="fullName">Full Name</label>
@@ -113,7 +115,7 @@
                         <small style="color: var(--text-muted); margin-top: 5px; display: block;">You will use this PIN to log in later.</small>
                     </div>
 
-                    <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 0.75rem; margin: 2rem 0; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
+                    <div id="priceBox" style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 0.75rem; margin: 2rem 0; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
                         <p style="font-size: 1rem; color: var(--primary-light); font-weight: 700;">
                             Subscription: ₦3,000 / 1 Year (Early Adopter Price)
                         </p>
@@ -126,14 +128,56 @@
         </main>
 
         <footer style="margin-top: 2rem; padding: 2rem 0; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
-            Secure payment powered by Paystack. Documents are uploaded after payment.
+            Secure payment powered by Paystack. Documents are uploaded after registration.
         </footer>
     </div>
 
     <script src="https://js.paystack.co/v1/inline.js"></script>
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const freeToken = urlParams.get('free_token') || urlParams.get('token');
+        let isValidFreeToken = false;
+
+        if (freeToken) {
+            fetch(`/api/free-token/validate?token=${encodeURIComponent(freeToken)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const banner = document.getElementById('freeTokenBanner');
+                    const priceBox = document.getElementById('priceBox');
+                    const submitBtn = document.getElementById('submitBtn');
+
+                    if (data.valid) {
+                        isValidFreeToken = true;
+                        if (banner) {
+                            banner.style.display = 'block';
+                            banner.style.background = 'rgba(16, 185, 129, 0.15)';
+                            banner.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+                            banner.innerHTML = `
+                                <div style="font-weight: 800; color: #34d399; font-size: 1.1rem; margin-bottom: 0.25rem;">🎁 FREE REGISTRATION LINK APPLIED</div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);">No payment is required. Single-use link locked to your IP session.</div>
+                            `;
+                        }
+                        if (priceBox) priceBox.style.display = 'none';
+                        if (submitBtn) submitBtn.textContent = 'Complete Free Registration';
+                    } else {
+                        if (banner) {
+                            banner.style.display = 'block';
+                            banner.style.background = 'rgba(239, 68, 68, 0.15)';
+                            banner.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+                            banner.innerHTML = `
+                                <div style="font-weight: 800; color: #f87171; font-size: 1rem; margin-bottom: 0.25rem;">⚠️ FREE REGISTRATION LINK INVALID</div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);">${data.message || 'This link has already been used or accessed from another IP.'}</div>
+                            `;
+                        }
+                    }
+                })
+                .catch(err => console.error('Error validating token:', err));
+        }
+
         function toggleVehicleFields() {
-            const userType = document.getElementById('userType').value;
+            const userTypeEl = document.getElementById('userType');
+            if (!userTypeEl) return;
+            const userType = userTypeEl.value;
             const vehicleTypeGroup = document.getElementById('vehicleType').closest('.input-group');
             const plateNumberGroup = document.getElementById('plateNumber').closest('.input-group');
             
@@ -157,6 +201,10 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
+            if (isValidFreeToken && freeToken) {
+                data.freeToken = freeToken;
+            }
+
             // Handle multiple emergency contacts
             const names = formData.getAll('emergencyContactName[]');
             const phones = formData.getAll('emergencyContactPhone[]');
@@ -172,7 +220,6 @@
                 data.emergencyContactsStr = JSON.stringify(contacts);
             }
 
-
             try {
                 const response = await fetch('/api/register', {
                     method: 'POST',
@@ -185,6 +232,12 @@
                 if (result.success) {
                     localStorage.setItem('riderToken', result.token);
                     
+                    if (result.isFree) {
+                        // Free registration bypasses Paystack payment modal completely!
+                        window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}&type=${data.vehicleType || ''}&userType=${data.userType || ''}&free=true`;
+                        return;
+                    }
+
                     const handler = PaystackPop.setup({
                         key: result.paystackPublicKey,
                         email: data.phone + "@riderid.com",
@@ -198,7 +251,7 @@
                             ]
                         },
                         callback: function(response) {
-                            window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}&type=${data.vehicleType}&userType=${data.userType}`;
+                            window.location.href = `upload-docs.html?id=${result.riderId}&ref=${result.reference}&type=${data.vehicleType || ''}&userType=${data.userType || ''}`;
                         },
                         onClose: function() {
                             alert('Transaction cancelled.');
@@ -210,12 +263,13 @@
                 } else {
                     alert('Error: ' + result.message);
                     btn.disabled = false;
-                    btn.textContent = 'Proceed to Payment';
+                    btn.textContent = isValidFreeToken ? 'Complete Free Registration' : 'Proceed to Payment';
                 }
             } catch (error) {
                 console.error(error);
                 alert('Connection error.');
                 btn.disabled = false;
+                btn.textContent = isValidFreeToken ? 'Complete Free Registration' : 'Proceed to Payment';
             }
         });
     </script>

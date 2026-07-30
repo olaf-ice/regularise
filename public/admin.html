@@ -299,6 +299,112 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Free Registration Links Section -->
+            <div style="margin-top: 4rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <h1 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            🎁 Free Registration Links Manager
+                        </h1>
+                        <p style="color: var(--text-muted); margin: 0;">Generate batch free registration links, track visitor IP addresses, enforce single-use nullification, and export link lists.</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button onclick="copyAllActiveLinks()" class="action-btn" style="border-color: #60a5fa; color: #60a5fa; font-weight: 700;">
+                            📋 Copy Active Links
+                        </button>
+                        <button onclick="exportFreeLinksCSV()" class="action-btn" style="border-color: #34d399; color: #34d399; font-weight: 700;">
+                            📥 Export Links CSV
+                        </button>
+                        <button onclick="clearUnusedLinks()" class="action-btn suspend" style="font-weight: 700;">
+                            🗑️ Clear Unused
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid for Links -->
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 1.5rem;">
+                    <div class="metric-card">
+                        <div class="metric-value" id="freeMetricTotal">0</div>
+                        <div class="metric-label">Total Generated</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="freeMetricActive" style="color: #34d399;">0</div>
+                        <div class="metric-label">Active (Unopened)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="freeMetricClaimed" style="color: #fbbf24;">0</div>
+                        <div class="metric-label">Claimed (IP Locked)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="freeMetricUsed" style="color: #60a5fa;">0</div>
+                        <div class="metric-label">Used / Registered</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="freeMetricNullified" style="color: #f87171;">0</div>
+                        <div class="metric-label">Nullified (IP Mismatch)</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <!-- Batch Generator Form Card -->
+                    <div style="flex: 1; min-width: 320px; background: var(--glass-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary-light);">Generate Free Links Batch</h3>
+                        <form id="generateFreeLinksForm" onsubmit="generateFreeLinks(event)">
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Quantity to Generate</label>
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <button type="button" class="action-btn" onclick="setLinkQuantity(300)" style="flex: 1; font-weight: 700; border-color: var(--primary-light);">300 Links</button>
+                                    <button type="button" class="action-btn" onclick="setLinkQuantity(100)" style="flex: 1;">100</button>
+                                    <button type="button" class="action-btn" onclick="setLinkQuantity(50)" style="flex: 1;">50</button>
+                                    <button type="button" class="action-btn" onclick="setLinkQuantity(10)" style="flex: 1;">10</button>
+                                </div>
+                                <input type="number" id="freeLinkQty" value="300" min="1" max="1000" required style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white;">
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Batch Description / Notes (Optional)</label>
+                                <input type="text" id="freeLinkNotes" placeholder="e.g. Campaign Batch 1 - Promo 300" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white;">
+                            </div>
+                            <button type="submit" id="generateLinksBtn" class="btn btn-primary" style="width: 100%; font-weight: 700;">
+                                ⚡ Generate Free Links
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Free Links List Table -->
+                    <div style="flex: 2; min-width: 450px;" class="admin-table-container">
+                        <div style="padding: 1rem; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <label style="font-size: 0.8rem; color: var(--text-muted);">Status Filter:</label>
+                                <select id="linkStatusFilter" onchange="fetchFreeLinks(1)" style="padding: 0.4rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.8rem;">
+                                    <option value="all">All Statuses</option>
+                                    <option value="active">Active (Unused)</option>
+                                    <option value="claimed">Claimed (IP Locked)</option>
+                                    <option value="used">Used (Registered)</option>
+                                    <option value="nullified">Nullified</option>
+                                </select>
+                            </div>
+                            <input type="text" id="linkSearchInput" oninput="debounceFetchFreeLinks()" placeholder="Search token, IP, rider..." style="padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.8rem; width: 180px;">
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Status</th>
+                                    <th>Claimed IP / Date</th>
+                                    <th>Used Info / Rider</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="freeLinksTableBody">
+                                <tr><td colspan="5" style="text-align: center;">Loading links...</td></tr>
+                            </tbody>
+                        </table>
+                        <div id="freeLinksPagination" style="padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); font-size: 0.8rem; color: var(--text-muted);">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -356,6 +462,7 @@
             fetchRiders();
             fetchAgents();
             fetchAnalytics();
+            fetchFreeLinks(1);
         }
 
         async function fetchRiders() {
@@ -610,6 +717,261 @@
                 URL.revokeObjectURL(url);
             })
             .catch(() => alert('Failed to export data. Please try again.'));
+        }
+
+        // Free Registration Links JS Logic
+        let currentFreeLinkPage = 1;
+        let searchDebounceTimeout = null;
+
+        function setLinkQuantity(qty) {
+            document.getElementById('freeLinkQty').value = qty;
+        }
+
+        function debounceFetchFreeLinks() {
+            clearTimeout(searchDebounceTimeout);
+            searchDebounceTimeout = setTimeout(() => {
+                fetchFreeLinks(1);
+            }, 300);
+        }
+
+        async function fetchFreeLinks(page = 1) {
+            currentFreeLinkPage = page;
+            const statusFilterEl = document.getElementById('linkStatusFilter');
+            const searchInputEl = document.getElementById('linkSearchInput');
+            
+            const status = statusFilterEl ? statusFilterEl.value : 'all';
+            const search = searchInputEl ? searchInputEl.value.trim() : '';
+
+            try {
+                const res = await fetch(`/api/admin/free-links?status=${status}&search=${encodeURIComponent(search)}&page=${page}&limit=50`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    updateFreeLinkStats(data.stats);
+                    renderFreeLinksTable(data.rows);
+                    renderFreeLinksPagination(data.page, data.totalPages, data.total);
+                } else {
+                    if (res.status === 401 || res.status === 403) logout();
+                }
+            } catch (err) {
+                console.error('Error fetching free links:', err);
+                const tbody = document.getElementById('freeLinksTableBody');
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">Failed to load free links</td></tr>`;
+            }
+        }
+
+        function updateFreeLinkStats(stats) {
+            if (!stats) return;
+            document.getElementById('freeMetricTotal').textContent = stats.total || 0;
+            document.getElementById('freeMetricActive').textContent = stats.active || 0;
+            document.getElementById('freeMetricClaimed').textContent = stats.claimed || 0;
+            document.getElementById('freeMetricUsed').textContent = stats.used || 0;
+            document.getElementById('freeMetricNullified').textContent = stats.nullified || 0;
+        }
+
+        function renderFreeLinksTable(rows) {
+            const tbody = document.getElementById('freeLinksTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No free links found. Click "Generate Free Links" to create batch links.</td></tr>`;
+                return;
+            }
+
+            const origin = window.location.origin;
+
+            rows.forEach(link => {
+                const tr = document.createElement('tr');
+
+                let badgeClass = 'status-active';
+                let statusLabel = 'ACTIVE';
+                if (link.status === 'claimed') { badgeClass = 'status-pending'; statusLabel = 'CLAIMED (IP LOCKED)'; }
+                if (link.status === 'used') { badgeClass = 'status-active'; statusLabel = 'USED'; }
+                if (link.status === 'nullified') { badgeClass = 'status-suspended'; statusLabel = 'NULLIFIED'; }
+
+                const fullUrl = `${origin}/register.html?free_token=${link.token}`;
+
+                const claimedInfo = link.claimedIp 
+                    ? `<div style="font-weight:600;">${link.claimedIp}</div><div style="font-size:0.75rem; color:var(--text-muted);">${new Date(link.claimedAt || link.createdAt).toLocaleString()}</div>`
+                    : '<span style="color:var(--text-muted);">-</span>';
+
+                const usedInfo = link.riderId
+                    ? `<div style="color: #34d399; font-weight:700;">${link.riderId}</div><div style="font-size:0.75rem; color:var(--text-muted);">${link.usedIp || ''}</div>`
+                    : (link.status === 'nullified' ? '<span style="color:#f87171; font-weight:600;">IP Mismatch</span>' : '<span style="color:var(--text-muted);">-</span>');
+
+                tr.innerHTML = `
+                    <td>
+                        <strong style="color:var(--primary-light); font-family: monospace;">${link.token}</strong>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${link.notes || ''}</div>
+                    </td>
+                    <td><span class="status-badge ${badgeClass}">${statusLabel}</span></td>
+                    <td>${claimedInfo}</td>
+                    <td>${usedInfo}</td>
+                    <td>
+                        <button class="action-btn view" onclick="copySingleLink('${fullUrl}')" title="Copy full URL">📋 Copy Link</button>
+                        ${(link.status === 'active' || link.status === 'claimed') ? `<button class="action-btn suspend" onclick="deleteSingleLink(${link.id})">Delete</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderFreeLinksPagination(currentPage, totalPages, totalCount) {
+            const container = document.getElementById('freeLinksPagination');
+            if (!container) return;
+            if (totalPages <= 1) {
+                container.innerHTML = `<span>Total Links: <strong>${totalCount}</strong></span>`;
+                return;
+            }
+            container.innerHTML = `
+                <span>Total Links: <strong>${totalCount}</strong> (Page ${currentPage} of ${totalPages})</span>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="action-btn" ${currentPage <= 1 ? 'disabled style="opacity:0.5;"' : ''} onclick="fetchFreeLinks(${currentPage - 1})">Prev</button>
+                    <button class="action-btn" ${currentPage >= totalPages ? 'disabled style="opacity:0.5;"' : ''} onclick="fetchFreeLinks(${currentPage + 1})">Next</button>
+                </div>
+            `;
+        }
+
+        async function generateFreeLinks(e) {
+            e.preventDefault();
+            const qty = parseInt(document.getElementById('freeLinkQty').value) || 300;
+            const notes = document.getElementById('freeLinkNotes').value.trim();
+            const btn = document.getElementById('generateLinksBtn');
+
+            if (!confirm(`Are you sure you want to generate ${qty} free registration links?`)) return;
+
+            btn.disabled = true;
+            btn.textContent = `Generating ${qty} Links...`;
+
+            try {
+                const res = await fetch('/api/admin/free-links/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ count: qty, notes })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    fetchFreeLinks(1);
+                } else {
+                    alert(data.message || 'Failed to generate links');
+                }
+            } catch (err) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⚡ Generate Free Links';
+            }
+        }
+
+        async function copyAllActiveLinks() {
+            try {
+                const res = await fetch(`/api/admin/free-links?status=active&limit=1000`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                if (data.success && data.rows.length > 0) {
+                    const origin = window.location.origin;
+                    const linksText = data.rows.map(r => `${origin}/register.html?free_token=${r.token}`).join('\n');
+                    await navigator.clipboard.writeText(linksText);
+                    alert(`Copied ${data.rows.length} active free registration links to your clipboard!`);
+                } else {
+                    alert('No active free registration links found to copy.');
+                }
+            } catch (err) {
+                alert('Failed to copy links.');
+            }
+        }
+
+        async function exportFreeLinksCSV() {
+            try {
+                const res = await fetch(`/api/admin/free-links?limit=5000`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                if (data.success && data.rows.length > 0) {
+                    const origin = window.location.origin;
+                    let csv = 'ID,Token,Full Registration URL,Status,Created At,Claimed IP,Claimed At,Used IP,Used At,Rider ID,Notes\n';
+                    
+                    data.rows.forEach(r => {
+                        const fullUrl = `${origin}/register.html?free_token=${r.token}`;
+                        csv += `"${r.id}","${r.token}","${fullUrl}","${r.status}","${r.createdAt}","${r.claimedIp || ''}","${r.claimedAt || ''}","${r.usedIp || ''}","${r.usedAt || ''}","${r.riderId || ''}","${r.notes || ''}"\n`;
+                    });
+
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `free_registration_links_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert('No links to export.');
+                }
+            } catch (err) {
+                alert('Failed to export CSV');
+            }
+        }
+
+        async function clearUnusedLinks() {
+            if (!confirm('Are you sure you want to delete ALL unused (active & unclaimed) free registration links?')) return;
+
+            try {
+                const res = await fetch('/api/admin/free-links/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ clearUnused: true })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    fetchFreeLinks(1);
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        async function deleteSingleLink(id) {
+            if (!confirm('Are you sure you want to delete this link?')) return;
+            try {
+                const res = await fetch('/api/admin/free-links/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ ids: [id] })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchFreeLinks(currentFreeLinkPage);
+                }
+            } catch (err) {
+                alert('Error deleting link');
+            }
+        }
+
+        function copySingleLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Copied link to clipboard:\n' + url);
+            }).catch(() => {
+                prompt('Copy this link:', url);
+            });
         }
     </script>
 
