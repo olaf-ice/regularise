@@ -725,6 +725,7 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             riderId: fullRider.riderId,
             userType: fullRider.userType || 'driver',
             emergencyContact: fullRider.emergencyContact,
+            emergencyContacts: fullRider.emergencyContacts || (fullRider.emergencyContact ? [fullRider.emergencyContact] : []),
             medical: fullRider.medical ? { 
                 bloodGroup: fullRider.medical.bloodGroup,
                 refusesBloodTransfusion: fullRider.medical.refusesBloodTransfusion,
@@ -752,6 +753,7 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             riderId: rider.riderId,
             userType: rider.userType || 'driver',
             emergencyContact: rider.emergencyContact,
+            emergencyContacts: rider.emergencyContacts || (rider.emergencyContact ? [rider.emergencyContact] : []),
             medical: rider.medical ? { 
                 bloodGroup: rider.medical.bloodGroup,
                 refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
