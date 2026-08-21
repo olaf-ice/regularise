@@ -251,7 +251,7 @@ const dbHelpers = {
         });
         
         insertBatch(count);
-        return { count: createdTokens.length, createdAt: now };
+        return { count: createdTokens.length, createdAt: now, tokens: createdTokens };
     },
     getFreeLinks: ({ status = 'all', search = '', page = 1, limit = 50 } = {}) => {
         let sql = 'SELECT * FROM free_registration_links';
