@@ -910,8 +910,12 @@
                 const data = await res.json();
                 if (data.success) {
                     alert(data.message);
+                    // Update the overall free‑link counters
+                    if (data.stats) updateFreeLinkStats(data.stats);
                     if (data.result && data.result.tokens) {
-                        showGeneratedLinks(data.result.tokens);
+                        // Store tokens temporarily and remember count
+                        window.__generatedTokens = data.result.tokens;
+                        window.__generatedCount = data.result.count;
                     }
                     if (qty > 10 && typeof fetchFreeLinks === 'function') fetchFreeLinks(1);
                 } else {
@@ -923,6 +927,17 @@
                 btn.disabled = false;
                 btn.textContent = '⚡ Generate Free Links';
                 overlay.style.display = 'none';
+                // Show generated links modal if tokens were stored
+                if (window.__generatedTokens) {
+                    // Show count above the list
+                    const countElem = document.getElementById('generatedCount');
+                    if (countElem && window.__generatedCount !== undefined) {
+                        countElem.textContent = `${window.__generatedCount} link${window.__generatedCount === 1 ? '' : 's'} generated`;
+                    }
+                    showGeneratedLinks(window.__generatedTokens);
+                    window.__generatedTokens = null;
+                    window.__generatedCount = null;
+                }
             }
         }
 
@@ -1033,6 +1048,7 @@
     <div id="generatedLinksModal" class="modal-overlay" style="display:none;">
         <div class="modal-content glass-card">
             <h3>Generated Free Registration Links</h3>
+            <p id="generatedCount" style="margin-bottom:0.5rem; font-weight:600;"></p>
             <ul id="generatedLinksList" style="max-height:300px; overflow-y:auto; margin:1rem 0; padding-left:1.5rem;">
             </ul>
             <button class="btn btn-primary" onclick="copyGeneratedLinks()">Copy All</button>
