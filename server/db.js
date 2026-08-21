@@ -304,11 +304,6 @@ const dbHelpers = {
             return { valid: false, message: 'This registration link has already been used.' };
         }
 
-        // Disallow any reuse after the link has been claimed (opened) once
-        if (link.status === 'claimed') {
-            return { valid: false, message: 'This registration link has already been opened and cannot be reused.' };
-        }
-
         if (link.status === 'nullified') {
             return { valid: false, message: 'This link was accessed from a different IP address and has been nullified.' };
         }
