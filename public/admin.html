@@ -226,7 +226,7 @@
         <header class="nav-bar" style="margin-bottom: 2rem; padding: 1rem 0;">
             <div class="nav-logo">
                 <img src="assets/logo.png" alt="MyVault Logo" style="height: 2rem; width: auto; object-fit: contain;">
-                <span>MYVAULT ADMIN</span>
+                <span>MYVAULT ADMIN <span id="adminRequestBadge" class="status-badge status-pending" style="display:none; margin-left: 10px; cursor: pointer; font-size: 0.7rem;" title="Pending Requests">0</span></span>
             </div>
             <button onclick="logout()" class="action-btn">Log Out</button>
         </header>
@@ -459,6 +459,7 @@
 
     <script>
         let adminToken = localStorage.getItem('adminToken');
+        const baseUrl = 'http://127.0.0.1:3001';
 
         // Check auth on load
         if (adminToken) {
@@ -476,7 +477,7 @@
             btn.textContent = 'Authenticating...';
 
             try {
-                const res = await fetch('/api/admin/login', {
+                const res = await fetch(`${baseUrl}/api/admin/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -516,7 +517,7 @@
 
         async function fetchRiders() {
             try {
-                const res = await fetch('/api/admin/riders', {
+                const res = await fetch(`${baseUrl}/api/admin/riders`, {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
@@ -592,7 +593,7 @@
             if (!confirm(`Are you sure you want to change ${riderId} to ${newStatus}?`)) return;
 
             try {
-                const res = await fetch('/api/admin/rider/status', {
+                const res = await fetch(`${baseUrl}/api/admin/rider/status`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -613,7 +614,7 @@
 
         async function fetchAgents() {
             try {
-                const res = await fetch('/api/admin/agents', {
+                const res = await fetch(`${baseUrl}/api/admin/agents`, {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
@@ -666,7 +667,7 @@
             btn.textContent = 'Creating...';
 
             try {
-                const res = await fetch('/api/admin/add-agent', {
+                const res = await fetch(`${baseUrl}/api/admin/add-agent`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -692,7 +693,7 @@
         }
 
         function exportCSV() {
-            const res = fetch('/api/admin/riders', {
+            const res = fetch(`${baseUrl}/api/admin/riders`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             })
             .then(r => r.json())
@@ -898,7 +899,7 @@
             overlay.style.display = 'flex';
 
             try {
-                const res = await fetch('/api/admin/free-links/generate', {
+                const res = await fetch(`${baseUrl}/api/admin/free-links/generate`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -996,7 +997,7 @@
             if (!confirm('Are you sure you want to delete ALL unused (active & unclaimed) free registration links?')) return;
 
             try {
-                const res = await fetch('/api/admin/free-links/delete', {
+                const res = await fetch(`${baseUrl}/api/admin/free-links/delete`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1019,7 +1020,7 @@
         async function deleteSingleLink(id) {
             if (!confirm('Are you sure you want to delete this link?')) return;
             try {
-                const res = await fetch('/api/admin/free-links/delete', {
+                const res = await fetch(`${baseUrl}/api/admin/free-links/delete`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1098,5 +1099,29 @@
 
 
     <script src="js/global.js"></script>
+    <script>
+        // Poll for notifications
+        setInterval(async () => {
+            const token = localStorage.getItem('adminToken');
+            if (!token) return;
+            try {
+                const res = await fetch('/api/admin/notifications', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const badge = document.getElementById('adminRequestBadge');
+                    if (data.pendingCount > 0) {
+                        badge.style.display = 'inline-block';
+                        badge.textContent = data.pendingCount + ' New Request(s)';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.error('Notification poll error', e);
+            }
+        }, 15000);
+    </script>
 </body>
 </html>

@@ -40,6 +40,8 @@ const replacement = `<main id="profileContent" style="display: none;">
                 <div id="tab-overview" class="tab-content active">\n`;
 
 html = html.replace(startPattern, replacement);
+// Inject admin UI script tag before closing body
+html = html.replace('</body>', '<script src="js/admin_ui.js"></script></body>');
 
 // 3. Add closing tags before </main>
 html = html.replace('        </main>', '            </div><!-- end dashboard-main -->\n        </div><!-- end dashboard-grid -->\n        </main>');

@@ -36,7 +36,12 @@ function purgeExpiredSessions() {
 setInterval(purgeExpiredSessions, 30 * 60 * 1000);
 
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_key_change_in_prod';
+// Load critical secrets from environment variables. If missing, the app will abort on startup.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('❌ Fatal: JWT_SECRET environment variable is not set. Exiting.');
+  process.exit(1);
+}
 const PORT = process.env.PORT || 3001;
 let adminTokenVersion = 0;
 
@@ -289,8 +294,17 @@ setTimeout(() => console.log('[CRON] Expiry reminder job initialized.'), 1000);
 // Admin Login
 app.post('/api/admin/login', authLimiter, (req, res) => {
     const { username, password } = req.body;
-    const adminUser = process.env.ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.ADMIN_PASSWORD || 'adminpass123';
+    // Admin credentials must be provided via environment variables.
+const adminUser = process.env.ADMIN_USERNAME;
+if (!adminUser) {
+  console.error('❌ Fatal: ADMIN_USERNAME environment variable is not set. Exiting.');
+  process.exit(1);
+}
+const adminPass = process.env.ADMIN_PASSWORD;
+if (!adminPass) {
+  console.error('❌ Fatal: ADMIN_PASSWORD environment variable is not set. Exiting.');
+  process.exit(1);
+}
 
     if (username === adminUser && password === adminPass) {
         adminTokenVersion++;
@@ -298,6 +312,16 @@ app.post('/api/admin/login', authLimiter, (req, res) => {
         res.json({ success: true, token });
     } else {
         res.status(401).json({ success: false, message: 'Invalid admin credentials' });
+    }
+});
+
+// Get Admin Notifications
+app.get('/api/admin/notifications', authenticateAdminToken, (req, res) => {
+    try {
+        const pendingCount = dbHelpers.getPendingRequestsCount();
+        res.json({ success: true, pendingCount });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch notifications' });
     }
 });
 
@@ -955,31 +979,47 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
 app.get('/api/verify/:query', (req, res) => {
     const query = req.params.query.toLowerCase();
     const rider = dbHelpers.findRiderByQuery(query);
-    if (rider) {
-        // Strip sensitive data for Level 1 access (Public scan)
-        const level1Rider = {
-            name: rider.name,
-            phone: rider.phone,
-            riderId: rider.riderId,
-            userType: rider.userType || 'driver',
-            status: rider.status,
-            expiryDate: rider.expiryDate,
-            vehicleType: rider.vehicleType,
-            safety: rider.safety,
-            vehicle: rider.vehicle,
-            bike: rider.bike,
-            emergencyContact: rider.emergencyContact,
-            medical: rider.medical ? { 
-                bloodGroup: rider.medical.bloodGroup,
-                refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
-            } : {},
-            // Only include passport photo, hide all other documents and expiry dates
-            documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
-        };
-        res.json({ success: true, rider: level1Rider, isLevel1: true });
-    } else {
-        res.json({ success: false, message: 'Rider not found' });
+    if (!rider) {
+        return res.json({ success: false, message: 'Rider not found' });
     }
+
+    let isAdmin = false;
+    const authHeader = req.headers['authorization'];
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        try {
+            const user = jwt.verify(token, JWT_SECRET);
+            if (user && user.role === 'admin') isAdmin = true;
+        } catch (e) {}
+    }
+
+    if (isAdmin) {
+        const safeRider = { ...rider };
+        delete safeRider.pin;
+        return res.json({ success: true, rider: safeRider, isLevel1: false, isAdmin: true });
+    }
+
+    // Strip sensitive data for Level 1 access (Public scan)
+    const level1Rider = {
+        name: rider.name,
+        phone: rider.phone,
+        riderId: rider.riderId,
+        userType: rider.userType || 'driver',
+        status: rider.status,
+        expiryDate: rider.expiryDate,
+        vehicleType: rider.vehicleType,
+        safety: rider.safety,
+        vehicle: rider.vehicle,
+        bike: rider.bike,
+        emergencyContact: rider.emergencyContact,
+        medical: rider.medical ? { 
+            bloodGroup: rider.medical.bloodGroup,
+            refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
+        } : {},
+        // Only include passport photo, hide all other documents and expiry dates
+        documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
+    };
+    res.json({ success: true, rider: level1Rider, isLevel1: true });
 });
 
 // Unlock Endpoint for Public Profile (Level 2)
@@ -1231,6 +1271,21 @@ app.post('/api/register', authLimiter, [
         });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Registration failed' });
+    }
+});
+
+// Request Card or Sticker
+app.post('/api/rider/request', authenticateToken, (req, res) => {
+    try {
+        const { type } = req.body;
+        if (!type || (type !== 'card' && type !== 'sticker')) {
+            return res.status(400).json({ success: false, message: 'Invalid request type' });
+        }
+        dbHelpers.insertRequest(req.user.riderId, type);
+        res.json({ success: true, message: `${type} request submitted successfully.` });
+    } catch (error) {
+        console.error("Request error:", error);
+        res.status(500).json({ success: false, message: 'Failed to submit request' });
     }
 });
 

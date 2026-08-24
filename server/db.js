@@ -58,6 +58,13 @@ db.exec(`
     createdAt TEXT NOT NULL,
     used INTEGER DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    riderId TEXT NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('card','sticker')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','handled')),
+    createdAt TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS free_registration_links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     token TEXT UNIQUE NOT NULL,
@@ -369,6 +376,20 @@ const dbHelpers = {
         const nullified = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'nullified'").get().count;
 
         return { total, active, claimed, used, nullified };
+    },
+    // Request helper functions
+    insertRequest: (riderId, type) => {
+        const stmt = db.prepare('INSERT INTO requests (riderId, type, status, createdAt) VALUES (?, ?, ?, ?)');
+        stmt.run(riderId, type, 'pending', new Date().toISOString());
+    },
+    getPendingRequestsCount: () => {
+        const stmt = db.prepare('SELECT COUNT(*) as count FROM requests WHERE status = \"pending\"');
+        const row = stmt.get();
+        return row ? row.count : 0;
+    },
+    getPendingRequests: () => {
+        const stmt = db.prepare('SELECT * FROM requests WHERE status = \"pending\" ORDER BY createdAt DESC');
+        return stmt.all();
     }
 };
 

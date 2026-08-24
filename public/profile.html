@@ -742,7 +742,7 @@
                         </div>
                         <span id="stickerTitleLabel" style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">Helmet QR Sticker</span>
                         <button id="printStickerBtn" class="btn btn-outline" onclick="printSticker()" style="display: none; padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print Sticker</button>
-                        <button id="requestStickerBtn" class="btn btn-outline" onclick="window.location.href='mailto:support@myvault.com.ng?subject=Sticker Request&body=I would like to request a physical QR Sticker for ID: ' + currentRiderId" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">📬 Request Sticker</button>
+                        <button id="requestStickerBtn" class="btn btn-outline" onclick="requestItem('sticker')" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">📬 Request Sticker</button>
                     </div>
 
                     <!-- PVC Emergency Pocket Card Preview -->
@@ -756,7 +756,7 @@
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">PVC Emergency ID</span>
                         <div id="pvcActionsContainer" style="width: 100%;">
-                            <button id="requestPvcBtn" class="btn btn-outline" onclick="window.location.href='mailto:support@myvault.com.ng?subject=PVC Request&body=I would like to request a physical PVC card for ID: ' + currentRiderId" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">📬 Request for PVC</button>
+                            <button id="requestPvcBtn" class="btn btn-outline" onclick="requestItem('card')" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">📬 Request for PVC</button>
                             <div id="printPvcActions" style="display: none; width: 100%; flex-direction: column;">
                                 <button class="btn btn-outline" onclick="printPVCCard()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print PVC ID</button>
                                 <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
@@ -1190,8 +1190,18 @@
                     });
                 }
 
-                const response = await fetch(`/api/verify/${query}`);
+                const fetchHeaders = {};
+                const adminToken = localStorage.getItem('adminToken');
+                if (adminToken) fetchHeaders['Authorization'] = `Bearer ${adminToken}`;
+                const response = await fetch(`/api/verify/${query}`, { headers: fetchHeaders });
                 const data = await response.json();
+
+                if (data.isAdmin) {
+                    document.body.classList.add('admin');
+                    const style = document.createElement('style');
+                    style.innerHTML = '@media print { .admin .no-print { display: block !important; } }';
+                    document.head.appendChild(style);
+                }
 
                 if (data.success) {
                     const rider = data.rider;
@@ -2842,5 +2852,32 @@ document.getElementById('onboardingForm')?.addEventListener('submit', async (e) 
 </script>
 
     <script src="js/global.js"></script>
+    <script>
+        async function requestItem(type) {
+            const token = localStorage.getItem('riderToken');
+            if (!token) {
+                alert('Please log in to make a request.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/rider/request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ type })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`${type.toUpperCase()} request submitted successfully!`);
+                } else {
+                    alert(`Failed to submit request: ${data.message}`);
+                }
+            } catch (e) {
+                alert('An error occurred while submitting the request.');
+            }
+        }
+    </script>
 
 </body></html>
