@@ -297,13 +297,13 @@ app.post('/api/admin/login', authLimiter, (req, res) => {
     // Admin credentials must be provided via environment variables.
 const adminUser = process.env.ADMIN_USERNAME;
 if (!adminUser) {
-  console.error('❌ Fatal: ADMIN_USERNAME environment variable is not set. Exiting.');
-  process.exit(1);
+  console.error('❌ Error: ADMIN_USERNAME environment variable is not set.');
+  return res.status(500).json({ success: false, message: 'Admin credentials not configured on server.' });
 }
 const adminPass = process.env.ADMIN_PASSWORD;
 if (!adminPass) {
-  console.error('❌ Fatal: ADMIN_PASSWORD environment variable is not set. Exiting.');
-  process.exit(1);
+  console.error('❌ Error: ADMIN_PASSWORD environment variable is not set.');
+  return res.status(500).json({ success: false, message: 'Admin credentials not configured on server.' });
 }
 
     if (username === adminUser && password === adminPass) {
