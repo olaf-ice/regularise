@@ -23,7 +23,7 @@ if (!fs.existsSync(DATA_DIR)) {
 
 const db = new Database(DB_FILE);
 
-// Initialize table
+// Initialize tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS riders (
     riderId TEXT PRIMARY KEY,
@@ -85,14 +85,14 @@ if (fs.existsSync(OLD_JSON_FILE)) {
         console.log('Migrating data from riders.json to riders.db...');
         const rawData = fs.readFileSync(OLD_JSON_FILE, 'utf8');
         const ridersList = JSON.parse(rawData);
-        
+
         const insertStmt = db.prepare('INSERT OR IGNORE INTO riders (riderId, phone, pin, data) VALUES (?, ?, ?, ?)');
         const insertMany = db.transaction((riders) => {
             for (const rider of riders) {
                 insertStmt.run(rider.riderId, rider.phone, rider.pin || '', JSON.stringify(rider));
             }
         });
-        
+
         insertMany(ridersList);
         console.log('Migration complete. Renaming riders.json to riders.json.backup');
         fs.renameSync(OLD_JSON_FILE, OLD_JSON_FILE + '.backup');
@@ -133,7 +133,7 @@ const dbHelpers = {
             const rId = data.riderId ? data.riderId.toLowerCase().replace(/[\s-]/g, '') : '';
             const pNum = data.plateNumber ? data.plateNumber.toLowerCase().replace(/[\s-]/g, '') : '';
             const ph = data.phone ? data.phone.toLowerCase().replace(/[\s-]/g, '') : '';
-            
+
             if (rId === q || pNum === q || ph === q) {
                 return data;
             }
@@ -231,7 +231,7 @@ const dbHelpers = {
                 registrations.push(parsed.registrationDate);
             }
         }
-        
+
         const stmtLogs = db.prepare('SELECT timestamp FROM access_logs');
         const scans = [];
         for (const row of stmtLogs.iterate()) {
@@ -239,7 +239,7 @@ const dbHelpers = {
                 scans.push(row.timestamp.split('T')[0]);
             }
         }
-        
+
         return { registrations, scans };
     },
     // Free Registration Links Helpers
@@ -248,7 +248,7 @@ const dbHelpers = {
         const insertStmt = db.prepare('INSERT INTO free_registration_links (token, status, createdAt, notes) VALUES (?, ?, ?, ?)');
         const now = new Date().toISOString();
         const createdTokens = [];
-        
+
         const insertBatch = db.transaction((qty) => {
             for (let i = 0; i < qty; i++) {
                 const token = 'FREE-' + crypto.randomBytes(12).toString('hex').toUpperCase();
@@ -256,7 +256,7 @@ const dbHelpers = {
                 createdTokens.push(token);
             }
         });
-        
+
         insertBatch(count);
         return { count: createdTokens.length, createdAt: now, tokens: createdTokens };
     },
@@ -303,17 +303,9 @@ const dbHelpers = {
         const stmt = db.prepare('SELECT * FROM free_registration_links WHERE token = ?');
         const link = stmt.get(token);
 
-        if (!link) {
-            return { valid: false, message: 'Invalid registration link.' };
-        }
-
-        if (link.status === 'used') {
-            return { valid: false, message: 'This registration link has already been used.' };
-        }
-
-        if (link.status === 'nullified') {
-            return { valid: false, message: 'This link was accessed from a different IP address and has been nullified.' };
-        }
+        if (!link) return { valid: false, message: 'Invalid registration link.' };
+        if (link.status === 'used') return { valid: false, message: 'This registration link has already been used.' };
+        if (link.status === 'nullified') return { valid: false, message: 'This link is no longer valid.' };
 
         const now = new Date().toISOString();
         const cleanIp = (clientIp || '').replace(/^.*:/, '');
@@ -324,35 +316,19 @@ const dbHelpers = {
             return { valid: true, link: { ...link, status: 'claimed', claimedIp: cleanIp } };
         }
 
-        const existingClaimedIp = (link.claimedIp || '').replace(/^.*:/, '');
-        if (existingClaimedIp && cleanIp && existingClaimedIp !== cleanIp) {
-            const nullifyStmt = db.prepare('UPDATE free_registration_links SET status = ? WHERE id = ?');
-            nullifyStmt.run('nullified', link.id);
-            return { valid: false, message: 'Access denied: Link accessed from a different IP address and has been nullified.' };
-        }
-
+        // No IP enforcement — valid as long as not used or nullified
         return { valid: true, link };
     },
     useFreeLink: (token, riderId, clientIp) => {
         if (!token) return { success: false, message: 'No token provided' };
         const link = dbHelpers.getFreeLinkByToken(token);
         if (!link) return { success: false, message: 'Invalid token' };
-
         if (link.status === 'used') return { success: false, message: 'Token already used' };
         if (link.status === 'nullified') return { success: false, message: 'Token nullified' };
 
-        const cleanIp = (clientIp || '').replace(/^.*:/, '');
-        const existingClaimedIp = (link.claimedIp || '').replace(/^.*:/, '');
-
-        if (existingClaimedIp && cleanIp && existingClaimedIp !== cleanIp) {
-            const nullifyStmt = db.prepare('UPDATE free_registration_links SET status = ? WHERE id = ?');
-            nullifyStmt.run('nullified', link.id);
-            return { success: false, message: 'IP mismatch detected. Link nullified.' };
-        }
-
         const now = new Date().toISOString();
-        const stmt = db.prepare('UPDATE free_registration_links SET status = ?, usedAt = ?, usedIp = ?, riderId = ? WHERE id = ?');
-        stmt.run('used', now, cleanIp, riderId, link.id);
+        const useStmt = db.prepare('UPDATE free_registration_links SET status = ?, usedAt = ?, riderId = ? WHERE id = ?');
+        useStmt.run('used', now, riderId, link.id);
         return { success: true };
     },
     deleteFreeLinks: ({ ids = [], clearUnused = false } = {}) => {
@@ -374,7 +350,6 @@ const dbHelpers = {
         const claimed = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'claimed'").get().count;
         const used = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'used'").get().count;
         const nullified = db.prepare("SELECT COUNT(*) as count FROM free_registration_links WHERE status = 'nullified'").get().count;
-
         return { total, active, claimed, used, nullified };
     },
     // Request helper functions
@@ -383,12 +358,12 @@ const dbHelpers = {
         stmt.run(riderId, type, 'pending', new Date().toISOString());
     },
     getPendingRequestsCount: () => {
-        const stmt = db.prepare('SELECT COUNT(*) as count FROM requests WHERE status = \"pending\"');
+        const stmt = db.prepare('SELECT COUNT(*) as count FROM requests WHERE status = "pending"');
         const row = stmt.get();
         return row ? row.count : 0;
     },
     getPendingRequests: () => {
-        const stmt = db.prepare('SELECT * FROM requests WHERE status = \"pending\" ORDER BY createdAt DESC');
+        const stmt = db.prepare('SELECT * FROM requests WHERE status = "pending" ORDER BY createdAt DESC');
         return stmt.all();
     }
 };
