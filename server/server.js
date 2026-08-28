@@ -398,18 +398,26 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
     if (!riderId || !status) return res.status(400).json({ success: false, message: 'Rider ID and Status required' });
 
     try {
-        const updated = dbHelpers.updateRiderStatus(riderId, status);
-        if (updated) {
-            // Also attempt to sync the new status to Google Sheets so the external sheet is updated
-            saveToGoogleSheets(updated);
-            res.json({ success: true, message: `Rider ${riderId} status updated to ${status}` });
-        } else {
-            res.status(404).json({ success: false, message: 'Rider not found' });
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+
+        rider.status = status;
+
+        // If activating and no expiry date is set, grant 12 months from now
+        if (status === 'Active' && !rider.expiryDate) {
+            const expiry = new Date();
+            expiry.setMonth(expiry.getMonth() + 12);
+            rider.expiryDate = expiry.toISOString().split('T')[0];
         }
+
+        dbHelpers.updateRider(rider.riderId, rider);
+        saveToGoogleSheets(rider);
+        res.json({ success: true, message: `Rider ${riderId} status updated to ${status}`, expiryDate: rider.expiryDate });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Failed to update status' });
     }
 });
+
 
 // Admin Free Registration Links Endpoints
 app.post('/api/admin/free-links/generate', authenticateAdminToken, (req, res) => {
