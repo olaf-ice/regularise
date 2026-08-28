@@ -1221,17 +1221,10 @@
                     initSessionToken(rider.riderId || currentRiderId || 'UNK');
                     
                     // PVC & Sticker Request Logic
-                    if (query === 'RID-71447' || rider.riderId === 'RID-71447') {
-                        document.getElementById('requestPvcBtn').style.display = 'none';
-                        document.getElementById('printPvcActions').style.display = 'flex';
-                        if (document.getElementById('requestStickerBtn')) document.getElementById('requestStickerBtn').style.display = 'none';
-                        if (document.getElementById('printStickerBtn')) document.getElementById('printStickerBtn').style.display = 'block';
-                    } else {
-                        document.getElementById('requestPvcBtn').style.display = 'block';
-                        document.getElementById('printPvcActions').style.display = 'none';
-                        if (document.getElementById('requestStickerBtn')) document.getElementById('requestStickerBtn').style.display = 'block';
-                        if (document.getElementById('printStickerBtn')) document.getElementById('printStickerBtn').style.display = 'none';
-                    }
+                    document.getElementById('requestPvcBtn').style.display = 'none';
+                    document.getElementById('printPvcActions').style.display = 'flex';
+                    if (document.getElementById('requestStickerBtn')) document.getElementById('requestStickerBtn').style.display = 'none';
+                    if (document.getElementById('printStickerBtn')) document.getElementById('printStickerBtn').style.display = 'block';
                     
                     const isEmergencyView = urlParams.get('view') === 'emergency';
                     
