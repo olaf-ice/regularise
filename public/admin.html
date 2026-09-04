@@ -643,6 +643,98 @@
             }
         }
 
+        let rawAnalyticsData = { registrations: [], scans: [] };
+        let regChartInstance = null;
+        let scansChartInstance = null;
+
+        async function fetchAnalytics() {
+            try {
+                const res = await fetch(`${baseUrl}/api/admin/analytics`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    rawAnalyticsData = data.data;
+                    renderCharts('week');
+                }
+            } catch (err) {
+                console.error('Failed to fetch analytics', err);
+            }
+        }
+
+        function renderCharts(period) {
+            document.querySelectorAll('#btn-week, #btn-month, #btn-year').forEach(btn => {
+                btn.style.borderColor = 'var(--glass-border)';
+                btn.style.color = 'var(--text-light)';
+            });
+            const activeBtn = document.getElementById(`btn-${period}`);
+            if (activeBtn) {
+                activeBtn.style.borderColor = 'var(--primary-light)';
+                activeBtn.style.color = 'var(--primary-light)';
+            }
+
+            const regCounts = aggregateDataByDate(rawAnalyticsData.registrations || [], period);
+            const scanCounts = aggregateDataByDate(rawAnalyticsData.scans || [], period);
+
+            drawChart('registrationsChart', 'Registrations', regCounts.labels, regCounts.values, '#10b981', regChartInstance, (inst) => regChartInstance = inst);
+            drawChart('scansChart', 'Profile Scans', scanCounts.labels, scanCounts.values, '#60a5fa', scansChartInstance, (inst) => scansChartInstance = inst);
+        }
+
+        function aggregateDataByDate(datesArray, period) {
+            const counts = {};
+            const now = new Date();
+            
+            const filtered = datesArray.filter(dateStr => {
+                if (!dateStr) return false;
+                const d = new Date(dateStr);
+                const diffTime = Math.abs(now - d);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (period === 'week') return diffDays <= 7;
+                if (period === 'month') return diffDays <= 30;
+                if (period === 'year') return diffDays <= 365;
+                return true;
+            });
+
+            filtered.forEach(dateStr => {
+                const d = dateStr.split('T')[0];
+                counts[d] = (counts[d] || 0) + 1;
+            });
+
+            const labels = Object.keys(counts).sort();
+            const values = labels.map(label => counts[label]);
+
+            return { labels, values };
+        }
+
+        function drawChart(canvasId, label, labels, data, color, chartInstance, setInstanceCallback) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            const newChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '33',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+            setInstanceCallback(newChart);
+        }
+
+
         async function fetchAgents() {
             try {
                 const res = await fetch(`${baseUrl}/api/admin/agents`, {
