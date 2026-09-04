@@ -202,17 +202,6 @@
             }
         }
 
-        // Revert Register link to Waitlist before launch
-        document.addEventListener("DOMContentLoaded", () => {
-            const LAUNCH_DATE = new Date("2026-07-01T00:00:00Z").getTime();
-            if (Date.now() < LAUNCH_DATE) {
-                const registerLink = document.getElementById("registerLinkBtn");
-                if (registerLink) {
-                    registerLink.href = "index.html";
-                    registerLink.innerHTML = "Join Waitlist &rarr;";
-                }
-            }
-        });
 
         async function riderLogin() {
             const phone = document.getElementById('riderPhone').value.trim();
