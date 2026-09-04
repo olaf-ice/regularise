@@ -741,8 +741,7 @@
                             <div id="qrStickerPreview" style="width: 60px; height: 60px;"></div>
                         </div>
                         <span id="stickerTitleLabel" style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">Helmet QR Sticker</span>
-                        <button id="printStickerBtn" class="btn btn-outline" onclick="printSticker()" style="display: none; padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print Sticker</button>
-                        <button id="requestStickerBtn" class="btn btn-outline" onclick="requestItem('sticker')" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">📬 Request Sticker</button>
+                        <button id="printStickerBtn" class="btn btn-outline" onclick="printSticker()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print Sticker</button>
                     </div>
 
                     <!-- PVC Emergency Pocket Card Preview -->
@@ -1846,16 +1845,27 @@ let hasExpired = false;
             }
         }
 
-        const pw = window.open('', '', 'height=600,width=600');
+        const pw = window.open('', '', 'height=700,width=500');
         pw.document.write(`<!DOCTYPE html><html><head><title>Sticker - ${d.name}</title>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            @page { size: A6 portrait; margin: 0; }
             * { margin:0; padding:0; box-sizing:border-box; }
-            html, body { width:100%; height:100%; background:white; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; }
+            html, body {
+                width: 105mm;
+                height: 148mm;
+                background: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Inter', sans-serif;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
             .sticker {
-                width: 320px;
-                border: 4px solid #ef4444;
-                border-radius: 16px;
+                width: 96mm;
+                border: 3px solid #ef4444;
+                border-radius: 10px;
                 overflow: hidden;
                 background: #fff;
                 color: #0f172a;
@@ -1864,43 +1874,39 @@ let hasExpired = false;
                 background: #ef4444;
                 color: white;
                 text-align: center;
-                padding: 12px 10px;
-                font-size: 24px;
+                padding: 9px 8px;
+                font-size: 18px;
                 font-weight: 900;
                 text-transform: uppercase;
                 letter-spacing: 1px;
             }
             .middle {
                 display: flex;
-                padding: 16px;
+                padding: 12px;
                 align-items: center;
-                gap: 16px;
+                gap: 12px;
             }
-            .middle-left {
-                flex: 1;
-            }
+            .middle-left { flex: 1; }
             .middle-right {
-                width: 100px;
+                width: 80px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 6px;
+                gap: 5px;
             }
-            .kin-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-            .kin-name { font-size: 16px; font-weight: 900; line-height: 1.2; margin-top: 2px; }
-            .kin-phone { font-size: 14px; font-weight: 700; color: #ef4444; margin-top: 4px; }
-            .instruction { font-size: 11px; font-weight: 800; background: #fee2e2; color: #b91c1c; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px; }
-            
-            .qr-wrapper { width: 100px; height: 100px; background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 4px; }
+            .kin-label { font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+            .kin-name { font-size: 13px; font-weight: 900; line-height: 1.2; margin-top: 2px; }
+            .kin-phone { font-size: 12px; font-weight: 700; color: #ef4444; margin-top: 3px; }
+            .instruction { font-size: 9px; font-weight: 800; background: #fee2e2; color: #b91c1c; padding: 3px 6px; border-radius: 4px; display: inline-block; margin-top: 6px; }
+            .qr-wrapper { width: 78px; height: 78px; background: white; border: 2px solid #e2e8f0; border-radius: 6px; padding: 3px; }
             .qr-wrapper img { width: 100%; height: 100%; object-fit: contain; }
-            .qr-text { font-size: 9px; font-weight: 700; text-align: center; color: #64748b; line-height: 1.2; }
-            
+            .qr-text { font-size: 8px; font-weight: 700; text-align: center; color: #64748b; line-height: 1.2; }
             .bottom {
                 background: #0f172a;
                 color: white;
                 text-align: center;
-                padding: 10px;
-                font-size: 14px;
+                padding: 8px;
+                font-size: 11px;
                 font-weight: 800;
                 letter-spacing: 1px;
                 text-transform: uppercase;
@@ -2684,11 +2690,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Anti-Copy/Print
+        // Anti-Copy
         const style = document.createElement('style');
         style.innerHTML = `
             body { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
-            @media print { body { display: none !important; } }
         `;
         document.head.appendChild(style);
         

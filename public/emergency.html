@@ -25,18 +25,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #060a12;
-            --surface: #0d1424;
-            --glass: rgba(255,255,255,0.04);
-            --glass-border: rgba(255,255,255,0.08);
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --glass: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(0, 0, 0, 0.1);
             --red: #ef4444;
             --red-dark: #b91c1c;
             --amber: #f59e0b;
             --green: #10b981;
-            --text: #f0f4ff;
-            --text-muted: #8892a4;
-            --primary: #3b82f6;
-            --primary-light: #60a5fa;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --primary: #0d9488;
+            --primary-light: #2dd4bf;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -160,9 +160,9 @@
         }
         /* Cards */
         .card {
-            background: var(--glass); border: 1px solid var(--glass-border);
+            background: var(--surface); border: 1px solid var(--glass-border);
             border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
         .card-title {
             font-size: 0.62rem; font-weight: 800; letter-spacing: 2px;
@@ -292,12 +292,12 @@
         .share-btn {
             flex: 1; padding: 0.7rem;
             border: 1px solid var(--glass-border); border-radius: 0.65rem;
-            background: var(--glass); color: var(--text);
+            background: var(--surface); color: var(--text);
             font-size: 0.78rem; font-weight: 700; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 0.35rem;
             text-decoration: none; transition: all 0.2s ease; font-family: inherit;
         }
-        .share-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+        .share-btn:hover { background: rgba(0,0,0,0.05); transform: translateY(-1px); }
         .share-btn.wa { border-color: rgba(37,211,102,0.4); color: #25D366; }
         .share-btn.wa:hover { background: rgba(37,211,102,0.08); }
         .share-btn.copy { border-color: rgba(96,165,250,0.4); color: var(--primary-light); }
@@ -352,11 +352,11 @@
         }
         .hold-btn {
             position: relative; width: 120px; height: 120px;
-            border-radius: 50%; background: #1a2540; border: none;
+            border-radius: 50%; background: #ffffff; border: 1px solid var(--glass-border);
             color: var(--text); font-weight: 800; font-size: 0.9rem;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             flex-direction: column; gap: 0.5rem; outline: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             transition: transform 0.2s; overflow: hidden;
             user-select: none; -webkit-user-select: none;
         }

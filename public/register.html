@@ -296,26 +296,7 @@
         });
     </script>
 
-    <script>
-        document.getElementById('addContactBtn').addEventListener('click', function() {
-            const container = document.getElementById('emergencyContactsContainer');
-            const div = document.createElement('div');
-            div.className = 'emergency-contact-item';
-            div.style.cssText = 'border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 1rem; margin-top: 1rem; position: relative;';
-            div.innerHTML = `
-                <div class="input-group">
-                    <label>Emergency Contact Name</label>
-                    <input type="text" name="emergencyContactName[]" placeholder="Jane Doe" required>
-                </div>
-                <div class="input-group">
-                    <label>Emergency Contact Phone Number</label>
-                    <input type="tel" name="emergencyContactPhone[]" placeholder="080XXXXXXXX" required>
-                </div>
-                <button type="button" onclick="this.parentElement.remove()" style="background:transparent; border: none; color: var(--error); cursor: pointer; font-size: 0.875rem; text-decoration: underline;">Remove Contact</button>
-            `;
-            container.appendChild(div);
-        });
-    </script>
+    <!-- Removed orphaned addContactBtn listener -->
     
 
 
