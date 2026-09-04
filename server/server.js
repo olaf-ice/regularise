@@ -418,6 +418,26 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
     }
 });
 
+// Admin Force Reset Rider PIN
+app.post('/api/admin/rider/reset-pin', authenticateAdminToken, async (req, res) => {
+    const { riderId, newPin } = req.body;
+    if (!riderId || !newPin) return res.status(400).json({ success: false, message: 'Rider ID and new PIN required' });
+    if (newPin.length !== 4) return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits' });
+
+    try {
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+
+        const salt = await bcrypt.genSalt(10);
+        rider.pin = await bcrypt.hash(newPin, salt);
+        dbHelpers.updateRider(riderId, rider);
+        
+        res.json({ success: true, message: `PIN for ${riderId} reset successfully` });
+    } catch (err) {
+        console.error('Admin PIN reset error:', err);
+        res.status(500).json({ success: false, message: 'Failed to reset PIN' });
+    }
+});
 
 // Admin Free Registration Links Endpoints
 app.post('/api/admin/free-links/generate', authenticateAdminToken, (req, res) => {

@@ -582,6 +582,7 @@
                     <td><span class="status-badge ${badgeClass}">${r.status}</span></td>
                     <td>
                         <button class="action-btn view" onclick="window.open('profile.html?id=${r.riderId}', '_blank')">View Profile</button>
+                        <button class="action-btn" onclick="forceResetPin('${r.riderId}')" style="border-color: #f59e0b; color: #f59e0b;">Reset PIN</button>
                         ${toggleAction}
                     </td>
                 `;
@@ -604,6 +605,36 @@
                 const data = await res.json();
                 if (data.success) {
                     fetchRiders(); // Refresh
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        async function forceResetPin(riderId) {
+            const newPin = prompt(`Enter new 4-digit PIN for ${riderId}:`);
+            if (!newPin) return;
+            if (newPin.length !== 4 || isNaN(newPin)) {
+                alert('PIN must be exactly 4 digits');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to forcibly reset the PIN for ${riderId} to ${newPin}?`)) return;
+
+            try {
+                const res = await fetch(`${baseUrl}/api/admin/rider/reset-pin`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ riderId, newPin })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
                 } else {
                     alert(data.message);
                 }
