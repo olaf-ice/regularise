@@ -661,10 +661,15 @@
             </div>
         </div>
 
-        <!-- Emergency Contacts (Level 1) -->
+        <!-- Emergency Contacts (Level 1: primary only) -->
         <div class="card" id="kinCard" style="display:none;">
-            <div class="card-title"><span>📞</span> EMERGENCY CONTACTS</div>
+            <div class="card-title"><span>📞</span> EMERGENCY CONTACT</div>
             <div id="kinList"></div>
+            <!-- Additional contacts only visible after unlock -->
+            <div class="level-2-data" id="extraKinSection" style="margin-top:0.75rem; border-top: 1px solid var(--glass-border); padding-top:0.75rem;">
+                <div style="font-size:0.6rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.5rem;">Additional Emergency Contacts</div>
+                <div id="extraKinList"></div>
+            </div>
         </div>
         
         <!-- Nearby Help Network (Level 1 - Concept) -->
@@ -879,9 +884,11 @@
         // --------------------
 
         function buildKinCards(contactsList, fallbackEc) {
-            document.getElementById('kinCard').style.display = 'block';
             const list = document.getElementById('kinList');
+            const extraList = document.getElementById('extraKinList');
+            const extraSection = document.getElementById('extraKinSection');
             list.innerHTML = '';
+            extraList.innerHTML = '';
             
             let contacts = [];
             if (contactsList && contactsList.length > 0) {
@@ -895,19 +902,42 @@
                 return;
             }
 
-            contacts.forEach(c => {
-                if (!c.phone) return;
+            document.getElementById('kinCard').style.display = 'block';
+
+            // Always show the first (primary) contact
+            const primary = contacts[0];
+            if (primary && primary.phone) {
                 const row = document.createElement('div');
                 row.className = 'kin-row';
                 row.innerHTML = `
                     <div>
-                        <div class="kin-name">${c.name || 'Emergency Contact'}</div>
-                        <div class="kin-rel">${c.rel || c.relationship || 'Emergency Contact'}</div>
+                        <div class="kin-name">${primary.name || 'Emergency Contact'}</div>
+                        <div class="kin-rel">${primary.rel || primary.relationship || 'Primary Emergency Contact'}</div>
                     </div>
-                    <a href="tel:${c.phone}" class="call-btn">📞 CALL</a>
+                    <a href="tel:${primary.phone}" class="call-btn">📞 CALL</a>
                 `;
                 list.appendChild(row);
-            });
+            }
+
+            // Additional contacts only visible after Level 2 unlock
+            const additional = contacts.slice(1);
+            if (additional.length > 0) {
+                additional.forEach(c => {
+                    if (!c.phone) return;
+                    const row = document.createElement('div');
+                    row.className = 'kin-row';
+                    row.innerHTML = `
+                        <div>
+                            <div class="kin-name">${c.name || 'Emergency Contact'}</div>
+                            <div class="kin-rel">${c.rel || c.relationship || 'Emergency Contact'}</div>
+                        </div>
+                        <a href="tel:${c.phone}" class="call-btn">📞 CALL</a>
+                    `;
+                    extraList.appendChild(row);
+                });
+                // extraKinSection is a level-2-data element — shown on unlock
+                extraSection.style.display = 'none'; // hidden by default, shown by unlock
+            }
         }
 
         function calcDist(lat1, lon1, lat2, lon2) {
