@@ -85,125 +85,13 @@
         </h1>
         <p style="font-size: 1.25rem; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto;">
             MyVault securely stores your personal, emergency, and identity information with clinical-grade encryption.
-        </p>
-
-        <div class="timer-wrapper" id="countdown">
-            <div class="time-box">
-                <div class="time-value" id="days">00</div>
-                <div class="time-label">Days</div>
-            </div>
-            <div class="time-box">
-                <div class="time-value" id="hours">00</div>
-                <div class="time-label">Hrs</div>
-            </div>
-            <div class="time-box">
-                <div class="time-value" id="minutes">00</div>
-                <div class="time-label">Mins</div>
-            </div>
-            <div class="time-box">
-                <div class="time-value" id="seconds">00</div>
-                <div class="time-label">Secs</div>
-            </div>
-        </div>
-
-        <div class="glass-card" style="padding: 3rem; max-width: 500px; margin: 0 auto; text-align: left;">
-            <form id="waitlistForm">
-                <div class="input-group">
-                    <input type="email" id="wlEmail" placeholder="Email Address" required>
-                </div>
-                <div class="input-group">
-                    <input type="tel" id="wlPhone" placeholder="Phone Number" required>
-                </div>
-                <label class="checkbox-group">
-                    <input type="checkbox" id="wlWhatsapp" checked>
-                    Notify me via WhatsApp for early access updates
-                </label>
-
-                <button type="submit" id="wlSubmitBtn" class="btn btn-primary" style="margin-top: 1rem;">Get Early Access</button>
-            </form>
-            
-            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid var(--amber); border-radius: 0.5rem; display: flex; align-items: center; gap: 1rem;">
-                <span style="font-size: 1.5rem;">⏳</span>
-                <div>
-                    <div style="font-weight: 700; color: var(--amber);">Join Early — ₦3,000/year</div>
-                </div>
-            </div>
-        </div>
-
-        <div style="margin-top: 3rem; font-size: 1rem; color: var(--text-muted);">
-            Already have an account? <a href="login.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Log in here</a>
+        </p>        <div style="margin-top: 2.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="register.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem; text-decoration: none;">Register Now</a>
+            <a href="login.html" class="btn" style="background: var(--surface); border: 1px solid var(--glass-border); color: var(--text); font-size: 1.1rem; padding: 1rem 2.5rem; text-decoration: none; border-radius: 8px; font-weight: 700;">Log In</a>
         </div>
     </div>
 
     <script src="js/theme.js"></script>
     <script src="js/global.js"></script>
-    <script>
-        const targetDate = new Date("2026-07-01T00:00:00").getTime();
-
-        const daysEl = document.getElementById('days');
-        const hoursEl = document.getElementById('hours');
-        const minutesEl = document.getElementById('minutes');
-        const secondsEl = document.getElementById('seconds');
-
-        function updateTimer() {
-            const now = new Date().getTime();
-            const distance = targetDate - now;
-
-            if (distance < 0) {
-                if (daysEl) daysEl.innerText = "00";
-                if (hoursEl) hoursEl.innerText = "00";
-                if (minutesEl) minutesEl.innerText = "00";
-                if (secondsEl) secondsEl.innerText = "00";
-                return;
-            }
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            daysEl.innerText = days.toString().padStart(2, '0');
-            hoursEl.innerText = hours.toString().padStart(2, '0');
-            minutesEl.innerText = minutes.toString().padStart(2, '0');
-            secondsEl.innerText = seconds.toString().padStart(2, '0');
-        }
-
-        updateTimer();
-        setInterval(updateTimer, 1000);
-
-        // Handle Waitlist Form Submission
-        document.getElementById('waitlistForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('wlEmail').value.trim();
-            const phone = document.getElementById('wlPhone').value.trim();
-            const wantsWhatsapp = document.getElementById('wlWhatsapp').checked;
-            const btn = document.getElementById('wlSubmitBtn');
-
-            btn.disabled = true;
-            btn.textContent = 'Securing Spot...';
-
-            try {
-                const response = await fetch('/api/waitlist', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, phone, wantsWhatsapp })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert('Success! You are on the waitlist. Keep an eye on your WhatsApp!');
-                    document.getElementById('waitlistForm').reset();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Connection error. Please try again.');
-            }
-            
-            btn.disabled = false;
-            btn.textContent = 'Get Early Access';
-        });
-    </script>
 </body>
 </html>
