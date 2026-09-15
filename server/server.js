@@ -439,6 +439,50 @@ app.post('/api/admin/rider/reset-pin', authenticateAdminToken, async (req, res) 
     }
 });
 
+// Admin Delete Rider
+app.delete('/api/admin/rider/:id', authenticateAdminToken, async (req, res) => {
+    const riderId = req.params.id;
+    try {
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+        
+        // Delete rider and associations from DB
+        dbHelpers.deleteRider(riderId);
+        
+        // Try to delete physical images if they exist
+        const fs = require('fs');
+        const path = require('path');
+        if (rider.passportImage) {
+            const passportPath = path.join(UPLOADS_DIR, rider.passportImage.replace('/uploads/', ''));
+            if (fs.existsSync(passportPath)) fs.unlinkSync(passportPath);
+        }
+        if (rider.idCardImage) {
+            const idCardPath = path.join(UPLOADS_DIR, rider.idCardImage.replace('/uploads/', ''));
+            if (fs.existsSync(idCardPath)) fs.unlinkSync(idCardPath);
+        }
+        
+        res.json({ success: true, message: `Rider ${riderId} deleted successfully` });
+    } catch (err) {
+        console.error('Admin delete rider error:', err);
+        res.status(500).json({ success: false, message: 'Failed to delete rider' });
+    }
+});
+
+// Admin Delete Agent
+app.delete('/api/admin/agent/:id', authenticateAdminToken, async (req, res) => {
+    const agentId = req.params.id;
+    try {
+        const agent = dbHelpers.getAgentById(agentId);
+        if (!agent) return res.status(404).json({ success: false, message: 'Agent not found' });
+        
+        dbHelpers.deleteAgent(agentId);
+        res.json({ success: true, message: `Agent ${agentId} deleted successfully` });
+    } catch (err) {
+        console.error('Admin delete agent error:', err);
+        res.status(500).json({ success: false, message: 'Failed to delete agent' });
+    }
+});
+
 // Admin Free Registration Links Endpoints
 app.post('/api/admin/free-links/generate', authenticateAdminToken, (req, res) => {
     try {

@@ -339,6 +339,7 @@
                                     <th>Phone</th>
                                     <th>Users Onboarded</th>
                                     <th>Date Added</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="agentsTableBody">
@@ -584,10 +585,33 @@
                         <button class="action-btn view" onclick="window.open('profile.html?id=${r.riderId}', '_blank')">View Profile</button>
                         <button class="action-btn" onclick="forceResetPin('${r.riderId}')" style="border-color: #f59e0b; color: #f59e0b;">Reset PIN</button>
                         ${toggleAction}
+                        <button class="action-btn" onclick="deleteRider('${r.riderId}')" style="border-color: #ef4444; color: #ef4444;">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+        
+        async function deleteRider(riderId) {
+            if (!confirm(`CRITICAL WARNING: Are you sure you want to PERMANENTLY delete rider ${riderId}? This cannot be undone.`)) return;
+
+            try {
+                const res = await fetch(`${baseUrl}/api/admin/rider/${riderId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    fetchRiders();
+                } else {
+                    alert(data.message || 'Failed to delete rider');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred during deletion.');
+            }
         }
 
         async function toggleStatus(riderId, newStatus) {
@@ -772,9 +796,32 @@
                     <td>${a.phone}</td>
                     <td><span style="background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 0.2rem 0.6rem; border-radius: 50px; font-weight: bold;">${a.onboardedCount || 0}</span></td>
                     <td>${dateAdded}</td>
+                    <td><button class="action-btn" onclick="deleteAgent('${a.agentId}')" style="border-color: #ef4444; color: #ef4444;">Delete</button></td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+        
+        async function deleteAgent(agentId) {
+            if (!confirm(`CRITICAL WARNING: Are you sure you want to PERMANENTLY delete agent ${agentId}? This cannot be undone.`)) return;
+
+            try {
+                const res = await fetch(`${baseUrl}/api/admin/agent/${agentId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    fetchAgents();
+                } else {
+                    alert(data.message || 'Failed to delete agent');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred during deletion.');
+            }
         }
 
         async function addAgent(e) {

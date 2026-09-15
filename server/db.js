@@ -170,6 +170,15 @@ const dbHelpers = {
         }
         return null;
     },
+    deleteRider: (riderId) => {
+        const deleteTransaction = db.transaction(() => {
+            db.prepare('DELETE FROM riders WHERE riderId = ?').run(riderId);
+            db.prepare('DELETE FROM access_logs WHERE riderId = ?').run(riderId);
+            db.prepare('DELETE FROM emergency_links WHERE riderId = ?').run(riderId);
+            db.prepare('DELETE FROM requests WHERE riderId = ?').run(riderId);
+        });
+        deleteTransaction();
+    },
     // Agent helper functions
     insertAgent: (agent) => {
         const stmt = db.prepare('INSERT INTO agents (agentId, phone, pin, data) VALUES (?, ?, ?, ?)');
@@ -196,6 +205,10 @@ const dbHelpers = {
             agents.push(parseSecureData(row.data));
         }
         return agents;
+    },
+    deleteAgent: (agentId) => {
+        const stmt = db.prepare('DELETE FROM agents WHERE agentId = ?');
+        stmt.run(agentId);
     },
     // Security & Emergency features
     logAccess: (riderId, ip, userAgent, location = '') => {
