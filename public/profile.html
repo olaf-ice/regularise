@@ -2145,8 +2145,14 @@ let hasExpired = false;
             const backEl = document.getElementById('pdfCardBack');
 
             if (format === 'svg') {
-                const frontSvg = await htmlToImage.toSvg(frontEl);
-                const backSvg = await htmlToImage.toSvg(backEl);
+                const frontSvg = await Promise.race([
+                    htmlToImage.toSvg(frontEl),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage front timeout')), 10000))
+                ]);
+                const backSvg = await Promise.race([
+                    htmlToImage.toSvg(backEl),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage back timeout')), 10000))
+                ]);
 
                 // Download front
                 let link1 = document.createElement('a');
@@ -2163,8 +2169,14 @@ let hasExpired = false;
                 }, 500);
 
             } else {
-                const frontCanvas = await html2canvas(frontEl, { scale: 3, useCORS: true, backgroundColor: null });
-                const backCanvas = await html2canvas(backEl, { scale: 3, useCORS: true, backgroundColor: null });
+                const frontCanvas = await Promise.race([
+                    html2canvas(frontEl, { scale: 3, useCORS: true, backgroundColor: null, allowTaint: true }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas front timeout')), 10000))
+                ]);
+                const backCanvas = await Promise.race([
+                    html2canvas(backEl, { scale: 3, useCORS: true, backgroundColor: null, allowTaint: true }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas back timeout')), 10000))
+                ]);
 
                 const frontImg = frontCanvas.toDataURL('image/png', 1.0);
                 const backImg = backCanvas.toDataURL('image/png', 1.0);
@@ -2202,8 +2214,15 @@ let hasExpired = false;
             document.body.removeChild(container);
 
         } catch (e) {
+            const errMsg = e.message || String(e);
             console.error('Generation failed', e);
-            alert('Failed to generate file: ' + (e.message || e) + '\nSee console for details.');
+            alert('Failed to generate file: ' + errMsg + '\nSee console for details.');
+            
+            // Fallback onscreen error
+            const errDiv = document.createElement('div');
+            errDiv.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); background:red; color:white; padding:15px; z-index:999999; border-radius:8px;';
+            errDiv.innerHTML = '<strong>Generation Error:</strong> ' + errMsg + '<br><button onclick="this.parentElement.remove()" style="margin-top:10px; color:black;">Close</button>';
+            document.body.appendChild(errDiv);
         } finally {
             if (btn) btn.innerHTML = origText;
         }
