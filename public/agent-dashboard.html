@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent Dashboard - MyVault</title>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <!-- Open Graph / WhatsApp / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://myvault.com.ng/">
@@ -260,10 +261,32 @@
                 
                 const data = await res.json();
                 if (data.success) {
-                    alert('User registered successfully!');
-                    document.getElementById('registerForm').reset();
-                    loadDashboard();
-                    openModal(data.riderId, payload.name); // Prompt to upload docs immediately
+                    // Open Paystack Inline Modal
+                    const handler = PaystackPop.setup({
+                        key: data.paystackPublicKey,
+                        email: payload.phone + "@riderid.com",
+                        amount: 3000 * 100, // Agent pays 3000 NGN
+                        currency: 'NGN',
+                        ref: data.reference,
+                        metadata: {
+                            custom_fields: [
+                                { display_name: "Agent Name", variable_name: "agent_name", value: agentName || "Agent" },
+                                { display_name: "Rider Name", variable_name: "rider_name", value: payload.name },
+                                { display_name: "Rider Phone", variable_name: "rider_phone", value: payload.phone }
+                            ]
+                        },
+                        callback: function(response) {
+                            alert('Payment successful! Now please upload the documents.');
+                            document.getElementById('registerForm').reset();
+                            loadDashboard();
+                            openModal(data.riderId, payload.name); 
+                        },
+                        onClose: function() {
+                            alert('Transaction cancelled. You must pay ₦3,000 before you can upload documents for this rider.');
+                        }
+                    });
+                    
+                    handler.openIframe();
                 } else {
                     alert(data.message || 'Registration failed');
                 }

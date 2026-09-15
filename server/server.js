@@ -645,7 +645,13 @@ app.post('/api/agent/register-rider', authenticateAgentToken, [
             sendSMS(phone, `Welcome ${name}! Your MyVault profile was created by an agent. Your default PIN is ${plainPin}. Please login to change it.`);
         }
 
-        res.json({ success: true, riderId, reference, message: 'User registered successfully!' });
+        res.json({ 
+            success: true, 
+            riderId, 
+            reference, 
+            paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY,
+            message: 'User registered successfully!' 
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Registration failed' });
     }
@@ -658,7 +664,7 @@ app.post('/api/agent/upload-docs/:riderId', authenticateAgentToken, upload.field
     { name: 'insuranceDoc', maxCount: 1 },
     { name: 'ninDoc', maxCount: 1 },
     { name: 'healthInsuranceDoc', maxCount: 1 }
-]), (req, res) => {
+]), async (req, res) => {
     try {
         const riderId = req.params.riderId;
         const rider = dbHelpers.getRiderById(riderId);
@@ -666,6 +672,12 @@ app.post('/api/agent/upload-docs/:riderId', authenticateAgentToken, upload.field
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
         if (rider.onboardedBy !== req.user.agentId) return res.status(403).json({ success: false, message: 'Unauthorized. You did not onboard this user.' });
         if (rider.status === 'Active') return res.status(400).json({ success: false, message: 'User is already active. Cannot modify documents anymore.' });
+
+        // Verify Paystack Payment before accepting docs
+        const isPaid = await verifyPaystackPayment(rider.reference);
+        if (!isPaid) {
+            return res.status(402).json({ success: false, message: 'Payment verification failed. You must pay the fee before uploading documents.' });
+        }
 
         rider.documents = rider.documents || {};
         
@@ -681,8 +693,12 @@ app.post('/api/agent/upload-docs/:riderId', authenticateAgentToken, upload.field
             }
         });
         
+        // Auto-Activate since payment is verified and docs are uploaded
+        rider.status = 'Active';
+        rider.expiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
         dbHelpers.updateRider(riderId, rider);
-        res.json({ success: true, message: 'Documents uploaded successfully' });
+        res.json({ success: true, message: 'Documents uploaded successfully and Rider is now Active!' });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Document upload failed' });
     }
