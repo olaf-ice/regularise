@@ -1846,7 +1846,7 @@ let hasExpired = false;
             if (qrImg && qrImg.src) qrDataUrl = qrImg.src;
             // Fallback: forcefully generate right before print if missing
             if (!qrDataUrl || qrDataUrl.trim() === '') {
-                qrDataUrl = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23f5f5f5"/%3E%3Ctext x="50" y="50" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="%23999"%3EQR%3C/text%3E%3C/svg%3E';
+                qrDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mMs/wQAAfMBeVq1c6wAAAAASUVORK5CYII=';
             }
         }
 
@@ -2013,7 +2013,7 @@ let hasExpired = false;
             const qrImg = document.querySelector('#qrStickerPreview img');
             if (qrImg && qrImg.src) qrDataUrl = qrImg.src;
             if (!qrDataUrl || qrDataUrl.trim() === '') {
-                qrDataUrl = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23f5f5f5"/%3E%3Ctext x="50" y="50" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="%23999"%3EQR%3C/text%3E%3C/svg%3E';
+                qrDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mMs/wQAAfMBeVq1c6wAAAAASUVORK5CYII=';
             }
         }
 
@@ -2022,12 +2022,13 @@ let hasExpired = false;
         if (pptImg && pptImg.src) {
             try {
                 let url = pptImg.src;
-                if (url.startsWith('data:')) {
+                if (url.startsWith('data:') || url.startsWith(window.location.origin)) {
                     passportSrc = url;
                 } else {
                     // Try proxy to avoid canvas tainting
                     const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
                     const res = await fetch(proxyUrl);
+                    if (!res.ok) throw new Error(`Proxy fetch failed: ${res.status} ${res.statusText}`);
                     const blob = await res.blob();
                     passportSrc = await new Promise((resolve, reject) => {
                         const reader = new FileReader();
@@ -2037,8 +2038,9 @@ let hasExpired = false;
                     });
                 }
             } catch (e) {
-                console.warn("Failed to fetch passport via proxy, falling back to original", e);
-                passportSrc = pptImg.src;
+                console.error("Failed to fetch passport via proxy:", e);
+                alert("Could not load passport photo securely for printing. The PVC will generate without it.");
+                passportSrc = '';
             }
         }
 
@@ -2071,7 +2073,8 @@ let hasExpired = false;
                 }
                 .pdf-card::before { 
                     content:''; position:absolute; inset:0; 
-                    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+                    background-image: radial-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px);
+                    background-size: 20px 20px;
                     z-index: 0;
                 }
                 .ghost-image {
@@ -2291,7 +2294,7 @@ let hasExpired = false;
             const qrImg = document.querySelector('#qrStickerPreview img');
             if (qrImg && qrImg.src) qrDataUrl = qrImg.src;
             if (!qrDataUrl || qrDataUrl.trim() === '') {
-                qrDataUrl = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23f5f5f5"/%3E%3Ctext x="50" y="50" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="%23999"%3EQR%3C/text%3E%3C/svg%3E';
+                qrDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mMs/wQAAfMBeVq1c6wAAAAASUVORK5CYII=';
             }
         }
 
