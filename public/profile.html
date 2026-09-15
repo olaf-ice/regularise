@@ -2014,7 +2014,28 @@ let hasExpired = false;
 
         let passportSrc = '';
         const pptImg = document.querySelector('#passportImg');
-        if (pptImg && pptImg.src) passportSrc = pptImg.src;
+        if (pptImg && pptImg.src) {
+            try {
+                let url = pptImg.src;
+                if (url.startsWith('data:')) {
+                    passportSrc = url;
+                } else {
+                    // Try proxy to avoid canvas tainting
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+                    const res = await fetch(proxyUrl);
+                    const blob = await res.blob();
+                    passportSrc = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                }
+            } catch (e) {
+                console.warn("Failed to fetch passport via proxy, falling back to original", e);
+                passportSrc = pptImg.src;
+            }
+        }
 
         if (!window.html2canvas || !window.jspdf || !window.htmlToImage) {
             alert('PDF/Image libraries not fully loaded yet.\nhtml2canvas: ' + !!window.html2canvas + '\njspdf: ' + !!window.jspdf + '\nhtmlToImage: ' + !!window.htmlToImage + '\n\nPlease hard refresh (Ctrl+F5).');
@@ -2196,11 +2217,11 @@ let hasExpired = false;
 
             } else {
                 const frontCanvas = await Promise.race([
-                    html2canvas(frontEl, { scale: 3, useCORS: true, backgroundColor: null, allowTaint: true }),
+                    html2canvas(frontEl, { scale: 3, useCORS: true, backgroundColor: null }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas front timeout')), 10000))
                 ]);
                 const backCanvas = await Promise.race([
-                    html2canvas(backEl, { scale: 3, useCORS: true, backgroundColor: null, allowTaint: true }),
+                    html2canvas(backEl, { scale: 3, useCORS: true, backgroundColor: null }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas back timeout')), 10000))
                 ]);
 
