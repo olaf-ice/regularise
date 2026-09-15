@@ -598,7 +598,7 @@
             try {
                 const res = await fetch(`${baseUrl}/api/admin/rider/${riderId}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
                 
@@ -808,7 +808,7 @@
             try {
                 const res = await fetch(`${baseUrl}/api/admin/agent/${agentId}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
                 
@@ -1276,7 +1276,7 @@
             if (!token) return;
             try {
                 const res = await fetch('/api/admin/notifications', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
                 const data = await res.json();
                 if (data.success) {
