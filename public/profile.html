@@ -901,6 +901,9 @@
 
             try {
                 const res = await fetch(`/api/verify/${currentRiderId}/unlock`, { method: 'POST' });
+                if (!res.ok) {
+                    throw new Error('Server returned ' + res.status + ' ' + res.statusText);
+                }
                 const data = await res.json();
                 if (data.success) {
                     const rider = data.rider;
@@ -979,10 +982,12 @@
                     
                     // Update button state
                     document.getElementById('unlockLevel2Box').style.display = 'none';
+                } else {
+                    throw new Error(data.message || 'Unlock failed: Rider not found or unauthorized');
                 }
             } catch (err) {
                 console.error(err);
-                alert("Failed to unlock profile. Check connection.");
+                alert("Failed to unlock profile: " + (err.message || err));
                 resetUnlock();
             }
         }
