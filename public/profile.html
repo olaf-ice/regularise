@@ -1870,28 +1870,30 @@ let hasExpired = false;
         pw.document.write(`<!DOCTYPE html><html><head><title>Sticker - ${d.name}</title>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-            @page { size: A4 portrait; margin: 10mm; }
+            @page { size: A4 portrait; margin: 0; }
             * { margin:0; padding:0; box-sizing:border-box; }
             html, body {
-                width: 100%;
-                height: 100%;
+                width: 100vw;
+                height: 100vh;
                 background: white;
                 font-family: 'Inter', sans-serif;
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
+                overflow: hidden; /* Prevent scrolling/spilling */
             }
             .page-container {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: 1fr 1fr;
-                gap: 10mm;
+                grid-template-columns: 100mm 100mm;
+                grid-template-rows: 100mm 100mm;
                 width: 100%;
                 height: 100%;
-                padding: 5mm;
+                align-content: center;
+                justify-content: center;
+                gap: 5mm;
             }
             .sticker-wrapper {
-                border: 1px dashed #ccc;
-                padding: 10mm;
+                width: 100mm;
+                height: 100mm;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1899,22 +1901,18 @@ let hasExpired = false;
             .sticker {
                 width: 100%;
                 height: 100%;
-                max-width: 80mm;
-                max-height: 115mm;
-                border: 4px solid #ef4444;
-                border-radius: 12px;
-                overflow: hidden;
                 background: #fff;
                 color: #0f172a;
                 display: flex;
                 flex-direction: column;
+                border: none;
             }
             .top {
                 background: #ef4444;
                 color: white;
                 text-align: center;
-                padding: 12px 10px;
-                font-size: 20px;
+                padding: 10px 8px;
+                font-size: 18px;
                 font-weight: 900;
                 text-transform: uppercase;
                 letter-spacing: 1px;
@@ -1923,36 +1921,38 @@ let hasExpired = false;
                 display: flex;
                 flex-direction: column;
                 flex: 1;
-                padding: 15px;
+                padding: 12px;
                 align-items: center;
                 justify-content: center;
-                gap: 15px;
+                gap: 10px;
+                background: #fafafa;
             }
             .kin-info {
                 text-align: center;
                 width: 100%;
             }
-            .kin-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-            .kin-name { font-size: 18px; font-weight: 900; line-height: 1.2; margin-top: 4px; }
-            .kin-phone { font-size: 16px; font-weight: 700; color: #ef4444; margin-top: 4px; }
-            .instruction { font-size: 12px; font-weight: 800; background: #fee2e2; color: #b91c1c; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 8px; }
+            .kin-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+            .kin-name { font-size: 16px; font-weight: 900; line-height: 1.2; margin-top: 3px; }
+            .kin-phone { font-size: 15px; font-weight: 700; color: #ef4444; margin-top: 3px; }
+            .instruction { font-size: 11px; font-weight: 800; background: #fee2e2; color: #b91c1c; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 6px; text-transform: uppercase; }
             
             .qr-section {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 8px;
+                gap: 6px;
+                margin-top: 5px;
             }
-            .qr-wrapper { width: 110px; height: 110px; background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 4px; }
+            .qr-wrapper { width: 90px; height: 90px; background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 4px; }
             .qr-wrapper img { width: 100%; height: 100%; object-fit: contain; }
-            .qr-text { font-size: 11px; font-weight: 700; text-align: center; color: #64748b; line-height: 1.2; max-width: 140px;}
+            .qr-text { font-size: 10px; font-weight: 800; text-align: center; color: #64748b; line-height: 1.2; max-width: 120px; text-transform: uppercase; }
             
             .bottom {
                 background: #0f172a;
                 color: white;
                 text-align: center;
-                padding: 12px;
-                font-size: 14px;
+                padding: 10px;
+                font-size: 12px;
                 font-weight: 800;
                 letter-spacing: 1px;
                 text-transform: uppercase;
