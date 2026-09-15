@@ -1846,205 +1846,126 @@ let hasExpired = false;
         }
 
         const pw = window.open('', '', 'height=700,width=500');
+        const stickerHTML = `
+            <div class="sticker-wrapper">
+                <div class="sticker">
+                    <div class="top">IN CASE OF EMERGENCY</div>
+                    <div class="middle">
+                        <div class="kin-info">
+                            <div class="kin-label">Emergency Contact</div>
+                            <div class="kin-name">${d.kinName}</div>
+                            <div class="kin-phone">${d.kinPhone}</div>
+                            <div class="instruction">Call immediately</div>
+                        </div>
+                        <div class="qr-section">
+                            <div class="qr-wrapper">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:14px;font-weight:700;">QR</div>'}</div>
+                            <div class="qr-text">Scan for medical & identity details</div>
+                        </div>
+                    </div>
+                    <div class="bottom">Scan. Inform. Save Life.</div>
+                </div>
+            </div>
+        `;
+
         pw.document.write(`<!DOCTYPE html><html><head><title>Sticker - ${d.name}</title>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-            @page { size: A6 portrait; margin: 0; }
+            @page { size: A4 portrait; margin: 10mm; }
             * { margin:0; padding:0; box-sizing:border-box; }
             html, body {
-                width: 105mm;
-                height: 148mm;
+                width: 100%;
+                height: 100%;
                 background: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
                 font-family: 'Inter', sans-serif;
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
             }
+            .page-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 1fr;
+                gap: 10mm;
+                width: 100%;
+                height: 100%;
+                padding: 5mm;
+            }
+            .sticker-wrapper {
+                border: 1px dashed #ccc;
+                padding: 10mm;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
             .sticker {
-                width: 96mm;
-                border: 3px solid #ef4444;
-                border-radius: 10px;
+                width: 100%;
+                height: 100%;
+                max-width: 80mm;
+                max-height: 115mm;
+                border: 4px solid #ef4444;
+                border-radius: 12px;
                 overflow: hidden;
                 background: #fff;
                 color: #0f172a;
+                display: flex;
+                flex-direction: column;
             }
             .top {
                 background: #ef4444;
                 color: white;
                 text-align: center;
-                padding: 9px 8px;
-                font-size: 18px;
+                padding: 12px 10px;
+                font-size: 20px;
                 font-weight: 900;
                 text-transform: uppercase;
                 letter-spacing: 1px;
             }
             .middle {
                 display: flex;
-                padding: 12px;
+                flex-direction: column;
+                flex: 1;
+                padding: 15px;
                 align-items: center;
-                gap: 12px;
+                justify-content: center;
+                gap: 15px;
             }
-            .middle-left { flex: 1; }
-            .middle-right {
-                width: 80px;
+            .kin-info {
+                text-align: center;
+                width: 100%;
+            }
+            .kin-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+            .kin-name { font-size: 18px; font-weight: 900; line-height: 1.2; margin-top: 4px; }
+            .kin-phone { font-size: 16px; font-weight: 700; color: #ef4444; margin-top: 4px; }
+            .instruction { font-size: 12px; font-weight: 800; background: #fee2e2; color: #b91c1c; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 8px; }
+            
+            .qr-section {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 5px;
+                gap: 8px;
             }
-            .kin-label { font-size: 8px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-            .kin-name { font-size: 13px; font-weight: 900; line-height: 1.2; margin-top: 2px; }
-            .kin-phone { font-size: 12px; font-weight: 700; color: #ef4444; margin-top: 3px; }
-            .instruction { font-size: 9px; font-weight: 800; background: #fee2e2; color: #b91c1c; padding: 3px 6px; border-radius: 4px; display: inline-block; margin-top: 6px; }
-            .qr-wrapper { width: 78px; height: 78px; background: white; border: 2px solid #e2e8f0; border-radius: 6px; padding: 3px; }
+            .qr-wrapper { width: 110px; height: 110px; background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 4px; }
             .qr-wrapper img { width: 100%; height: 100%; object-fit: contain; }
-            .qr-text { font-size: 8px; font-weight: 700; text-align: center; color: #64748b; line-height: 1.2; }
+            .qr-text { font-size: 11px; font-weight: 700; text-align: center; color: #64748b; line-height: 1.2; max-width: 140px;}
+            
             .bottom {
                 background: #0f172a;
                 color: white;
                 text-align: center;
-                padding: 8px;
-                font-size: 11px;
+                padding: 12px;
+                font-size: 14px;
                 font-weight: 800;
                 letter-spacing: 1px;
                 text-transform: uppercase;
+                margin-top: auto;
             }
             @media print {
                 html, body { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
             }
-        
-        /* Tab Navigation */
-        .tab-nav {
-            display: flex;
-            overflow-x: auto;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 0.5rem;
-            scrollbar-width: none; /* Firefox */
-        }
-        .tab-nav::-webkit-scrollbar { display: none; } /* Chrome */
-        .tab-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid transparent;
-            color: var(--text-muted);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            transition: all 0.3s ease;
-        }
-        .tab-btn.active {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.5);
-            color: #60a5fa;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
-        }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        
-        /* Realistic Digital Wallet Card */
-        .wallet-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            padding: 1rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            margin-bottom: 1rem;
-        }
-        .wallet-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        .wallet-card::before {
-            content: '';
-            position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.1) 50%, transparent 55%);
-            background-size: 200% 200%;
-            animation: shimmer 3s infinite linear;
-            pointer-events: none;
-        }
-        @keyframes shimmer {
-            0% { background-position: -200% -200%; }
-            100% { background-position: 200% 200%; }
-        }
-        .wallet-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 0.5rem;
-        }
-        .wallet-card-title {
-            font-size: 0.85rem;
-            font-weight: 800;
-            color: var(--primary-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .wallet-card-icon {
-            font-size: 1.2rem;
-            opacity: 0.8;
-        }
-        .wallet-card-body {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-        .wallet-card-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        .wallet-card-label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .wallet-card-value {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--text);
-            font-family: monospace;
-            letter-spacing: 1px;
-        }
-        .wallet-card-status {
-            font-size: 0.7rem;
-            font-weight: 800;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-        }
-</style></head><body>
-        <div class="sticker">
-            <div class="top">IN CASE OF EMERGENCY</div>
-            <div class="middle">
-                <div class="middle-left">
-                    <div class="kin-label">Emergency Contact</div>
-                    <div class="kin-name">${d.kinName}</div>
-                    <div class="kin-phone">${d.kinPhone}</div>
-                    <div class="instruction">Call immediately</div>
-                </div>
-                <div class="middle-right">
-                    <div class="qr-wrapper">${qrDataUrl ? `<img src="${qrDataUrl}" />` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:12px;font-weight:700;">QR</div>'}</div>
-                    <div class="qr-text">Scan for medical & identity details</div>
-                </div>
-            </div>
-            <div class="bottom">Scan. Inform. Save Life.</div>
+        </style></head><body>
+        <div class="page-container">
+            ${stickerHTML.repeat(4)}
         </div>
-        
-
-
-    </body></html>`);
+        </body></html>`);
         pw.document.close();
         pw.focus();
         setTimeout(() => { pw.print(); pw.close(); }, 900);
