@@ -733,7 +733,7 @@
                 <h4 style="color: var(--primary-light); margin-bottom: 0.5rem; font-size: 0.88rem; letter-spacing: 1px; font-weight: 800;">🎫 PHYSICAL-DIGITAL TAG GENERATOR</h4>
                 <p id="stickerDescriptionText" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1.25rem;">Get print-ready assets to connect your bike, helmet, or physical wristband directly to MyVault.</p>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
                     <!-- Circular Helmet Sticker Preview -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
                         <!-- QR sticker visual -->
@@ -765,6 +765,21 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Print Agreement Form -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+                        <!-- Agreement mini preview -->
+                        <div style="width: 70px; height: 90px; border: 1px solid #d1d5db; border-radius: 2px; background: white; display: flex; flex-direction: column; padding: 8px 6px; margin-bottom: 0.5rem; overflow: hidden; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);">
+                            <div style="width: 100%; height: 2px; background: #3b82f6; margin-bottom: 4px;"></div>
+                            <div style="width: 80%; height: 2px; background: #9ca3af; margin-bottom: 4px;"></div>
+                            <div style="width: 90%; height: 2px; background: #9ca3af; margin-bottom: 4px;"></div>
+                            <div style="width: 60%; height: 2px; background: #9ca3af; margin-bottom: 12px;"></div>
+                            <div style="width: 100%; height: 1px; background: #9ca3af; margin-top: auto; margin-bottom: 2px;"></div>
+                            <div style="font-size: 0.2rem; color: #6b7280; text-align: left;">Signature</div>
+                        </div>
+                        <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">Verification Agreement</span>
+                        <button class="btn btn-primary" onclick="printAgreement()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print Form</button>
                     </div>
                 </div>
             </div>
@@ -1832,6 +1847,120 @@ let hasExpired = false;
                 new QRCode(qrContainer, { text: emergencyUrl, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
             } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
+    }
+
+    function printAgreement() {
+        const d = _printRiderData;
+        if (!d.riderId) { alert('Please wait for profile data to load.'); return; }
+
+        const printWindow = window.open('', '_blank', 'width=800,height=1000');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>MyVault Member Agreement - ${d.name}</title>
+                <style>
+                    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #111; line-height: 1.6; }
+                    .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 30px; }
+                    .header img { height: 50px; }
+                    .header-title { text-align: right; }
+                    h1 { margin: 0; font-size: 24px; color: #1e3a8a; font-weight: 800; }
+                    h2 { font-size: 18px; color: #1e3a8a; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+                    p { margin: 10px 0; font-size: 14px; }
+                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 30px; }
+                    .info-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold; }
+                    .info-value { font-size: 16px; font-weight: 600; color: #0f172a; }
+                    .terms { font-size: 13px; color: #334155; margin-bottom: 50px; }
+                    .terms li { margin-bottom: 10px; }
+                    .signature-section { display: flex; justify-content: space-between; margin-top: 50px; }
+                    .sig-box { width: 45%; }
+                    .sig-line { border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px; }
+                    .sig-label { font-size: 12px; font-weight: bold; }
+                    .sig-sub { font-size: 11px; color: #64748b; }
+                    .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                    @media print {
+                        body { padding: 0; }
+                        button { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <!-- Fallback logo if image fails to load in print view -->
+                        <div style="font-size: 28px; font-weight: 900; color: #2563eb; letter-spacing: -1px;">MYVAULT<span style="color: #f59e0b;">.</span></div>
+                    </div>
+                    <div class="header-title">
+                        <h1>MEMBER AGREEMENT</h1>
+                        <div style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 4px;">DATE: ${new Date().toLocaleDateString()}</div>
+                    </div>
+                </div>
+
+                <p style="font-size: 15px; font-weight: bold; margin-bottom: 20px;">This document serves as the official registration and verification agreement between MyVault and the registered citizen.</p>
+
+                <div class="info-grid">
+                    <div>
+                        <div class="info-label">Full Name</div>
+                        <div class="info-value">${d.name.toUpperCase()}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Citizen ID</div>
+                        <div class="info-value">${d.riderId}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Phone Number</div>
+                        <div class="info-value">${d.phone}</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Status</div>
+                        <div class="info-value" style="color: #16a34a;">VERIFIED</div>
+                    </div>
+                </div>
+
+                <h2>1. Terms of Registration</h2>
+                <ul class="terms">
+                    <li>I confirm that all personal and vehicle information provided during my registration is accurate, truthful, and up to date.</li>
+                    <li>I authorize MyVault to securely store, process, and display my emergency and identification data for the sole purpose of verification and emergency response.</li>
+                    <li>I understand that my public profile can be accessed by scanning my physical tags (QR Sticker / PVC ID) and I consent to this data being visible to anyone who physically scans my tag during an emergency or verification process.</li>
+                    <li>I agree to promptly update my profile or notify my agent if any of my critical information (phone number, vehicle status, medical details) changes.</li>
+                    <li>I understand that any falsification of documents or identity may result in the immediate suspension or permanent ban of my MyVault account.</li>
+                </ul>
+
+                <h2>2. Physical Tags & Liability</h2>
+                <ul class="terms">
+                    <li>I acknowledge that the QR stickers and PVC ID cards issued to me are tied to my digital identity. I will not transfer, sell, or allow unauthorized individuals to use my physical tags.</li>
+                    <li>If my tag is lost, stolen, or damaged, I will immediately report it via the platform to prevent unauthorized access.</li>
+                    <li>MyVault is a digital verification platform and is not liable for accidents, injuries, or third-party actions that occur while I am operating my vehicle or going about my daily activities.</li>
+                </ul>
+
+                <div class="signature-section">
+                    <div class="sig-box">
+                        <div class="sig-line"></div>
+                        <div class="sig-label">CITIZEN SIGNATURE</div>
+                        <div class="sig-sub">${d.name.toUpperCase()}</div>
+                    </div>
+                    <div class="sig-box">
+                        <div class="sig-line"></div>
+                        <div class="sig-label">DATE SIGNED</div>
+                        <div class="sig-sub">DD / MM / YYYY</div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    Document ID: ${d.riderId}-${Date.now().toString().slice(-6)} | Generated via MyVault Digital Systems
+                    <br>This is a legally binding agreement. Keep a copy for your records.
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        setTimeout(function() {
+                            window.print();
+                        }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 
     function printSticker() {
