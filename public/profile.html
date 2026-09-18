@@ -2331,11 +2331,11 @@ let hasExpired = false;
             if (format === 'svg') {
                 const frontSvg = await Promise.race([
                     htmlToImage.toSvg(frontEl),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage front timeout')), 10000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage front timeout')), 20000))
                 ]);
                 const backSvg = await Promise.race([
                     htmlToImage.toSvg(backEl),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage back timeout')), 10000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage back timeout')), 20000))
                 ]);
 
                 // Download front
@@ -2354,12 +2354,12 @@ let hasExpired = false;
 
             } else {
                 const frontCanvas = await Promise.race([
-                    html2canvas(frontEl, { scale: 3, useCORS: true, backgroundColor: null }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas front timeout')), 10000))
+                    html2canvas(frontEl, { scale: 2, useCORS: true, backgroundColor: null }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas front timeout')), 20000))
                 ]);
                 const backCanvas = await Promise.race([
-                    html2canvas(backEl, { scale: 3, useCORS: true, backgroundColor: null }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas back timeout')), 10000))
+                    html2canvas(backEl, { scale: 2, useCORS: true, backgroundColor: null }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas back timeout')), 20000))
                 ]);
 
                 const frontImg = frontCanvas.toDataURL('image/png', 1.0);
