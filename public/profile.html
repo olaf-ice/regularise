@@ -2256,7 +2256,7 @@ let hasExpired = false;
             </style>
             
             <div class="pdf-card" id="pdfCardFront">
-                ${passportSrc ? `<img src="${passportSrc}" crossorigin="anonymous" class="ghost-image" />` : ''}
+                ${passportSrc ? `<div class="ghost-image" style="background-image: url('${passportSrc}'); background-size: cover; background-position: center;"></div>` : ''}
                 <div class="pvc-watermark">SECURE &middot; VERIFIED &middot; AUTHENTIC</div>
                 <div class="hologram-seal"></div>
                 <div class="card-left">
@@ -2536,7 +2536,7 @@ let hasExpired = false;
         </style></head><body>
         <p class="page-hint">Landscape print &bull; Laminate after printing &bull; Standard CR80 PVC card ratio</p>
         <div class="card">
-            ${passportSrc ? `<img src="${passportSrc}" class="ghost-image" />` : ''}
+            ${passportSrc ? `<div class="ghost-image" style="background-image: url('${passportSrc}'); background-size: cover; background-position: center;"></div>` : ''}
             <div class="holographic-sheen"></div>
             <div class="pvc-watermark">SECURE &middot; VERIFIED &middot; AUTHENTIC</div>
             <div class="hologram-seal"></div>
