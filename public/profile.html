@@ -1814,7 +1814,13 @@ let hasExpired = false;
             allergies = rider.medical.allergies || 'None';
         }
         if (rider.emergencyContact) {
-            kinName = rider.emergencyContact.name || '---';
+            let rawName = rider.emergencyContact.name || '---';
+            if (rawName.includes(',')) rawName = rawName.split(',')[0];
+            if (rawName.includes('/')) rawName = rawName.split('/')[0];
+            if (rawName.includes(' and ')) rawName = rawName.split(' and ')[0];
+            if (rawName.includes(' & ')) rawName = rawName.split(' & ')[0];
+            kinName = rawName.trim();
+
             let rawPhone = rider.emergencyContact.phone || '---';
             if (rawPhone.includes(',')) rawPhone = rawPhone.split(',')[0];
             if (rawPhone.includes('/')) rawPhone = rawPhone.split('/')[0];
