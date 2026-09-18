@@ -2353,17 +2353,14 @@ let hasExpired = false;
                 }, 500);
 
             } else {
-                const frontCanvas = await Promise.race([
-                    html2canvas(frontEl, { scale: 2, useCORS: true, backgroundColor: null }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas front timeout')), 20000))
+                const frontImg = await Promise.race([
+                    htmlToImage.toPng(frontEl, { pixelRatio: 2, skipFonts: true }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage front timeout')), 20000))
                 ]);
-                const backCanvas = await Promise.race([
-                    html2canvas(backEl, { scale: 2, useCORS: true, backgroundColor: null }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('html2canvas back timeout')), 20000))
+                const backImg = await Promise.race([
+                    htmlToImage.toPng(backEl, { pixelRatio: 2, skipFonts: true }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('htmlToImage back timeout')), 20000))
                 ]);
-
-                const frontImg = frontCanvas.toDataURL('image/png', 1.0);
-                const backImg = backCanvas.toDataURL('image/png', 1.0);
 
                 if (format === 'png') {
                     // Download front
