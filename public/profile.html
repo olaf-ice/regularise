@@ -1815,23 +1815,34 @@ let hasExpired = false;
         }
         if (rider.emergencyContact) {
             kinName = rider.emergencyContact.name || '---';
-            kinPhone = rider.emergencyContact.phone || '---';
+            let rawPhone = rider.emergencyContact.phone || '---';
+            if (rawPhone.includes(',')) rawPhone = rawPhone.split(',')[0];
+            if (rawPhone.includes('/')) rawPhone = rawPhone.split('/')[0];
+            if (rawPhone.includes(' and ')) rawPhone = rawPhone.split(' and ')[0];
+            kinPhone = rawPhone.trim();
         }
 
         const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
 
         let computedExpiry = rider.expiryDate || '';
         if (!computedExpiry && rider.createdAt) {
-            let d = new Date(rider.createdAt);
-            d.setFullYear(d.getFullYear() + 1);
-            computedExpiry = d.toISOString().split('T')[0];
-        } else if (!computedExpiry) {
-            let d = new Date();
-            d.setFullYear(d.getFullYear() + 1);
-            computedExpiry = d.toISOString().split('T')[0];
+            try {
+                const date = new Date(rider.createdAt);
+                if (!isNaN(date)) {
+                    date.setFullYear(date.getFullYear() + 1);
+                    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                    computedExpiry = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+                }
+            } catch(e) {}
         }
         
-        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: rider.phone || '', dob: rider.medical?.dateOfBirth || rider.dob || '', expiryDate: computedExpiry };
+        let primaryPhone = rider.phone || '';
+        if (primaryPhone.includes(',')) primaryPhone = primaryPhone.split(',')[0];
+        if (primaryPhone.includes('/')) primaryPhone = primaryPhone.split('/')[0];
+        if (primaryPhone.includes(' and ')) primaryPhone = primaryPhone.split(' and ')[0];
+        primaryPhone = primaryPhone.trim();
+
+        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: primaryPhone, dob: rider.medical?.dateOfBirth || rider.dob || '', expiryDate: computedExpiry };
 
         // Update mini preview
         if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
