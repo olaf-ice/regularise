@@ -1553,7 +1553,7 @@ app.get('/api/emergency/onetime/:linkId', (req, res) => {
 
 app.get('/api/riders/:id/access-logs', authenticateToken, (req, res) => {
     try {
-        if (req.user.riderId !== req.params.id) {
+        if (req.user.riderId !== req.params.id && req.user.role !== 'admin' && req.user.role !== 'agent') {
             return res.status(403).json({ success: false, message: 'Unauthorized' });
         }
         const logs = dbHelpers.getAccessLogs(req.params.id);
