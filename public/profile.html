@@ -779,7 +779,7 @@
                             <div style="font-size: 0.2rem; color: #6b7280; text-align: left;">Signature</div>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">Verification Agreement</span>
-                        <button class="btn btn-primary" onclick="printAgreement()" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">🖨️ Print Form</button>
+                        <button class="btn btn-primary" onclick="printAgreement(event)" style="padding: 0.35rem 0.6rem; font-size: 0.68rem; width: 100%;">📥 Download Form</button>
                     </div>
                 </div>
             </div>
@@ -1866,118 +1866,127 @@ let hasExpired = false;
         }
     }
 
-    function printAgreement() {
+    async function printAgreement(event) {
         const d = _printRiderData;
         if (!d.riderId) { alert('Please wait for profile data to load.'); return; }
 
-        const printWindow = window.open('', '_blank', 'width=800,height=1000');
-        printWindow.document.write(`
-            <html>
-            <head>
-                <title>MyVault Member Agreement - ${d.name}</title>
-                <style>
-                    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #111; line-height: 1.6; }
-                    .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 30px; }
-                    .header img { height: 50px; }
-                    .header-title { text-align: right; }
-                    h1 { margin: 0; font-size: 24px; color: #1e3a8a; font-weight: 800; }
-                    h2 { font-size: 18px; color: #1e3a8a; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-                    p { margin: 10px 0; font-size: 14px; }
-                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 30px; }
-                    .info-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold; }
-                    .info-value { font-size: 16px; font-weight: 600; color: #0f172a; }
-                    .terms { font-size: 13px; color: #334155; margin-bottom: 50px; }
-                    .terms li { margin-bottom: 10px; }
-                    .signature-section { display: flex; justify-content: space-between; margin-top: 50px; }
-                    .sig-box { width: 45%; }
-                    .sig-line { border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px; }
-                    .sig-label { font-size: 12px; font-weight: bold; }
-                    .sig-sub { font-size: 11px; color: #64748b; }
-                    .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
-                    @media print {
-                        body { padding: 0; }
-                        button { display: none; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="header">
+        if (!window.html2canvas || !window.jspdf) {
+            alert('PDF libraries not fully loaded yet. Please hard refresh (Ctrl+F5).');
+            return;
+        }
+
+        const btn = event ? event.currentTarget : null;
+        const origText = btn ? btn.innerHTML : '📥 Download Form';
+        if (btn) btn.innerHTML = '⏳ Processing...';
+
+        try {
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.top = '-9999px';
+            container.style.left = '-9999px';
+            container.style.width = '794px'; 
+            container.style.height = '1123px'; 
+            container.style.background = '#ffffff';
+            container.style.color = '#111111';
+            container.style.padding = '40px';
+            container.style.boxSizing = 'border-box';
+            container.style.fontFamily = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+            document.body.appendChild(container);
+
+            container.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 30px;">
                     <div>
-                        <!-- Fallback logo if image fails to load in print view -->
                         <div style="font-size: 28px; font-weight: 900; color: #2563eb; letter-spacing: -1px;">MYVAULT<span style="color: #f59e0b;">.</span></div>
                     </div>
-                    <div class="header-title">
-                        <h1>MEMBER AGREEMENT</h1>
+                    <div style="text-align: right;">
+                        <h1 style="margin: 0; font-size: 24px; color: #1e3a8a; font-weight: 800;">MEMBER AGREEMENT</h1>
                         <div style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 4px;">DATE: ${new Date().toLocaleDateString()}</div>
                     </div>
                 </div>
 
                 <p style="font-size: 15px; font-weight: bold; margin-bottom: 20px;">This document serves as the official registration and verification agreement between MyVault and the registered citizen.</p>
 
-                <div class="info-grid">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 30px;">
                     <div>
-                        <div class="info-label">Full Name</div>
-                        <div class="info-value">${d.name.toUpperCase()}</div>
+                        <div style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Full Name</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #0f172a; margin-top: 4px;">${d.name.toUpperCase()}</div>
                     </div>
                     <div>
-                        <div class="info-label">Citizen ID</div>
-                        <div class="info-value">${d.riderId}</div>
+                        <div style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Citizen ID</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #0f172a; margin-top: 4px;">${d.riderId}</div>
                     </div>
                     <div>
-                        <div class="info-label">Phone Number</div>
-                        <div class="info-value">${d.phone}</div>
+                        <div style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Phone Number</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #0f172a; margin-top: 4px;">${d.phone}</div>
                     </div>
                     <div>
-                        <div class="info-label">Status</div>
-                        <div class="info-value" style="color: #16a34a;">VERIFIED</div>
+                        <div style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Status</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #16a34a; margin-top: 4px;">VERIFIED</div>
                     </div>
                 </div>
 
-                <h2>1. Terms of Registration</h2>
-                <ul class="terms">
-                    <li>I confirm that all personal and vehicle information provided during my registration is accurate, truthful, and up to date.</li>
-                    <li>I authorize MyVault to securely store, process, and display my emergency and identification data for the sole purpose of verification and emergency response.</li>
-                    <li>I understand that my public profile can be accessed by scanning my physical tags (QR Sticker / PVC ID) and I consent to this data being visible to anyone who physically scans my tag during an emergency or verification process.</li>
-                    <li>I agree to promptly update my profile or notify my agent if any of my critical information (phone number, vehicle status, medical details) changes.</li>
-                    <li>I understand that any falsification of documents or identity may result in the immediate suspension or permanent ban of my MyVault account.</li>
+                <h2 style="font-size: 18px; color: #1e3a8a; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px;">1. Terms of Registration</h2>
+                <ul style="font-size: 13px; color: #334155; margin-bottom: 40px; padding-left: 20px; line-height: 1.6;">
+                    <li style="margin-bottom: 10px;">I confirm that all personal and vehicle information provided during my registration is accurate, truthful, and up to date.</li>
+                    <li style="margin-bottom: 10px;">I authorize MyVault to securely store, process, and display my emergency and identification data for the sole purpose of verification and emergency response.</li>
+                    <li style="margin-bottom: 10px;">I understand that my public profile can be accessed by scanning my physical tags (QR Sticker / PVC ID) and I consent to this data being visible to anyone who physically scans my tag during an emergency or verification process.</li>
+                    <li style="margin-bottom: 10px;">I agree to promptly update my profile or notify my agent if any of my critical information (phone number, vehicle status, medical details) changes.</li>
+                    <li style="margin-bottom: 10px;">I understand that any falsification of documents or identity may result in the immediate suspension or permanent ban of my MyVault account.</li>
                 </ul>
 
-                <h2>2. Physical Tags & Liability</h2>
-                <ul class="terms">
-                    <li>I acknowledge that the QR stickers and PVC ID cards issued to me are tied to my digital identity. I will not transfer, sell, or allow unauthorized individuals to use my physical tags.</li>
-                    <li>If my tag is lost, stolen, or damaged, I will immediately report it via the platform to prevent unauthorized access.</li>
-                    <li>MyVault is a digital verification platform and is not liable for accidents, injuries, or third-party actions that occur while I am operating my vehicle or going about my daily activities.</li>
+                <h2 style="font-size: 18px; color: #1e3a8a; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px;">2. Physical Tags & Liability</h2>
+                <ul style="font-size: 13px; color: #334155; margin-bottom: 50px; padding-left: 20px; line-height: 1.6;">
+                    <li style="margin-bottom: 10px;">I acknowledge that the QR stickers and PVC ID cards issued to me are tied to my digital identity. I will not transfer, sell, or allow unauthorized individuals to use my physical tags.</li>
+                    <li style="margin-bottom: 10px;">If my tag is lost, stolen, or damaged, I will immediately report it via the platform to prevent unauthorized access.</li>
+                    <li style="margin-bottom: 10px;">MyVault is a digital verification platform and is not liable for accidents, injuries, or third-party actions that occur while I am operating my vehicle or going about my daily activities.</li>
                 </ul>
 
-                <div class="signature-section">
-                    <div class="sig-box">
-                        <div class="sig-line"></div>
-                        <div class="sig-label">CITIZEN SIGNATURE</div>
-                        <div class="sig-sub">${d.name.toUpperCase()}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 60px;">
+                    <div style="width: 45%;">
+                        <div style="border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px;"></div>
+                        <div style="font-size: 12px; font-weight: bold;">CITIZEN SIGNATURE</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">${d.name.toUpperCase()}</div>
                     </div>
-                    <div class="sig-box">
-                        <div class="sig-line"></div>
-                        <div class="sig-label">DATE SIGNED</div>
-                        <div class="sig-sub">DD / MM / YYYY</div>
+                    <div style="width: 45%;">
+                        <div style="border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px;"></div>
+                        <div style="font-size: 12px; font-weight: bold;">DATE SIGNED</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">DD / MM / YYYY</div>
                     </div>
                 </div>
 
-                <div class="footer">
+                <div style="margin-top: 80px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px;">
                     Document ID: ${d.riderId}-${Date.now().toString().slice(-6)} | Generated via MyVault Digital Systems
                     <br>This is a legally binding agreement. Keep a copy for your records.
                 </div>
+            `;
 
-                <script>
-                    window.onload = function() {
-                        setTimeout(function() {
-                            window.print();
-                        }, 500);
-                    };
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+            await new Promise(r => setTimeout(r, 100));
+
+            const canvas = await window.html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+            pdf.save(`Member_Agreement_${d.riderId}.pdf`);
+
+            document.body.removeChild(container);
+
+        } catch (e) {
+            console.error('PDF generation failed', e);
+            alert('Failed to generate PDF. Please try again.');
+        }
+
+        if (btn) btn.innerHTML = origText;
     }
 
     function printSticker() {
