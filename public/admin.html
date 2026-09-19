@@ -1446,7 +1446,12 @@
         </body></html>`);
         pw.document.close();
         pw.focus();
-        setTimeout(() => { pw.print(); pw.close(); }, 900);
+        setTimeout(() => { 
+            pw.print(); 
+            if (!/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+                pw.onafterprint = () => setTimeout(() => pw.close(), 500);
+            }
+        }, 900);
     }
 
         // Poll for notifications
