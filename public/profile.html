@@ -1814,14 +1814,14 @@ let hasExpired = false;
             allergies = rider.medical.allergies || 'None';
         }
         if (rider.emergencyContact) {
-            let rawName = rider.emergencyContact.name || '---';
+            let rawName = String(rider.emergencyContact.name || '---');
             if (rawName.includes(',')) rawName = rawName.split(',')[0];
             if (rawName.includes('/')) rawName = rawName.split('/')[0];
             if (rawName.includes(' and ')) rawName = rawName.split(' and ')[0];
             if (rawName.includes(' & ')) rawName = rawName.split(' & ')[0];
             kinName = rawName.trim();
 
-            let rawPhone = rider.emergencyContact.phone || '---';
+            let rawPhone = String(rider.emergencyContact.phone || '---');
             if (rawPhone.includes(',')) rawPhone = rawPhone.split(',')[0];
             if (rawPhone.includes('/')) rawPhone = rawPhone.split('/')[0];
             if (rawPhone.includes(' and ')) rawPhone = rawPhone.split(' and ')[0];
@@ -1842,7 +1842,7 @@ let hasExpired = false;
             } catch(e) {}
         }
         
-        let primaryPhone = rider.phone || '';
+        let primaryPhone = String(rider.phone || '');
         if (primaryPhone.includes(',')) primaryPhone = primaryPhone.split(',')[0];
         if (primaryPhone.includes('/')) primaryPhone = primaryPhone.split('/')[0];
         if (primaryPhone.includes(' and ')) primaryPhone = primaryPhone.split(' and ')[0];
