@@ -1271,7 +1271,7 @@ app.post('/api/register', authLimiter, [
 
     try {
 
-        const { name, phone, altPhone, address, dob, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr, userType, freeToken } = req.body;
+        const { name, phone, altPhone, address, dob, nationality, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr, userType, freeToken } = req.body;
         let emergencyContacts = [];
         try { if (emergencyContactsStr) emergencyContacts = JSON.parse(emergencyContactsStr); } catch(e) {}
         if (emergencyContacts.length === 0 && emergencyContactName) {
@@ -1304,7 +1304,7 @@ app.post('/api/register', authLimiter, [
         expiry.setMonth(expiry.getMonth() + 12);
 
         const newRider = {
-            riderId, name, phone, altPhone, address, dob, plateNumber: plateNumber || '',
+            riderId, name, phone, altPhone, address, dob, nationality: nationality || 'Nigerian', plateNumber: plateNumber || '',
             pin: hashedPin,
             userType: userType || 'driver',
             registrationDate: new Date().toISOString().split('T')[0],
@@ -1382,7 +1382,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
         const { 
             reference, 
             // Rider's own medical
-            riderBloodGroup, riderGenotype, riderAllergies, riderHospital, conditions, medications, immunizations, height, weight, gender, dateOfBirth, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions,
+            riderBloodGroup, riderGenotype, riderAllergies, riderHospital, conditions, medications, immunizations, height, weight, gender, dateOfBirth, nationality, identifyingMarks, primaryDoctorName, primaryDoctorPhone, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions,
             // Emergency contact
             emergencyName, emergencyPhone, emergencyRel, emergencyAltPhone,
             bloodGroup, genotype,
@@ -1424,6 +1424,7 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
         if (address) rider.address = address;
         if (altPhone) rider.altPhone = altPhone;
         if (dateOfBirth) rider.dob = dateOfBirth;
+        if (nationality) rider.nationality = nationality;
         if (plateNumber) rider.plateNumber = plateNumber;
 
         // Update Emergency Contact

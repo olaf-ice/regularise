@@ -451,6 +451,8 @@
                             <span id="iceMedications" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
                             <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Date of Birth</span>
                             <span id="iceDateOfBirth" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
+                            <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Nationality</span>
+                            <span id="iceNationality" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
                             <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Immunizations</span>
                             <span id="iceImmunizations" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
                             <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Body Metrics</span>
@@ -930,6 +932,7 @@
                         document.getElementById('iceConditions').textContent = rider.medical.conditions || 'None reported';
                         document.getElementById('iceMedications').textContent = rider.medical.medications || 'None reported';
                         document.getElementById('iceDateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
+                        document.getElementById('iceNationality').textContent = rider.nationality || 'Not specified';
                         document.getElementById('iceImmunizations').textContent = rider.medical.immunizations || 'None reported';
                         
                         const bodyArr = [];
@@ -1524,6 +1527,10 @@ let hasExpired = false;
                 <input type="date" id="editDateOfBirth" name="dateOfBirth">
             </div>
             <div class="input-group">
+                <label>Nationality</label>
+                <input type="text" id="editNationality" name="nationality" placeholder="e.g. Nigerian">
+            </div>
+            <div class="input-group">
                 <label>Body Metrics</label>
                 <div style="display:flex;gap:0.5rem;">
                     <input type="text" id="editHeight" name="height" placeholder="Height">
@@ -1698,6 +1705,7 @@ let hasExpired = false;
         const med = (window.globalRiderData && window.globalRiderData.medical) || {};
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
         document.getElementById('editDateOfBirth').value = med.dateOfBirth || window.globalRiderData.dob || '';
+        document.getElementById('editNationality').value = window.globalRiderData.nationality || '';
         document.getElementById('editConditions').value = med.conditions || '';
         document.getElementById('editMedications').value = med.medications || '';
         document.getElementById('editImmunizations').value = med.immunizations || '';

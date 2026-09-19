@@ -569,6 +569,10 @@
                             <span class="detail-value" id="dateOfBirth">---</span>
                         </div>
                         <div class="detail-item">
+                            <span class="detail-label">Nationality</span>
+                            <span class="detail-value" id="nationality">---</span>
+                        </div>
+                        <div class="detail-item">
                             <span class="detail-label">Immunizations</span>
                             <span class="detail-value" id="immunizations">---</span>
                         </div>
@@ -1280,6 +1284,7 @@
                 document.getElementById('conditions').textContent = rider.medical.conditions || 'None reported';
                 document.getElementById('medications').textContent = rider.medical.medications || 'None reported';
                 document.getElementById('dateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
+                document.getElementById('nationality').textContent = rider.nationality || 'Not specified';
                 document.getElementById('immunizations').textContent = rider.medical.immunizations || 'None reported';
                 
                 const bodyArr = [];
