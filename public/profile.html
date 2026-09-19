@@ -1996,7 +1996,13 @@ let hasExpired = false;
             }
         }
 
-        const pw = window.open('', '', 'height=700,width=500');
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+        const pw = iframe.contentWindow;
         const stickerHTML = `
             <div class="sticker-wrapper">
                 <div class="sticker">
@@ -2147,9 +2153,7 @@ let hasExpired = false;
         pw.focus();
         setTimeout(() => { 
             pw.print(); 
-            if (!/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
-                pw.onafterprint = () => setTimeout(() => pw.close(), 500);
-            }
+            setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 300000);
         }, 900);
     }
 
@@ -2450,7 +2454,13 @@ let hasExpired = false;
         const pptImg = document.querySelector('#passportImg');
         if (pptImg && pptImg.src) passportSrc = pptImg.src;
 
-        const pw = window.open('', '', 'height=700,width=1000');
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+        const pw = iframe.contentWindow;
         pw.document.write(`<!DOCTYPE html><html><head><title>PVC Emergency ID - ${d.name}</title>
         <style>
             @page { size: A4 landscape; margin: 0; }
@@ -2627,9 +2637,7 @@ let hasExpired = false;
         pw.focus();
         setTimeout(() => { 
             pw.print(); 
-            if (!/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
-                pw.onafterprint = () => setTimeout(() => pw.close(), 500);
-            }
+            setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 300000);
         }, 900);
     }
 
