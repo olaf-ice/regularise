@@ -1461,8 +1461,8 @@ let hasExpired = false;
                         try {
                             const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
                             const d = _printRiderData || {};
-                            const safeAllergies = (d.allergies || 'None').replace(/[\r\n]+/g, ' ');
-                            const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${d.name || rider.name};;;;\nFN:${d.name || rider.name}\nORG:MyVault Emergency ID - ${d.riderId || rider.riderId}\nTITLE:Blood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'}\nNOTE:Allergies: ${safeAllergies} | ICE: ${d.kinName || '---'} - ${d.kinPhone || '---'}\nURL:${emergencyUrl}\nEND:VCARD`;
+                            const safeAllergies = (d.allergies || 'None').replace(/[\r\n]+/g, ' ').substring(0, 30);
+                            const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${d.name || rider.name};;;;\nFN:${d.name || rider.name}\nORG:MyVault Emergency ID - ${d.riderId || rider.riderId}\nTITLE:Blood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'} | Alrg: ${safeAllergies}\nNOTE:EMERGENCY CONTACT (ICE): ${d.kinName || '---'} - ${d.kinPhone || '---'}\nURL:${emergencyUrl}\nEND:VCARD`;
                             new QRCode(qrEl, {
                                 text: qrPayload,
                                 width: 256, height: 256,
@@ -1876,8 +1876,8 @@ let hasExpired = false;
             try {
                 // Use level L for faster scanning matching the overview QR code
                 const d = _printRiderData || {};
-                const safeAllergies = (d.allergies || 'None').replace(/[\r\n]+/g, ' ');
-                const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${d.name || rider.name};;;;\nFN:${d.name || rider.name}\nORG:MyVault Emergency ID - ${d.riderId || rider.riderId}\nTITLE:Blood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'}\nNOTE:Allergies: ${safeAllergies} | ICE: ${d.kinName || '---'} - ${d.kinPhone || '---'}\nURL:${emergencyUrl}\nEND:VCARD`;
+                const safeAllergies = (d.allergies || 'None').replace(/[\r\n]+/g, ' ').substring(0, 30);
+                const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${d.name || rider.name};;;;\nFN:${d.name || rider.name}\nORG:MyVault Emergency ID - ${d.riderId || rider.riderId}\nTITLE:Blood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'} | Alrg: ${safeAllergies}\nNOTE:EMERGENCY CONTACT (ICE): ${d.kinName || '---'} - ${d.kinPhone || '---'}\nURL:${emergencyUrl}\nEND:VCARD`;
                 new QRCode(qrContainer, { text: qrPayload, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
             } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
