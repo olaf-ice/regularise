@@ -8,8 +8,8 @@ const DATA_DIR = IS_PRODUCTION ? '/data' : path.join(__dirname, '..');
 const DB_FILE = path.join(DATA_DIR, 'riders.db');
 
 if (!fs.existsSync(DB_FILE)) {
-    console.error('Database file not found at:', DB_FILE);
-    process.exit(1);
+    console.log('Database file not found at:', DB_FILE, '- skipping migration.');
+    process.exit(0);
 }
 
 const db = new Database(DB_FILE);

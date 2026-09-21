@@ -4,7 +4,7 @@ services:
     env: node
     plan: starter
     buildCommand: npm install && npm run build
-    startCommand: node server/server.js
+    startCommand: node server/migrate_db_encryption.js && node server/server.js
     domains:
       - myvault.com.ng
     disk:

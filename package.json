@@ -4,7 +4,7 @@
   "description": "Rider Documentation & Verification System",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "node server/migrate_db_encryption.js && node server/server.js",
     "dev": "node server/server.js",
     "build": "node build.js",
     "postinstall": "npm run build",
