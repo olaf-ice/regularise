@@ -1275,8 +1275,17 @@
             }
             
             const phone = rider.phone || '---';
-            document.getElementById('riderPhoneLink').textContent = phone;
-            document.getElementById('riderPhoneLink').href = 'tel:' + phone;
+            let maskedPhone = '---';
+            if (phone !== '---' && phone.length > 6) {
+                const start = phone.substring(0, 4);
+                const end = phone.substring(phone.length - 4);
+                maskedPhone = `${start} *** ${end}`;
+            } else {
+                maskedPhone = phone;
+            }
+            document.getElementById('riderPhoneLink').textContent = maskedPhone;
+            document.getElementById('riderPhoneLink').removeAttribute('href');
+            document.getElementById('riderPhoneLink').style.cursor = 'default';
 
             // Medical Details
             if (rider.medical) {
