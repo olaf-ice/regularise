@@ -1294,7 +1294,7 @@
                 phone: '0800 000 0000',
                 dob: '01 JAN 1990',
                 expiryDate: '31 DEC 2030',
-                allergies: 'None',
+                allergies: 'Penicillin',
                 kinName: 'Jane Doe',
                 kinPhone: '0800 000 0001'
             };
@@ -1363,6 +1363,8 @@
                 .verified-id-row { display:flex; align-items:center; justify-content:center; gap:5px; margin-top:5px; }
                 .verified-id-row span { font-size:11px; font-weight:800; color:#10b981; }
                 .verified-id-row svg { width:14px; height:14px; fill:#10b981; }
+                .allergy-bar { padding:5px 10px; background:rgba(239,68,68,0.15); border-left:3px solid #ef4444; border-radius:3px; margin-top:10px; }
+                .allergy-text { font-size:11px; font-weight:800; color:#ef4444; }
                 
                 .card-back {
                     background: linear-gradient(135deg, #050b14 0%, #0a1424 100%);
@@ -1415,6 +1417,7 @@
                             <div class="info-value" style="font-size:14px;">${d.expiryDate}</div>
                         </div>
                     </div>
+                    ${d.allergies && d.allergies !== 'None' ? `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies}</div></div>` : ''}
                     <div class="kin-block">
                         <div class="kin-label">Emergency Contact</div>
                         <div class="kin-value">${d.kinName} &middot; ${d.kinPhone}</div>

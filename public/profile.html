@@ -752,7 +752,7 @@
                         <div style="width: 90px; height: 58px; border: 2px solid #f59e0b; border-radius: 4px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px; margin-bottom: 0.5rem; overflow: hidden;">
                             <div style="font-size: 0.28rem; font-weight: 900; color: #f59e0b; letter-spacing: 0.5px;">MYVAULT · EMERGENCY</div>
                             <div id="pvcPreviewName" style="font-size: 0.32rem; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">---</div>
-                            <div id="pvcPreviewMedical" style="font-size: 0.26rem; color: #ef4444; font-weight: 700;">Blood: --- | Geno: ---</div>
+                            <div id="pvcPreviewMedical" style="font-size: 0.24rem; color: #ef4444; font-weight: 700;">Blood: --- | Geno: --- | Allergies: ---</div>
                             <div id="pvcPreviewId" style="font-size: 0.25rem; color: #94a3b8;">DOB: --- | ID: ---</div>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 0.5rem;">PVC Emergency ID</span>
@@ -1457,8 +1457,10 @@ let hasExpired = false;
                         qrEl.innerHTML = '';
                         try {
                             const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
+                            const d = _printRiderData || {};
+                            const qrPayload = `ID: ${d.riderId || rider.riderId}\nName: ${d.name || rider.name}\nBlood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'}\nAllergies: ${d.allergies || 'None'}\nICE: ${d.kinName || '---'} - ${d.kinPhone || '---'}\n\nLive Link: ${emergencyUrl}`;
                             new QRCode(qrEl, {
-                                text: emergencyUrl,
+                                text: qrPayload,
                                 width: 220, height: 220,
                                 colorDark: '#0f172a', colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.L
@@ -1860,7 +1862,7 @@ let hasExpired = false;
 
         // Update mini preview
         if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
-        if (document.getElementById('pvcPreviewMedical')) document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | Geno: ---`;
+        if (document.getElementById('pvcPreviewMedical')) document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | Geno: --- | Allergies: ${allergies}`;
         if (document.getElementById('pvcPreviewId')) document.getElementById('pvcPreviewId').textContent = `DOB: ${_printRiderData.dob || '---'} | ID: ${rider.riderId}`;
 
         // Generate live QR code in preview
@@ -1869,7 +1871,9 @@ let hasExpired = false;
             qrContainer.innerHTML = '';
             try {
                 // Use level L for faster scanning matching the overview QR code
-                new QRCode(qrContainer, { text: emergencyUrl, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+                const d = _printRiderData || {};
+                const qrPayload = `ID: ${d.riderId || rider.riderId}\nName: ${d.name || rider.name}\nBlood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'}\nAllergies: ${d.allergies || 'None'}\nICE: ${d.kinName || '---'} - ${d.kinPhone || '---'}\n\nLive Link: ${emergencyUrl}`;
+                new QRCode(qrContainer, { text: qrPayload, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
             } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
     }
