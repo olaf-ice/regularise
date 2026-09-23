@@ -795,7 +795,7 @@
 
 
 
-                <!-- Bookmark tip for riders -->
+                <!-- Bookmark tip for users -->
                 <div id="bookmarkTip" style="display: none !important;">
                     <span id="bookmarkTipSpan" style="display: none;"></span>
                     <a id="profilePermalink" href="#" style="display: none;"></a>
@@ -1008,7 +1008,7 @@
                     // Update button state
                     document.getElementById('unlockLevel2Box').style.display = 'none';
                 } else {
-                    throw new Error(data.message || 'Unlock failed: Rider not found or unauthorized');
+                    throw new Error(data.message || 'Unlock failed: User not found or unauthorized');
                 }
             } catch (err) {
                 console.error(err);

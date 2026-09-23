@@ -44,7 +44,7 @@ function migrateTable(tableName, idColumnName) {
 try {
     migrateTable('riders', 'riderId');
 } catch (e) {
-    console.log('No riders table or error:', e.message);
+    console.log('No users table or error:', e.message);
 }
 
 // Migrate agents

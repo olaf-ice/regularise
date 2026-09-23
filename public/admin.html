@@ -231,6 +231,7 @@
                 <span>MYVAULT ADMIN <span id="adminRequestBadge" class="status-badge status-pending" style="display:none; margin-left: 10px; cursor: pointer; font-size: 0.7rem;" title="Pending Requests">0</span></span>
             </div>
             <div>
+                <a href="intake.html" target="_blank" class="action-btn" style="border-color: var(--primary); color: var(--primary); text-decoration: none; display: inline-block;">📋 Registration Form</a>
                 <button onclick="printDummyPVC(event)" class="action-btn" style="border-color: var(--amber); color: var(--amber);">📥 Download Dummy PVC</button>
                 <button onclick="logout()" class="action-btn">Log Out</button>
             </div>
@@ -238,7 +239,7 @@
 
         <div>
             <h1 style="margin-bottom: 0.5rem;">System Overview</h1>
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage riders, drivers, and compliance statuses across the ecosystem.</p>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage users, drivers, and compliance statuses across the ecosystem.</p>
             
             <div class="metrics-grid">
                 <div class="metric-card">
@@ -447,7 +448,7 @@
                                     <th>Token</th>
                                     <th>Status</th>
                                     <th>Claimed IP / Date</th>
-                                    <th>Used Info / Rider</th>
+                                    <th>Used Info / User</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -878,7 +879,7 @@
             .then(r => r.json())
             .then(data => {
                 if (!data.success || !data.riders.length) {
-                    alert('No rider data to export.');
+                    alert('No user data to export.');
                     return;
                 }
 
@@ -1150,7 +1151,7 @@
 
                 if (data.success && data.rows.length > 0) {
                     const origin = window.location.origin;
-                    let csv = 'ID,Token,Full Registration URL,Status,Created At,Claimed IP,Claimed At,Used IP,Used At,Rider ID,Notes\n';
+                    let csv = 'ID,Token,Full Registration URL,Status,Created At,Claimed IP,Claimed At,Used IP,Used At,User ID,Notes\n';
                     
                     data.rows.forEach(r => {
                         const fullUrl = `${origin}/register.html?free_token=${r.token}`;

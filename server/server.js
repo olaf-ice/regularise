@@ -229,7 +229,7 @@ async function saveToGoogleSheets(rider) {
             emergencyRel: rider.emergencyContact?.relationship || '',
             emergencyBloodGroup: rider.emergencyContact?.bloodGroup || '',
             emergencyGenotype: rider.emergencyContact?.genotype || '',
-            // Rider Medical
+            // User Medical
             riderBloodGroup: rider.medical?.bloodGroup || '',
             riderGenotype: rider.medical?.genotype || '',
             riderAllergies: rider.medical?.allergies || '',
@@ -259,7 +259,7 @@ const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 setInterval(() => {
     try {
         console.log('[CRON] Running daily document expiry check...');
-        const riders = dbHelpers.getAllRiders();
+        const users = dbHelpers.getAllRiders();
         const today = new Date();
         const warningTarget = new Date(today);
         warningTarget.setDate(today.getDate() + 14);
@@ -325,10 +325,10 @@ app.get('/api/admin/notifications', authenticateAdminToken, (req, res) => {
     }
 });
 
-// Get All Riders (Admin)
+// Get All Users (Admin)
 app.get('/api/admin/riders', authenticateAdminToken, (req, res) => {
     try {
-        const riders = dbHelpers.getAllRiders();
+        const users = dbHelpers.getAllRiders();
         // Remove pin from payloads before sending
         const safeRiders = riders.map(({ pin, ...safeData }) => safeData);
         res.json({ success: true, riders: safeRiders });
@@ -381,7 +381,7 @@ app.get('/api/admin/agents', authenticateAdminToken, (req, res) => {
         const safeAgents = agents.map(({ pin, ...safeData }) => safeData);
         
         // Count onboarded users for each agent
-        const riders = dbHelpers.getAllRiders();
+        const users = dbHelpers.getAllRiders();
         safeAgents.forEach(agent => {
             agent.onboardedCount = riders.filter(r => r.onboardedBy === agent.agentId).length;
         });
@@ -392,10 +392,10 @@ app.get('/api/admin/agents', authenticateAdminToken, (req, res) => {
     }
 });
 
-// Update Rider Status (Admin)
+// Update User Status (Admin)
 app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
     const { riderId, status } = req.body;
-    if (!riderId || !status) return res.status(400).json({ success: false, message: 'Rider ID and Status required' });
+    if (!riderId || !status) return res.status(400).json({ success: false, message: 'User ID and Status required' });
 
     try {
         const rider = dbHelpers.getRiderById(riderId);
@@ -418,10 +418,10 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
     }
 });
 
-// Admin Force Reset Rider PIN
+// Admin Force Reset User PIN
 app.post('/api/admin/rider/reset-pin', authenticateAdminToken, async (req, res) => {
     const { riderId, newPin } = req.body;
-    if (!riderId || !newPin) return res.status(400).json({ success: false, message: 'Rider ID and new PIN required' });
+    if (!riderId || !newPin) return res.status(400).json({ success: false, message: 'User ID and new PIN required' });
     if (newPin.length !== 4) return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits' });
 
     try {
@@ -698,7 +698,7 @@ app.post('/api/agent/upload-docs/:riderId', authenticateAgentToken, upload.field
         rider.expiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         dbHelpers.updateRider(riderId, rider);
-        res.json({ success: true, message: 'Documents uploaded successfully and Rider is now Active!' });
+        res.json({ success: true, message: 'Documents uploaded successfully and User is now Active!' });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Document upload failed' });
     }
@@ -1206,7 +1206,7 @@ app.post('/api/rider/reset-pin', authLimiter, async (req, res) => {
     }
 });
 
-// Rider Login Endpoint
+// User Login Endpoint
 app.post('/api/rider/login', authLimiter, async (req, res) => {
     const { loginId, phone, pin } = req.body;
     const identifier = loginId || phone;

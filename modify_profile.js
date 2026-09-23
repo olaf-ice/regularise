@@ -17,7 +17,7 @@ const replacement = `<main id="profileContent" style="display: none;">
                         <img id="passportImg" src="assets/default-avatar.png" alt="Passport" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <div id="namePlateContainer" style="text-align: center;">
-                        <h2 id="riderName" style="margin-bottom: 0.25rem; font-size: 1.5rem; font-weight: 800; color: var(--text); transition: all 0.3s ease;">Rider Name</h2>
+                        <h2 id="riderName" style="margin-bottom: 0.25rem; font-size: 1.5rem; font-weight: 800; color: var(--text); transition: all 0.3s ease;">User Name</h2>
                         <p id="riderPlate" style="color: var(--primary-light); font-weight: 900; font-size: 1.35rem; letter-spacing: 1px; transition: all 0.3s ease;">PLATE: ---</p>
                     </div>
                 </div>
