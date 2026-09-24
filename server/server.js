@@ -1621,6 +1621,34 @@ app.get('/api/admin/inject-izzy', (req, res) => {
     }
 });
 
+// Admin Request Payment Endpoint
+app.post('/api/admin/request-payment/:riderId', authenticateToken, async (req, res) => {
+    try {
+        const admin = dbHelpers.getAgentById(req.user.agentId);
+        if (!admin || admin.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Forbidden' });
+        }
+        
+        const riderId = req.params.riderId;
+        const rider = dbHelpers.getRiderById(riderId);
+        
+        if (!rider) {
+            return res.status(404).json({ success: false, message: 'Rider not found' });
+        }
+        
+        if (rider.status !== 'Pending') {
+            return res.status(400).json({ success: false, message: 'User is not Pending' });
+        }
+        
+        const msg = `Dear ${rider.name}, your MyVault account requires a registration payment of ₦3,500. Please login at https://myvault.com.ng/login.html to pay and activate your profile.`;
+        await sendSMS(rider.phone, msg);
+        
+        res.json({ success: true, message: 'Payment request sent via SMS' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://127.0.0.1:${PORT}`);
 });
