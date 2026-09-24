@@ -1609,7 +1609,12 @@ app.get('/api/admin/inject-izzy', (req, res) => {
             status: 'Pending',
             createdAt: new Date().toISOString()
         };
-        dbHelpers.updateRider(izzy.riderId, izzy);
+        const existing = dbHelpers.getRiderById(izzy.riderId);
+        if (existing) {
+            dbHelpers.updateRider(izzy.riderId, izzy);
+        } else {
+            dbHelpers.insertRider(izzy);
+        }
         res.json({ success: true, message: 'Izzy injected successfully! You can now test logging in with 08065658212 and PIN 1234' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
