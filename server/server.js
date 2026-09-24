@@ -1609,6 +1609,7 @@ app.get('/api/admin/inject-izzy', (req, res) => {
             name: 'DUROJAYE IZZY LAWRENCE',
             fullName: 'DUROJAYE IZZY LAWRENCE',
             status: 'Pending',
+            paymentRequested: true,
             createdAt: new Date().toISOString()
         };
         const existing = dbHelpers.getRiderById(izzy.riderId);
