@@ -25,7 +25,7 @@ const db = new Database(DB_FILE);
 
 // Initialize tables
 db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
+  CREATE TABLE IF NOT EXISTS riders (
     riderId TEXT PRIMARY KEY,
     phone TEXT UNIQUE NOT NULL,
     pin TEXT NOT NULL,
@@ -86,7 +86,7 @@ if (fs.existsSync(OLD_JSON_FILE)) {
         const rawData = fs.readFileSync(OLD_JSON_FILE, 'utf8');
         const ridersList = JSON.parse(rawData);
 
-        const insertStmt = db.prepare('INSERT OR IGNORE INTO users (riderId, phone, pin, data) VALUES (?, ?, ?, ?)');
+        const insertStmt = db.prepare('INSERT OR IGNORE INTO riders (riderId, phone, pin, data) VALUES (?, ?, ?, ?)');
         const insertMany = db.transaction((riders) => {
             for (const rider of riders) {
                 insertStmt.run(rider.riderId, rider.phone, rider.pin || '', JSON.stringify(rider));
@@ -104,11 +104,11 @@ if (fs.existsSync(OLD_JSON_FILE)) {
 // Database helper functions
 const dbHelpers = {
     insertRider: (rider) => {
-        const stmt = db.prepare('INSERT INTO users (riderId, phone, pin, data) VALUES (?, ?, ?, ?)');
+        const stmt = db.prepare('INSERT INTO riders (riderId, phone, pin, data) VALUES (?, ?, ?, ?)');
         stmt.run(rider.riderId, rider.phone, rider.pin, encryptData(JSON.stringify(rider)));
     },
     updateRider: (riderId, riderData) => {
-        const stmt = db.prepare('UPDATE users SET data = ?, pin = ? WHERE riderId = ?');
+        const stmt = db.prepare('UPDATE riders SET data = ?, pin = ? WHERE riderId = ?');
         stmt.run(encryptData(JSON.stringify(riderData)), riderData.pin, riderId);
     },
     insertWaitlist: (entry) => {
@@ -116,12 +116,12 @@ const dbHelpers = {
         stmt.run(entry.email || '', entry.phone || '', entry.wantsWhatsapp ? 1 : 0, entry.timestamp || new Date().toISOString());
     },
     getRiderById: (riderId) => {
-        const stmt = db.prepare('SELECT * FROM users WHERE riderId = ?');
+        const stmt = db.prepare('SELECT * FROM riders WHERE riderId = ?');
         const row = stmt.get(riderId);
         return row ? parseSecureData(row.data) : null;
     },
     getRiderByPhone: (phone) => {
-        const stmt = db.prepare('SELECT * FROM users WHERE phone = ?');
+        const stmt = db.prepare('SELECT * FROM riders WHERE phone = ?');
         const row = stmt.get(phone);
         return row ? parseSecureData(row.data) : null;
     },
@@ -152,19 +152,19 @@ const dbHelpers = {
     },
     getAllRiders: () => {
         const stmt = db.prepare('SELECT data FROM riders');
-        const users = [];
+        const riders = [];
         for (const row of stmt.iterate()) {
             riders.push(parseSecureData(row.data));
         }
         return riders;
     },
     updateRiderStatus: (riderId, newStatus) => {
-        const stmt = db.prepare('SELECT data, pin FROM users WHERE riderId = ?');
+        const stmt = db.prepare('SELECT data, pin FROM riders WHERE riderId = ?');
         const row = stmt.get(riderId);
         if (row) {
             const data = parseSecureData(row.data);
             data.status = newStatus;
-            const updateStmt = db.prepare('UPDATE users SET data = ? WHERE riderId = ?');
+            const updateStmt = db.prepare('UPDATE riders SET data = ? WHERE riderId = ?');
             updateStmt.run(encryptData(JSON.stringify(data)), riderId);
             return data;
         }
@@ -172,7 +172,7 @@ const dbHelpers = {
     },
     deleteRider: (riderId) => {
         const deleteTransaction = db.transaction(() => {
-            db.prepare('DELETE FROM users WHERE riderId = ?').run(riderId);
+            db.prepare('DELETE FROM riders WHERE riderId = ?').run(riderId);
             db.prepare('DELETE FROM access_logs WHERE riderId = ?').run(riderId);
             db.prepare('DELETE FROM emergency_links WHERE riderId = ?').run(riderId);
             db.prepare('DELETE FROM requests WHERE riderId = ?').run(riderId);

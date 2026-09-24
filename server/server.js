@@ -259,7 +259,7 @@ const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 setInterval(() => {
     try {
         console.log('[CRON] Running daily document expiry check...');
-        const users = dbHelpers.getAllRiders();
+        const riders = dbHelpers.getAllRiders();
         const today = new Date();
         const warningTarget = new Date(today);
         warningTarget.setDate(today.getDate() + 14);
@@ -328,7 +328,7 @@ app.get('/api/admin/notifications', authenticateAdminToken, (req, res) => {
 // Get All Users (Admin)
 app.get('/api/admin/riders', authenticateAdminToken, (req, res) => {
     try {
-        const users = dbHelpers.getAllRiders();
+        const riders = dbHelpers.getAllRiders();
         // Remove pin from payloads before sending
         const safeRiders = riders.map(({ pin, ...safeData }) => safeData);
         res.json({ success: true, riders: safeRiders });
@@ -381,7 +381,7 @@ app.get('/api/admin/agents', authenticateAdminToken, (req, res) => {
         const safeAgents = agents.map(({ pin, ...safeData }) => safeData);
         
         // Count onboarded users for each agent
-        const users = dbHelpers.getAllRiders();
+        const riders = dbHelpers.getAllRiders();
         safeAgents.forEach(agent => {
             agent.onboardedCount = riders.filter(r => r.onboardedBy === agent.agentId).length;
         });
