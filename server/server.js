@@ -1602,20 +1602,25 @@ app.post('/api/rider/change-pin', authenticateToken, async (req, res) => {
 app.get('/api/admin/inject-izzy', (req, res) => {
     try {
         const bcrypt = require('bcryptjs');
-        const izzy = {
-            riderId: 'RID-42242',
-            phone: '08065658212',
-            pin: bcrypt.hashSync('1234', 10),
-            name: 'DUROJAYE IZZY LAWRENCE',
-            fullName: 'DUROJAYE IZZY LAWRENCE',
-            status: 'Pending',
-            paymentRequested: true,
-            createdAt: new Date().toISOString()
-        };
-        const existing = dbHelpers.getRiderById(izzy.riderId);
+        let existing = dbHelpers.getRiderByPhone('08065658212');
+        
         if (existing) {
-            dbHelpers.updateRider(izzy.riderId, izzy);
+            existing.status = 'Pending';
+            existing.paymentRequested = true;
+            // Overwrite PIN to 1234 for testing if needed
+            existing.pin = bcrypt.hashSync('1234', 10);
+            dbHelpers.updateRider(existing.riderId, existing);
         } else {
+            const izzy = {
+                riderId: 'RID-42242',
+                phone: '08065658212',
+                pin: bcrypt.hashSync('1234', 10),
+                name: 'DUROJAYE IZZY LAWRENCE',
+                fullName: 'DUROJAYE IZZY LAWRENCE',
+                status: 'Pending',
+                paymentRequested: true,
+                createdAt: new Date().toISOString()
+            };
             dbHelpers.insertRider(izzy);
         }
         res.json({ success: true, message: 'Izzy injected successfully! You can now test logging in with 08065658212 and PIN 1234' });
