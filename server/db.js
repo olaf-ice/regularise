@@ -371,12 +371,12 @@ const dbHelpers = {
         stmt.run(riderId, type, 'pending', new Date().toISOString());
     },
     getPendingRequestsCount: () => {
-        const stmt = db.prepare('SELECT COUNT(*) as count FROM requests WHERE status = "pending"');
+        const stmt = db.prepare("SELECT COUNT(*) as count FROM requests WHERE status = 'pending'");
         const row = stmt.get();
         return row ? row.count : 0;
     },
     getPendingRequests: () => {
-        const stmt = db.prepare('SELECT * FROM requests WHERE status = "pending" ORDER BY createdAt DESC');
+        const stmt = db.prepare("SELECT * FROM requests WHERE status = 'pending' ORDER BY createdAt DESC");
         return stmt.all();
     }
 };

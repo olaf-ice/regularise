@@ -1079,7 +1079,7 @@ app.get('/api/verify/:query', (req, res) => {
     if (isAdmin) {
         const safeRider = { ...rider };
         delete safeRider.pin;
-        return res.json({ success: true, rider: safeRider, isLevel1: false, isAdmin: true });
+        return res.json({ success: true, rider: safeRider, isLevel1: false, isAdmin: true, paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY });
     }
 
     // Strip sensitive data for Level 1 access (Public scan)
@@ -1102,7 +1102,7 @@ app.get('/api/verify/:query', (req, res) => {
         // Only include passport photo, hide all other documents and expiry dates
         documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
     };
-    res.json({ success: true, rider: level1Rider, isLevel1: true });
+    res.json({ success: true, rider: level1Rider, isLevel1: true, paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY });
 });
 
 // Unlock Endpoint for Public Profile (Level 2)
