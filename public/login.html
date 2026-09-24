@@ -222,7 +222,7 @@
                     const data = await res.json();
                     if (data.success) {
                         localStorage.setItem('riderToken', data.token);
-                        window.location.href = `profile.html?id=${encodeURIComponent(data.riderId)}`;
+                        window.location.href = `profile.html?id=${encodeURIComponent(data.riderId)}&v=${Date.now()}`;
                     } else {
                         alert('Error: ' + data.message);
                         btn.disabled = false;
