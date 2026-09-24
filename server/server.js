@@ -1224,6 +1224,17 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
     try {
         const isMatch = await bcrypt.compare(pin, rider.pin);
         if (isMatch) {
+            if (rider.status && rider.status.toLowerCase() === 'pending') {
+                return res.json({ 
+                    success: false, 
+                    isPending: true, 
+                    message: 'Activation Required: Please complete your registration payment.',
+                    riderId: rider.riderId,
+                    phone: rider.phone,
+                    paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY
+                });
+            }
+
             rider.tokenVersion = (rider.tokenVersion || 0) + 1;
             dbHelpers.updateRider(rider.riderId, rider);
 

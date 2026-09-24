@@ -251,6 +251,10 @@
                     <div class="metric-label">Active Subscriptions</div>
                 </div>
                 <div class="metric-card">
+                    <div class="metric-value" id="metricPending" style="color: #f59e0b;">0</div>
+                    <div class="metric-label">Pending Payments</div>
+                </div>
+                <div class="metric-card">
                     <div class="metric-value" id="metricCars" style="color: #60a5fa;">0</div>
                     <div class="metric-label">Registered Cars</div>
                 </div>
@@ -549,6 +553,9 @@
         function updateMetrics(riders) {
             document.getElementById('metricTotal').textContent = riders.length;
             document.getElementById('metricActive').textContent = riders.filter(r => r.status === 'Active').length;
+            if (document.getElementById('metricPending')) {
+                document.getElementById('metricPending').textContent = riders.filter(r => r.status === 'Pending').length;
+            }
             document.getElementById('metricCars').textContent = riders.filter(r => r.vehicleType && r.vehicleType.toLowerCase() === 'car').length;
             
             // Bikes are either explicitly "motorcycle" or missing vehicleType (legacy)
@@ -565,7 +572,7 @@
             }
 
             // Sort by registration date descending
-            riders.sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
+            riders.sort((a, b) => new Date(b.registrationDate || b.createdAt || 0) - new Date(a.registrationDate || a.createdAt || 0));
 
             riders.forEach(r => {
                 const tr = document.createElement('tr');
@@ -589,7 +596,7 @@
                         <div>${pNum}</div>
                     </td>
                     <td>${r.phone}</td>
-                    <td>${r.registrationDate}</td>
+                    <td>${r.registrationDate || r.createdAt || 'N/A'}</td>
                     <td><span class="status-badge ${badgeClass}">${r.status}</span></td>
                     <td>
                         <button class="action-btn view" onclick="window.open('profile.html?id=${r.riderId}', '_blank')">View Profile</button>
