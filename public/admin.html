@@ -660,7 +660,7 @@
         }
 
         async function requestPayment(riderId) {
-            if (!confirm(`Are you sure you want to send a payment request SMS to this user?`)) return;
+            if (!confirm(`Are you sure you want to trigger a payment request on this user's profile?`)) return;
 
             try {
                 const res = await fetch(`${baseUrl}/api/admin/request-payment/${riderId}`, {

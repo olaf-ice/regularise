@@ -1236,7 +1236,7 @@
                 if (data.success) {
                     const rider = data.rider;
                     
-                    if (rider.status && rider.status.toLowerCase() === 'pending') {
+                    if (rider.paymentRequested) {
                         document.getElementById('paywallOverlay').style.display = 'flex';
                         document.getElementById('paywallBtn').onclick = function() {
                             const handler = PaystackPop.setup({
@@ -2609,8 +2609,8 @@ let hasExpired = false;
     <div id="paywallOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
         <div style="background: var(--surface); padding: 2.5rem; border-radius: 1.5rem; text-align: center; max-width: 400px; width: 90%; border: 1px solid var(--glass-border); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
-            <h2 style="color: var(--text); font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: 800;">Activation Required</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Your account status is currently <b>PENDING</b>. Please complete your registration payment to unlock your MyVault profile and features.</p>
+            <h2 style="color: var(--text); font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: 800;">Payment Required</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">An admin has requested a payment for your account. Please complete this payment to unlock your MyVault profile and features.</p>
             <button id="paywallBtn" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 1rem; font-weight: 700;">Pay ₦3,500 Now</button>
             <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-light);">Secure payment via Paystack</div>
         </div>

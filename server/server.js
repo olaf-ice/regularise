@@ -1095,6 +1095,7 @@ app.get('/api/verify/:query', (req, res) => {
         vehicle: rider.vehicle,
         bike: rider.bike,
         emergencyContact: rider.emergencyContact,
+        paymentRequested: rider.paymentRequested,
         medical: rider.medical ? { 
             bloodGroup: rider.medical.bloodGroup,
             refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
@@ -1505,6 +1506,7 @@ app.post('/api/payment/verify', async (req, res) => {
         const isPaid = await verifyPaystackPayment(reference);
         if (isPaid) {
             rider.status = 'Active';
+            delete rider.paymentRequested;
             const expiry = new Date();
             expiry.setMonth(expiry.getMonth() + 12);
             rider.expiryDate = expiry.toISOString().split('T')[0];
@@ -1640,10 +1642,10 @@ app.post('/api/admin/request-payment/:riderId', authenticateToken, async (req, r
             return res.status(400).json({ success: false, message: 'User is not Pending' });
         }
         
-        const msg = `Dear ${rider.name}, your MyVault account requires a registration payment of ₦3,500. Please login at https://myvault.com.ng/login.html to pay and activate your profile.`;
-        await sendSMS(rider.phone, msg);
+        rider.paymentRequested = true;
+        dbHelpers.updateRider(riderId, rider);
         
-        res.json({ success: true, message: 'Payment request sent via SMS' });
+        res.json({ success: true, message: 'Payment request pushed to user profile successfully' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
