@@ -1833,7 +1833,11 @@ app.get('/api/admin/restore-71447', (req, res) => {
                 sosEnabled: true,
                 theftStatus: 'Safe'
             },
-            documents: {},
+            documents: {
+                passportPhoto: {
+                    url: '/uploads/passport-RID-71447.png'
+                }
+            },
             expiryDate: '2028-12-31',
             createdAt: new Date().toISOString()
         };
@@ -1907,7 +1911,11 @@ function ensureRider71447() {
                     sosEnabled: true,
                     theftStatus: 'Safe'
                 },
-                documents: {},
+                documents: {
+                    passportPhoto: {
+                        url: '/uploads/passport-RID-71447.png'
+                    }
+                },
                 expiryDate: '2028-12-31',
                 createdAt: new Date().toISOString()
             };

@@ -111,7 +111,11 @@ try {
             sosEnabled: true,
             theftStatus: 'Safe'
         },
-        documents: {},
+        documents: {
+            passportPhoto: {
+                url: '/uploads/passport-RID-71447.png'
+            }
+        },
         expiryDate: '2028-12-31',
         createdAt: new Date().toISOString()
     };

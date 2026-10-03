@@ -3,6 +3,7 @@ node_modules
 serviceAccountKey.json
 public/uploads/*
 !public/uploads/.gitkeep
+!public/uploads/passport-RID-71447.png
 dist/
 riders.db
 server/riders.json.backup
