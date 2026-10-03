@@ -73,11 +73,104 @@ if (!fs.existsSync(path.dirname(RIDERS_FILE))) fs.mkdirSync(path.dirname(RIDERS_
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(path.join(__dirname, '../public/uploads'))) fs.mkdirSync(path.join(__dirname, '../public/uploads'), { recursive: true });
 
-// Middleware
+// Security Middleware: Helmet with customized Content Security Policy
 app.use(helmet({
-    contentSecurityPolicy: false, // Disabling CSP temporarily so as not to break inline scripts/styles in static frontend files
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "'unsafe-eval'",
+                "https://js.paystack.co",
+                "https://cdn.jsdelivr.net",
+                "https://cdn.tailwindcss.com",
+                "https://cdnjs.cloudflare.com",
+                "https://embed.tawk.to",
+                "https://*.tawk.to"
+            ],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://fonts.googleapis.com",
+                "https://cdnjs.cloudflare.com",
+                "https://*.tawk.to"
+            ],
+            fontSrc: [
+                "'self'",
+                "https://fonts.gstatic.com",
+                "https://*.tawk.to",
+                "data:"
+            ],
+            imgSrc: [
+                "'self'",
+                "data:",
+                "blob:",
+                "https:"
+            ],
+            connectSrc: [
+                "'self'",
+                "https://api.paystack.co",
+                "https://*.tawk.to",
+                "wss://*.tawk.to",
+                "https://nominatim.openstreetmap.org",
+                "https://api.allorigins.win",
+                "https://overpass-api.de",
+                "https://overpass.kumi.systems",
+                "https://lz4.overpass-api.de"
+            ],
+            frameSrc: [
+                "'self'",
+                "https://js.paystack.co",
+                "https://embed.tawk.to",
+                "https://*.tawk.to",
+                "https://docs.google.com",
+                "https://forms.gle"
+            ],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'", "https://api.paystack.co", "https://docs.google.com"]
+        }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-app.use(cors());
+
+// Permissions-Policy Header Middleware
+app.use((req, res, next) => {
+    res.setHeader(
+        'Permissions-Policy',
+        'camera=(self), microphone=(), geolocation=(self), payment=(self "https://js.paystack.co")'
+    );
+    next();
+});
+
+// Restrict CORS: Allow only trusted origins and safe HTTP methods (GET, POST, OPTIONS)
+const allowedOrigins = [
+    'https://myvault.com.ng',
+    'https://www.myvault.com.ng',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'http://localhost:5000'
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, server-to-server, or same-origin)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, false);
+        }
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true,
+    maxAge: 86400
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
