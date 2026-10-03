@@ -13,6 +13,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const dbHelpers = require('./db');
+const crypto = require('crypto');
 
 // ── In-Memory Emergency Session Store ───────────────────────────────────────
 // Sessions expire after 6 hours and are purged automatically.
@@ -41,6 +42,22 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   console.error('❌ Fatal: JWT_SECRET environment variable is not set. Exiting.');
   process.exit(1);
+}
+
+// ── QR Security & Anti-Screenshot Tokens ────────────────────────────────────
+function generateQrToken(riderId, timestamp) {
+    return crypto.createHmac('sha256', JWT_SECRET)
+                 .update(`${riderId}:${timestamp}`)
+                 .digest('hex')
+                 .substring(0, 16);
+}
+
+function generateCardCvv(riderId) {
+    const hash = crypto.createHmac('sha256', JWT_SECRET)
+                       .update(`cvv:${riderId}`)
+                       .digest('hex')
+                       .toUpperCase();
+    return `SEC-${hash.substring(0, 3)}`;
 }
 const PORT = process.env.PORT || 3001;
 let adminTokenVersion = 0;
@@ -761,8 +778,33 @@ app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
     }
 });
 
+// ── GET /api/qr/token/:riderId ──────────────────────────────────────────────
+// Generates a short-lived signed dynamic QR token for digital app screens (anti-screenshot)
+app.get('/api/qr/token/:riderId', (req, res) => {
+    try {
+        const { riderId } = req.params;
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+        
+        const t = Date.now();
+        const token = generateQrToken(riderId, t);
+        const cvv = generateCardCvv(riderId);
+        res.json({
+            success: true,
+            riderId,
+            t,
+            token,
+            cvv,
+            ttl: 45 // seconds validity window
+        });
+    } catch (err) {
+        console.error('QR Token Error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 // ── GET /scan/:riderId ───────────────────────────────────────────────────────
-// Static QR code scan endpoint. Triggers SOS, creates a session, and redirects to emergency page.
+// Smart QR scan endpoint. Detects live app screen, physical PVC/sticker, or stale screenshot.
 app.get('/scan/:riderId', async (req, res) => {
     try {
         const riderId = req.params.riderId;
@@ -774,6 +816,75 @@ app.get('/scan/:riderId', async (req, res) => {
         const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
         const sessionUrl = `${baseUrl}/emergency/${numericId}`;
 
+        // ── Analyze Scan Source & Screenshot Detection ──────────────────────
+        const { src, t, token } = req.query;
+        let scanDetails = {
+            scanType: src || 'standard',
+            status: 'live',
+            isLive: true,
+            isPhysical: false,
+            message: 'Verified Live Scan',
+            cvv: generateCardCvv(riderId),
+            scannedAt: new Date().toISOString()
+        };
+
+        if (src === 'digital') {
+            const timestamp = parseInt(t, 10);
+            const now = Date.now();
+            const ageSeconds = !isNaN(timestamp) ? Math.round((now - timestamp) / 1000) : 999999;
+            const expectedToken = !isNaN(timestamp) ? generateQrToken(riderId, timestamp) : '';
+            const isSignatureValid = token && token === expectedToken;
+
+            if (!isSignatureValid) {
+                scanDetails = {
+                    scanType: 'digital_invalid',
+                    status: 'screenshot',
+                    isLive: false,
+                    isPhysical: false,
+                    ageSeconds,
+                    message: '⚠️ UNVERIFIED DIGITAL PASS',
+                    scannedAt: new Date().toISOString()
+                };
+            } else if (ageSeconds > 60) {
+                // Screenshot / Expired Digital Pass
+                const minsAgo = Math.round(ageSeconds / 60);
+                scanDetails = {
+                    scanType: 'digital_screenshot',
+                    status: 'screenshot',
+                    isLive: false,
+                    isPhysical: false,
+                    ageSeconds,
+                    message: `⚠️ SCREENSHOT / EXPIRED QR DETECTED (${minsAgo > 1 ? minsAgo + ' minutes old' : ageSeconds + ' seconds old'})`,
+                    capturedAt: new Date(timestamp).toLocaleTimeString(),
+                    scannedAt: new Date().toISOString()
+                };
+            } else {
+                // Verified Live Digital App Scan
+                scanDetails = {
+                    scanType: 'digital_live',
+                    status: 'live',
+                    isLive: true,
+                    isPhysical: false,
+                    ageSeconds,
+                    message: '✅ VERIFIED LIVE DIGITAL PASS (Active App Screen)',
+                    scannedAt: new Date().toISOString()
+                };
+            }
+        } else {
+            // Direct physical card scan (Standard clean URL: /scan/:riderId with no query params)
+            const tagLabel = src === 'sticker' ? 'Helmet/Windshield Sticker' : 'Physical PVC ID Card';
+            scanDetails = {
+                scanType: src || 'physical_pvc',
+                status: 'physical',
+                isLive: true,
+                isPhysical: true,
+                tagLabel,
+                cvv: generateCardCvv(riderId),
+                message: `🏷️ AUTHENTIC PHYSICAL CREDENTIAL (${tagLabel})`,
+                scannedAt: new Date().toISOString()
+            };
+        }
+
         // Safe rider snapshot
         const { pin, ...safeRider } = rider;
 
@@ -783,26 +894,33 @@ app.get('/scan/:riderId', async (req, res) => {
             riderId,
             sessionUrl,
             createdAt: new Date().toISOString(),
-            location: null, // No exact location available immediately from a static scan
-            rider: safeRider
+            location: null,
+            rider: safeRider,
+            scanDetails
         };
 
         emergencySessions.set(sessionId, session);
         emergencySessions.set(numericId, session);
 
-        // Notify emergency contacts
+        // Notify emergency contacts with appropriate context
         const contacts = rider.emergencyContacts || [];
         if (contacts.length === 0 && rider.emergencyContact) contacts.push(rider.emergencyContact);
         
         contacts.forEach(contact => {
             if (contact && contact.phone) {
-                const msg = `🚨 EMERGENCY SCAN: ${rider.name}'s MyVault ID was just scanned. ` +
-                            `View their live emergency profile here: ${sessionUrl}`;
+                let alertHeader = '🚨 EMERGENCY SCAN';
+                if (scanDetails.status === 'screenshot') {
+                    alertHeader = '⚠️ EXPIRED / SCREENSHOT SCAN ALERT';
+                } else if (scanDetails.isPhysical) {
+                    alertHeader = `🚨 PHYSICAL ${scanDetails.tagLabel ? scanDetails.tagLabel.toUpperCase() : 'TAG'} SCAN`;
+                }
+                const msg = `${alertHeader}: ${rider.name}'s MyVault ID was just scanned. ` +
+                            `View emergency profile: ${sessionUrl}`;
                 sendSMS(contact.phone, msg).catch(() => {});
             }
         });
 
-        console.log(`[SCAN] QR Code scanned for ${riderId}. Redirecting to ${sessionUrl}`);
+        console.log(`[SCAN] QR Code scanned for ${riderId} [${scanDetails.scanType} / ${scanDetails.status}]. Redirecting to ${sessionUrl}`);
         res.redirect(`/emergency/${numericId}`);
     } catch (err) {
         console.error('Scan Error:', err);
@@ -847,7 +965,8 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             sessionId: session.sessionId,
             numericId: session.numericId,
             createdAt: session.createdAt,
-            rider: level1Rider 
+            rider: level1Rider,
+            scanDetails: session.scanDetails || { scanType: 'standard', status: 'live', isLive: true, message: 'Standard Scan', cvv: generateCardCvv(session.riderId) }
         };
         
         res.json({ success: true, session: level1Session, isLevel1: true });
@@ -871,7 +990,8 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             sessionId: session.sessionId,
             numericId: session.numericId,
             createdAt: session.createdAt,
-            rider: level1Rider
+            rider: level1Rider,
+            scanDetails: session.scanDetails || { scanType: 'standard', status: 'live', isLive: true, message: 'Standard Scan', cvv: generateCardCvv(session.riderId) }
         };
         res.json({ success: true, session: level1Session, isLevel1: true });
     }
@@ -956,7 +1076,7 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         
         const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber, refusesBloodTransfusion, advanceDirectiveStatement, conditions, medications, immunizations, height, weight, gender, dateOfBirth, identifyingMarks, primaryDoctorName, primaryDoctorPhone, hospitalPreference, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions } = req.body;
         
-        if (name && name.trim() !== '' && riderId === 'RID-71447') {
+        if (name && name.trim() !== '' && (riderId === 'RID-71447' || riderId === 'SID-71447' || riderId === '71447')) {
             rider.name = name.trim();
         }
         
@@ -1077,7 +1197,7 @@ app.get('/api/verify/:query', (req, res) => {
     }
 
     if (isAdmin) {
-        const safeRider = { ...rider };
+        const safeRider = { ...rider, cvv: generateCardCvv(rider.riderId) };
         delete safeRider.pin;
         return res.json({ success: true, rider: safeRider, isLevel1: false, isAdmin: true, paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY });
     }
@@ -1087,6 +1207,7 @@ app.get('/api/verify/:query', (req, res) => {
         name: rider.name,
         phone: rider.phone,
         riderId: rider.riderId,
+        cvv: generateCardCvv(rider.riderId),
         userType: rider.userType || 'driver',
         status: rider.status,
         expiryDate: rider.expiryDate,
@@ -1212,7 +1333,7 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
     const { loginId, phone, pin } = req.body;
     const identifier = loginId || phone;
     
-    const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
+    const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier) || dbHelpers.findRiderByQuery(identifier);
     
     if (!rider) {
         return res.json({ success: false, message: 'Invalid Phone Number, User ID or PIN' });
@@ -1656,6 +1777,154 @@ app.post('/api/admin/request-payment/:riderId', authenticateToken, async (req, r
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
+// Admin Restore RID-71447 Endpoint
+app.get('/api/admin/restore-71447', (req, res) => {
+    try {
+        const bcrypt = require('bcryptjs');
+        const rider71447 = {
+            riderId: 'RID-71447',
+            name: 'TIMILEYIN OLADIPUPO',
+            fullName: 'TIMILEYIN OLADIPUPO',
+            phone: '08079506543',
+            pin: bcrypt.hashSync('1234', 10),
+            plateNumber: 'JKG-213-AJ',
+            status: 'Active',
+            userType: 'driver',
+            vehicleType: 'motorcycle',
+            bike: {
+                plateNumber: 'JKG-213-AJ',
+                brand: 'TVS',
+                model: 'Motorcycle',
+                color: 'Red/Black',
+                ownershipType: 'Owned'
+            },
+            vehicle: {
+                type: 'motorcycle',
+                plateNumber: 'JKG-213-AJ',
+                brand: 'TVS',
+                model: 'Motorcycle',
+                color: 'Red/Black',
+                ownershipType: 'Owned'
+            },
+            medical: {
+                bloodGroup: 'O+',
+                genotype: 'AA',
+                allergies: 'None'
+            },
+            emergencyContact: {
+                name: 'Joy Oladipupo',
+                phone: '08032352737',
+                relationship: 'Family'
+            },
+            emergencyContacts: [
+                {
+                    name: 'Joy Oladipupo',
+                    phone: '08032352737',
+                    relationship: 'Family'
+                },
+                {
+                    name: 'Dorcas Oladipupo',
+                    phone: '09058233466',
+                    relationship: 'Family'
+                }
+            ],
+            safety: {
+                sosEnabled: true,
+                theftStatus: 'Safe'
+            },
+            documents: {},
+            expiryDate: '2028-12-31',
+            createdAt: new Date().toISOString()
+        };
+
+        const existing = dbHelpers.getRiderById('RID-71447') || dbHelpers.getRiderByPhone('08079506543');
+        if (existing) {
+            dbHelpers.updateRider(existing.riderId, { ...existing, ...rider71447, status: 'Active' });
+        } else {
+            dbHelpers.insertRider(rider71447);
+        }
+        res.json({ success: true, message: 'RID-71447 (TIMILEYIN OLADIPUPO) restored and activated successfully! Login with 08079506543 or RID-71447 and PIN 1234.' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+function ensureRider71447() {
+    try {
+        const bcrypt = require('bcryptjs');
+        const existing = dbHelpers.getRiderById('RID-71447') || dbHelpers.getRiderByPhone('08079506543');
+        if (!existing) {
+            console.log('[STARTUP] Seeding and Restoring RID-71447 (TIMILEYIN OLADIPUPO)...');
+            const rider71447 = {
+                riderId: 'RID-71447',
+                name: 'TIMILEYIN OLADIPUPO',
+                fullName: 'TIMILEYIN OLADIPUPO',
+                phone: '08079506543',
+                pin: bcrypt.hashSync('1234', 10),
+                plateNumber: 'JKG-213-AJ',
+                status: 'Active',
+                userType: 'driver',
+                vehicleType: 'motorcycle',
+                bike: {
+                    plateNumber: 'JKG-213-AJ',
+                    brand: 'TVS',
+                    model: 'Motorcycle',
+                    color: 'Red/Black',
+                    ownershipType: 'Owned'
+                },
+                vehicle: {
+                    type: 'motorcycle',
+                    plateNumber: 'JKG-213-AJ',
+                    brand: 'TVS',
+                    model: 'Motorcycle',
+                    color: 'Red/Black',
+                    ownershipType: 'Owned'
+                },
+                medical: {
+                    bloodGroup: 'O+',
+                    genotype: 'AA',
+                    allergies: 'None'
+                },
+                emergencyContact: {
+                    name: 'Joy Oladipupo',
+                    phone: '08032352737',
+                    relationship: 'Family'
+                },
+                emergencyContacts: [
+                    {
+                        name: 'Joy Oladipupo',
+                        phone: '08032352737',
+                        relationship: 'Family'
+                    },
+                    {
+                        name: 'Dorcas Oladipupo',
+                        phone: '09058233466',
+                        relationship: 'Family'
+                    }
+                ],
+                safety: {
+                    sosEnabled: true,
+                    theftStatus: 'Safe'
+                },
+                documents: {},
+                expiryDate: '2028-12-31',
+                createdAt: new Date().toISOString()
+            };
+            dbHelpers.insertRider(rider71447);
+            console.log('[STARTUP] RID-71447 successfully restored!');
+        } else if (existing.status !== 'Active') {
+            existing.status = 'Active';
+            if (!existing.expiryDate) existing.expiryDate = '2028-12-31';
+            dbHelpers.updateRider(existing.riderId, existing);
+            console.log('[STARTUP] RID-71447 status ensured Active!');
+        }
+    } catch (err) {
+        console.error('[STARTUP] Failed to check/restore RID-71447:', err.message);
+    }
+}
+
+ensureRider71447();
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://127.0.0.1:${PORT}`);

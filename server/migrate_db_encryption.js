@@ -54,5 +54,80 @@ try {
     console.log('No agents table or error:', e.message);
 }
 
+// Restore / Ensure RID-71447
+try {
+    const bcrypt = require('bcryptjs');
+    const existingStmt = db.prepare('SELECT * FROM riders WHERE riderId = ? OR phone = ?');
+    const existing = existingStmt.get('RID-71447', '08079506543');
+
+    const rider71447 = {
+        riderId: 'RID-71447',
+        name: 'TIMILEYIN OLADIPUPO',
+        fullName: 'TIMILEYIN OLADIPUPO',
+        phone: '08079506543',
+        pin: bcrypt.hashSync('1234', 10),
+        plateNumber: 'JKG-213-AJ',
+        status: 'Active',
+        userType: 'driver',
+        vehicleType: 'motorcycle',
+        bike: {
+            plateNumber: 'JKG-213-AJ',
+            brand: 'TVS',
+            model: 'Motorcycle',
+            color: 'Red/Black',
+            ownershipType: 'Owned'
+        },
+        vehicle: {
+            type: 'motorcycle',
+            plateNumber: 'JKG-213-AJ',
+            brand: 'TVS',
+            model: 'Motorcycle',
+            color: 'Red/Black',
+            ownershipType: 'Owned'
+        },
+        medical: {
+            bloodGroup: 'O+',
+            genotype: 'AA',
+            allergies: 'None'
+        },
+        emergencyContact: {
+            name: 'Joy Oladipupo',
+            phone: '08032352737',
+            relationship: 'Family'
+        },
+        emergencyContacts: [
+            {
+                name: 'Joy Oladipupo',
+                phone: '08032352737',
+                relationship: 'Family'
+            },
+            {
+                name: 'Dorcas Oladipupo',
+                phone: '09058233466',
+                relationship: 'Family'
+            }
+        ],
+        safety: {
+            sosEnabled: true,
+            theftStatus: 'Safe'
+        },
+        documents: {},
+        expiryDate: '2028-12-31',
+        createdAt: new Date().toISOString()
+    };
+
+    if (!existing) {
+        const insertStmt = db.prepare('INSERT INTO riders (riderId, phone, pin, data) VALUES (?, ?, ?, ?)');
+        insertStmt.run(rider71447.riderId, rider71447.phone, rider71447.pin, encryptData(JSON.stringify(rider71447)));
+        console.log('Successfully restored rider RID-71447.');
+    } else {
+        const updateStmt = db.prepare('UPDATE riders SET data = ?, pin = ? WHERE riderId = ?');
+        updateStmt.run(encryptData(JSON.stringify({ ...rider71447, status: 'Active' })), rider71447.pin, existing.riderId);
+        console.log('RID-71447 verified and set to Active.');
+    }
+} catch (e) {
+    console.error('Error ensuring RID-71447:', e.message);
+}
+
 console.log('Migration Complete.');
 db.close();

@@ -1457,7 +1457,10 @@
                             <div class="info-value" style="font-size:14px;">${d.expiryDate}</div>
                         </div>
                     </div>
-                    ${d.allergies && d.allergies !== 'None' ? `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies}</div></div>` : ''}
+                    ${d.allergies && d.allergies.toLowerCase() !== 'none' && d.allergies.trim() !== '' ? 
+                        `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies.toUpperCase()}</div></div>` : 
+                        `<div class="allergy-bar" style="background: rgba(16, 185, 129, 0.12); border-left: 3px solid #10b981;"><div class="allergy-text" style="color: #10b981;">&#x2713; ALLERGIES: NONE (NIL)</div></div>`
+                    }
                     <div class="kin-block">
                         <div class="kin-label">Emergency Contact</div>
                         <div class="kin-value">${d.kinName} &middot; ${d.kinPhone}</div>

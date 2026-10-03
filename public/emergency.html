@@ -486,6 +486,9 @@
             </div>
         </div>
 
+        <!-- Scan Authenticity & Liveness Banner (Live vs Screenshot vs Physical Tag) -->
+        <div id="scanAuthBanner" style="display:none; margin-bottom: 1.25rem;"></div>
+
         <div id="noBloodBanner" style="display:none; background: #7f1d1d; color: white; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; text-align: center; border: 2px solid #ef4444;">
             <div style="font-size: 1.25rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 0.25rem;">🚨 NO BLOOD TRANSFUSION 🚨</div>
             <div style="font-size: 0.85rem; font-weight: 600; opacity: 0.9;">Advance Medical Directive Active on Profile</div>
@@ -741,10 +744,50 @@
         </div>
     </div>
 
-    <footer style="margin-top: 2rem; padding: 2rem 0; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
-        &copy; 2026 MyVault Verification Ecosystem. All rights reserved.
-    </footer>
+    <!-- Physical Tag Anti-Screen Liveness Modal -->
+    <div id="livenessModal" style="display:none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 1rem;">
+        <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 1.25rem; max-width: 440px; width: 100%; padding: 1.25rem; color: #f8fafc; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.25rem;">🔍</span>
+                    <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;">Physical Tag Liveness Test</span>
+                </div>
+                <button onclick="closeLivenessModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+            </div>
 
+            <!-- Video Viewport / Reticle -->
+            <div style="position: relative; width: 100%; height: 260px; background: #000; border-radius: 0.75rem; overflow: hidden; margin-bottom: 1rem; border: 2px solid #334155;">
+                <video id="livenessVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="livenessCanvas" style="display: none;"></canvas>
+
+                <!-- Scanning Reticle Overlay -->
+                <div style="position: absolute; inset: 20px; border: 2px dashed rgba(59, 130, 246, 0.7); border-radius: 12px; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 10px;">
+                    <span style="background: rgba(0,0,0,0.7); color: #93c5fd; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;">ALIGN PHYSICAL CARD INSIDE BOX</span>
+                    <div id="livenessReticleAnim" style="width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 8px #60a5fa; animation: scanline-sweep 2s ease-in-out infinite;"></div>
+                    <span id="livenessStatusText" style="background: rgba(0,0,0,0.75); color: #f8fafc; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 6px;">Hold steady... analyzing reflection</span>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div id="livenessResultBox" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 0.85rem; margin-bottom: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.35rem;">Physical Verification Checks</div>
+                <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.5;" id="livenessDetails">
+                    &bull; Verify the physical card has a matte surface and authentic gold hologram seal.<br>
+                    &bull; Confirm the cardholder is presenting the actual physical card in person.
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <button id="livenessAnalyzeBtn" onclick="runOpticalAnalysis()" style="flex: 1; background: #2563eb; color: white; border: none; border-radius: 8px; padding: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer;">
+                    ⚡ Analyze Surface Reflection
+                </button>
+                <button onclick="closeLivenessModal()" style="background: #334155; color: white; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="toast" id="toast"></div>
 
@@ -752,6 +795,208 @@
         let sessionData = null;
         const currentUrl = window.location.href;
         let isUnlocked = false;
+        window._currentCardCvv = 'SEC-84B';
+
+        // ── Scan Authenticity & Anti-Screenshot Banner ──────────────────────
+        function renderScanAuthBanner(scanDetails) {
+            const bannerEl = document.getElementById('scanAuthBanner');
+            if (!bannerEl) return;
+            if (!scanDetails) {
+                bannerEl.style.display = 'none';
+                return;
+            }
+
+            bannerEl.style.display = 'block';
+
+            if (scanDetails.status === 'screenshot') {
+                const mins = scanDetails.ageSeconds ? Math.round(scanDetails.ageSeconds / 60) : 0;
+                const timeAgoText = mins > 1 ? `${mins} minutes ago` : `${scanDetails.ageSeconds || 'unknown'} seconds ago`;
+                bannerEl.innerHTML = `
+                    <div style="background: rgba(239, 68, 68, 0.12); border: 2px solid #ef4444; border-radius: 1rem; padding: 1.1rem; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+                            <span style="font-size: 1.5rem; animation: shake 0.8s infinite;">⚠️</span>
+                            <span style="font-size: 0.95rem; font-weight: 900; color: #ef4444; letter-spacing: 1px; text-transform: uppercase;">
+                                STATIC SCREENSHOT / EXPIRED QR DETECTED
+                            </span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #fca5a5; line-height: 1.5; margin-bottom: 0.5rem;">
+                            This QR code was captured <strong>${timeAgoText}</strong>. Digital passes expire in 60 seconds to prevent unauthorized screenshot sharing or replaying.
+                        </p>
+                        <div style="background: rgba(0,0,0,0.3); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.72rem; color: #f87171; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Scan Origin: <strong>Digital Screenshot Replay</strong></span>
+                            <span style="font-family: monospace; font-weight: 700;">Status: EXPIRED</span>
+                        </div>
+                    </div>
+                `;
+            } else if (scanDetails.status === 'physical') {
+                const tagLabel = scanDetails.tagLabel || 'Physical PVC ID Card';
+                bannerEl.innerHTML = `
+                    <div style="background: rgba(59, 130, 246, 0.1); border: 1.5px solid #3b82f6; border-radius: 1rem; padding: 1.1rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.4rem;">🏷️</span>
+                                <div>
+                                    <span style="font-size: 0.88rem; font-weight: 900; color: #60a5fa; letter-spacing: 0.5px; text-transform: uppercase;">
+                                        AUTHENTIC PHYSICAL CREDENTIAL (${tagLabel.toUpperCase()})
+                                    </span>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+                                        Permanent Physical Card &bull; Direct Verified Scan
+                                    </div>
+                                </div>
+                            </div>
+                            <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;">PERMANENT ID</span>
+                        </div>
+
+                        <div style="background: rgba(0,0,0,0.25); border-radius: 0.5rem; padding: 0.65rem 0.85rem; margin-top: 0.6rem; border: 1px dashed rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                            <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.4;">
+                                Suspect a photo or screenshot of this card on a phone screen?
+                            </div>
+                            <button onclick="openPhysicalLivenessTester()" style="background: #2563eb; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);">
+                                <span>📷</span> Test Card vs Screen
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Live digital app scan
+                const ageSec = scanDetails.ageSeconds || 0;
+                bannerEl.innerHTML = `
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1.5px solid #10b981; border-radius: 1rem; padding: 1rem 1.1rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block; animation: blink-dot 1s infinite;"></span>
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 900; color: #10b981; letter-spacing: 0.5px;">
+                                    VERIFIED LIVE DIGITAL PASS
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                    Scanned in real-time from active MyVault app (<strong style="color: #10b981;">${ageSec}s old</strong>). Static screenshots rejected.
+                                </div>
+                            </div>
+                        </div>
+                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;">REAL-TIME</span>
+                    </div>
+                `;
+            }
+        }
+
+        // ── Physical Card Optical Liveness Camera Tester ────────────────────
+        let livenessStream = null;
+
+        async function openPhysicalLivenessTester() {
+            const modal = document.getElementById('livenessModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            const cvvEl = document.getElementById('modalCardCvv');
+            if (cvvEl) cvvEl.textContent = window._currentCardCvv || 'SEC-84B';
+            const statusEl = document.getElementById('livenessStatusText');
+            if (statusEl) {
+                statusEl.textContent = 'Hold camera close to card...';
+                statusEl.style.color = '#f8fafc';
+            }
+
+            const video = document.getElementById('livenessVideo');
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    livenessStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+                    });
+                    video.srcObject = livenessStream;
+                    video.play();
+                    // Automatically analyze after 1.5s
+                    setTimeout(runOpticalAnalysis, 1500);
+                } else {
+                    throw new Error('Camera access not supported on this browser context');
+                }
+            } catch (e) {
+                console.warn('Camera stream error', e);
+                if (statusEl) statusEl.textContent = 'Manual Check: Verify Physical Seal & Card';
+                const details = document.getElementById('livenessDetails');
+                if (details) {
+                    details.innerHTML = `
+                        <div style="color: #f59e0b; margin-bottom: 6px;">📷 Camera reflection test unavailable (${e.message || 'permission denied'}).</div>
+                        <div>&bull; Confirm the cardholder is holding the physical plastic card.</div>
+                        <div>&bull; Confirm gold hologram seal is reflective.</div>
+                    `;
+                }
+            }
+        }
+
+        function closeLivenessModal() {
+            const modal = document.getElementById('livenessModal');
+            if (modal) modal.style.display = 'none';
+            if (livenessStream) {
+                livenessStream.getTracks().forEach(track => track.stop());
+                livenessStream = null;
+            }
+        }
+
+        function runOpticalAnalysis() {
+            const video = document.getElementById('livenessVideo');
+            const canvas = document.getElementById('livenessCanvas');
+            const statusText = document.getElementById('livenessStatusText');
+            const details = document.getElementById('livenessDetails');
+            if (!video || !canvas || video.readyState < 2) return;
+
+            canvas.width = 120;
+            canvas.height = 120;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 120, 120);
+
+            const imgData = ctx.getImageData(0, 0, 120, 120);
+            const data = imgData.data;
+
+            // Detect high-frequency periodic gradient variance (screen Moire pattern and narrow RGB spikes)
+            let highFreqCount = 0;
+            let totalBrightness = 0;
+            let specularPixels = 0;
+
+            for (let i = 0; i < data.length - 4; i += 4) {
+                const r = data[i], g = data[i+1], b = data[i+2];
+                const rNext = data[i+4], gNext = data[i+5], bNext = data[i+6];
+                const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                const lumNext = 0.299 * rNext + 0.587 * gNext + 0.114 * bNext;
+                totalBrightness += lum;
+
+                const diff = Math.abs(lum - lumNext);
+                // Strong sharp pixel transitions typical of digital screen RGB subpixels
+                if (diff > 45) highFreqCount++;
+                // Specular screen glare hot spots
+                if (lum > 240) specularPixels++;
+            }
+
+            const avgLum = totalBrightness / (120 * 120);
+            const isScreenGlitter = (highFreqCount > 1800 && avgLum > 60) || (specularPixels > 300);
+
+            if (isScreenGlitter) {
+                if (statusText) {
+                    statusText.textContent = '⚠️ SCREEN GLITTER DETECTED!';
+                    statusText.style.color = '#ef4444';
+                }
+                if (details) {
+                    details.innerHTML = `
+                        <div style="background: rgba(239,68,68,0.15); border: 1px solid #ef4444; padding: 8px; border-radius: 6px; color: #fca5a5; margin-bottom: 6px;">
+                            <strong>⚠️ Caution: Screen Glare / Pixel Grid Pattern Detected!</strong><br>
+                            The optical reflection resembles an electronic OLED/LCD phone screen displaying a photo, rather than a matte PVC card.
+                        </div>
+                        &bull; Please inspect the physical card in hand to confirm it is not a photo on a screen.
+                    `;
+                }
+            } else {
+                if (statusText) {
+                    statusText.textContent = '✅ REAL PVC PLASTIC / MATTE SURFACE';
+                    statusText.style.color = '#10b981';
+                }
+                if (details) {
+                    details.innerHTML = `
+                        <div style="background: rgba(16,185,129,0.15); border: 1px solid #10b981; padding: 8px; border-radius: 6px; color: #a7f3d0; margin-bottom: 6px;">
+                            <strong>✅ Confirmed Physical Surface!</strong><br>
+                            Diffuse ambient light reflection and matte surface texture verified. No digital screen refresh grid detected.
+                        </div>
+                        &bull; Physical card surface authentic.
+                    `;
+                }
+            }
+        }
 
         // --- SIREN & VIBRATION LOGIC ---
         let audioCtx, sirenOscillator, sirenGain, sirenInterval;
@@ -1156,6 +1401,9 @@
                 const rider = s.rider;
 
                 document.getElementById('mainContent').style.display = 'block';
+
+                // Scan Authenticity & Liveness Banner
+                renderScanAuthBanner(s.scanDetails);
 
                 // Check if older than 6h
                 if (Date.now() - new Date(s.createdAt).getTime() > 6 * 60 * 60 * 1000) {

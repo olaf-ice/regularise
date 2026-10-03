@@ -116,8 +116,12 @@ const dbHelpers = {
         stmt.run(entry.email || '', entry.phone || '', entry.wantsWhatsapp ? 1 : 0, entry.timestamp || new Date().toISOString());
     },
     getRiderById: (riderId) => {
+        if (!riderId) return null;
         const stmt = db.prepare('SELECT * FROM riders WHERE riderId = ?');
-        const row = stmt.get(riderId);
+        let row = stmt.get(riderId);
+        if (!row && !riderId.startsWith('RID-') && !riderId.startsWith('SID-')) {
+            row = stmt.get(`RID-${riderId}`) || stmt.get(`SID-${riderId}`);
+        }
         return row ? parseSecureData(row.data) : null;
     },
     getRiderByPhone: (phone) => {
@@ -126,15 +130,17 @@ const dbHelpers = {
         return row ? parseSecureData(row.data) : null;
     },
     findRiderByQuery: (query) => {
+        if (!query) return null;
         const q = query.toLowerCase().replace(/[\s-]/g, '');
         const stmt = db.prepare('SELECT * FROM riders');
         for (const row of stmt.iterate()) {
             const data = parseSecureData(row.data);
             const rId = data.riderId ? data.riderId.toLowerCase().replace(/[\s-]/g, '') : '';
+            const rIdBare = rId.replace(/^(rid|sid)/, '');
             const pNum = data.plateNumber ? data.plateNumber.toLowerCase().replace(/[\s-]/g, '') : '';
             const ph = data.phone ? data.phone.toLowerCase().replace(/[\s-]/g, '') : '';
 
-            if (rId === q || pNum === q || ph === q) {
+            if (rId === q || rIdBare === q || pNum === q || ph === q) {
                 return data;
             }
         }
