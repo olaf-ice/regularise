@@ -412,6 +412,9 @@ app.post('/api/admin/login', authLimiter, (req, res) => {
     // Default to 'admin' / 'adminpass123' if not explicitly configured in environment
     const configuredUser = (process.env.ADMIN_USERNAME || 'admin').trim();
     const configuredPass = (process.env.ADMIN_PASSWORD || 'adminpass123').trim();
+    if (!process.env.ADMIN_PASSWORD) {
+        console.warn('[SECURITY] ADMIN_PASSWORD env var is not set - using insecure built-in default password. Set ADMIN_USERNAME / ADMIN_PASSWORD in your host environment.');
+    }
 
     const isUserMatch = inputUser.toLowerCase() === configuredUser.toLowerCase();
     const isPassMatch = inputPass === configuredPass;
