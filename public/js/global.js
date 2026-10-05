@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. NDPR Privacy Banner Logic
     const bannerHTML = `
         <div id="ndpr-banner">
-            <p><strong>Privacy Notice:</strong> We use cookies and local storage to ensure your security and provide a better experience in compliance with NDPR. <a href="#" style="color: var(--primary);">Learn More</a></p>
+            <p><strong>Privacy Notice:</strong> We use cookies and local storage to ensure your security and provide a better experience in compliance with NDPR. <a href="privacy.html" style="color: var(--primary); text-decoration: underline;">Learn More</a></p>
             <div class="ndpr-buttons">
                 <button id="ndpr-reject">Reject</button>
                 <button id="ndpr-accept">Accept</button>

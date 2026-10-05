@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy & Data Protection | MyVault</title>
+    <link href="/css/fonts.css" rel="stylesheet">
+    <link href="/css/theme.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --bg-dark: #0b1329;
+            --surface: #111c38;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo {
+            height: 3.5rem;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 2.25rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        p, li {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+        }
+        ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        .highlight-box {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .highlight-box p {
+            color: #e2e8f0;
+            margin: 0;
+            font-size: 0.92rem;
+        }
+        .footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to MyVault Home</a>
+        
+        <header class="header">
+            <img src="assets/logo.png" alt="MyVault Logo" class="logo">
+            <div class="subtitle">NDPA 2023 Statutory Compliance & Privacy Framework</div>
+            <h1>Privacy Policy & Data Protection Notice</h1>
+            <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.88rem;">Effective Date: October 2026 &middot; Version 1.2</p>
+        </header>
+
+        <section>
+            <div class="highlight-box">
+                <p><strong>🛡️ Data Protection Commitment:</strong> MyVault ("we", "our", "us") operates in full compliance with the Nigeria Data Protection Act 2023 (NDPA) and NDPR frameworks. We process personal, vehicle, and medical emergency details strictly to facilitate immediate identification and life-saving medical care during road accidents or clinical emergencies.</p>
+            </div>
+
+            <h2>1. Information We Collect</h2>
+            <p>To generate your verified rider identity and emergency medical profile, we collect the following categories of data during registration or agent verification:</p>
+            <ul>
+                <li><strong>Identity Data:</strong> Full legal name, date of birth, residential address, passport photograph, and government ID (NIN/Voter's Card/Driver's License).</li>
+                <li><strong>Vehicle & Operator Data:</strong> Vehicle category (Motorcycle/Tricycle/Car), license plate number, engine number, and registration status.</li>
+                <li><strong>Vital Medical & Emergency Data:</strong> Blood group, genotype, known severe allergies, existing medical conditions, and Next-of-Kin (ICE) contact details.</li>
+                <li><strong>Technical & Access Logs:</strong> IP address, device user-agent strings, timestamp, and location data captured when a QR code or emergency profile is scanned.</li>
+            </ul>
+
+            <h2>2. Purpose of Processing & Emergency "Break-Glass" Access</h2>
+            <p>Your data is processed strictly for legitimate health, safety, and identification purposes:</p>
+            <ul>
+                <li>Displaying vital medical details (blood group, allergies, emergency contacts) to first responders upon QR scan during a medical emergency.</li>
+                <li>Allowing accredited clinical and healthcare personnel to perform authorized "Break-Glass" access to full emergency records.</li>
+                <li>Maintaining statutory audit trails to prevent identity theft, fraudulent verification, or unauthorized profile scraping.</li>
+            </ul>
+
+            <h2>3. Real-Time Audit Surveillance & Notifications</h2>
+            <p>Under NDPA 2023 accountability principles, every access event to your emergency profile triggers:</p>
+            <ul>
+                <li>An immediate SMS / push notification to your designated Next-of-Kin detailing the scan event.</li>
+                <li>A permanent, tamper-proof audit log recording the accessor's IP address, timestamp, facility name, and clinical justification.</li>
+            </ul>
+
+            <h2>4. Data Storage & Security Measures</h2>
+            <p>We implement bank-grade technical and organizational safeguards to protect your personal data:</p>
+            <ul>
+                <li>All sensitive data in transit is encrypted using TLS 1.3 encryption.</li>
+                <li>Access control is enforced via JWT authentication tokens and mandatory multi-factor validation for admin operations.</li>
+                <li>We do not sell, rent, or trade your personal or medical data to third-party advertisers or marketers under any circumstances.</li>
+            </ul>
+
+            <h2>5. Your Statutory Rights Under NDPA 2023</h2>
+            <p>As a data subject registered on MyVault, you possess the right to:</p>
+            <ul>
+                <li><strong>Access:</strong> Request a copy of your personal data held on our systems.</li>
+                <li><strong>Rectification:</strong> Correct inaccurate or outdated medical and emergency contact information via your user profile.</li>
+                <li><strong>Erasure / Deletion:</strong> Request full deactivation and erasure of your emergency profile, subject to statutory record-retention requirements.</li>
+                <li><strong>Objection:</strong> Object to automated processing or withdraw consent for optional third-party integrations.</li>
+            </ul>
+
+            <h2>6. Cookies & Local Storage</h2>
+            <p>MyVault utilizes browser local storage and essential cookies strictly to manage active authentication sessions, remember theme preferences, and maintain NDPR consent choices. No third-party tracking cookies are placed prior to explicit consent.</p>
+
+            <h2>7. Contact Information</h2>
+            <p>For data protection inquiries, privacy requests, or to exercise your NDPA rights, contact our Data Protection Officer:</p>
+            <p><strong>Email:</strong> privacy@myvault.com.ng<br>
+            <strong>Emergency Command Center:</strong> Support & Statutory Audit Office, Lagos, Nigeria</p>
+        </section>
+
+        <footer class="footer">
+            <p>&copy; 2026 MyVault Technologies. All rights reserved. &middot; <a href="terms.html" style="color: var(--primary);">Terms of Service</a> &middot; <a href="privacy.html" style="color: var(--primary);">Privacy Policy</a></p>
+        </footer>
+    </div>
+</body>
+</html>

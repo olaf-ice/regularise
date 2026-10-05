@@ -1281,6 +1281,15 @@ app.get('/emergency/:sessionId', (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, 'emergency.html'));
 });
 
+// ── Serve Privacy & Terms Clean Routes ─────────────────────────────────────────
+app.get('/privacy', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'privacy.html'));
+});
+
+app.get('/terms', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'terms.html'));
+});
+
 // ── Legacy SOS Endpoint (kept for ICE hub compatibility) ─────────────────────
 // POST /api/sos/:riderId  — alerts next of kin via SMS
 app.post('/api/sos/:riderId', authLimiter, async (req, res) => {
