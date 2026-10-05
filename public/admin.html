@@ -147,6 +147,161 @@
             animation: spin 1s linear infinite; margin-bottom: 1rem;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+        /* 🚨 Clinical Emergency & Audit Surveillance Styles */
+        .live-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulse-green 1.8s infinite;
+        }
+        .pulse-dot-red {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+            animation: pulse-red 1.2s infinite;
+        }
+        @keyframes pulse-green {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.35); opacity: 0.55; }
+        }
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.4; }
+        }
+        .session-active-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(20, 24, 33, 0.95));
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.12);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .session-active-card:hover {
+            transform: translateY(-2px);
+            border-color: #ef4444;
+        }
+        .audit-badge-breakglass {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .audit-badge-scan {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(96, 165, 250, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .audit-badge-killswitch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .flag-status-pill {
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: inline-block;
+        }
+        .flag-status-normal { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .flag-status-under_review { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .flag-status-flagged { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5); }
+        .flag-status-resolved { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+
+        .audit-tab-btn {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .audit-tab-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .audit-tab-btn.active {
+            background: rgba(239, 68, 68, 0.18);
+            border-color: rgba(239, 68, 68, 0.6);
+            color: #fca5a5;
+        }
+        .nav-quick-tabs {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0 1.25rem 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .nav-quick-tab {
+            padding: 0.5rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .nav-quick-tab:hover, .nav-quick-tab.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-light);
+        }
+
     </style>
     <script src="js/theme.js"></script>
 
@@ -236,8 +391,134 @@
                 <button onclick="logout()" class="action-btn">Log Out</button>
             </div>
         </header>
+        <!-- Fast Section Jump Tabs -->
+        <div class="nav-quick-tabs">
+            <a href="#clinicalAuditSection" class="nav-quick-tab active">
+                <span>🚨</span> Clinical Audit &amp; Emergency Command
+            </a>
+            <a href="#operatorsSection" class="nav-quick-tab">
+                <span>👥</span> Registered Operators &amp; Citizens
+            </a>
+            <a href="#analyticsSection" class="nav-quick-tab">
+                <span>📈</span> Growth Analytics
+            </a>
+            <a href="#agentsSection" class="nav-quick-tab">
+                <span>🏢</span> Field Agents
+            </a>
+            <a href="#freeLinksSection" class="nav-quick-tab">
+                <span>🎁</span> Free Links Manager
+            </a>
+        </div>
 
-        <div>
+        <!-- 🚨 Clinical Emergency & Break-Glass Audit Center -->
+        <div id="clinicalAuditSection" style="margin-bottom: 3.5rem; background: linear-gradient(145deg, rgba(239, 68, 68, 0.04), rgba(20, 24, 33, 0.75)); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 16px; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1.25rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+                        <span style="font-size: 1.5rem;">🚨</span>
+                        <h1 style="margin: 0; font-size: 1.5rem; letter-spacing: -0.02em;">Clinical Emergency &amp; Break-Glass Audit Center</h1>
+                        <span class="live-status-pill" id="nationalSurveillanceStatus">
+                            <span class="pulse-dot"></span> LIVE SURVEILLANCE
+                        </span>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">
+                        Statutory real-time surveillance of hospital break-glass access and QR emergency scans across Nigeria under NDPC / NDPA 2023 compliance.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
+                    <button onclick="exportNDPAAuditCSV()" class="action-btn" style="border-color: #34d399; color: #34d399; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem;">
+                        📥 Export NDPA Audit CSV
+                    </button>
+                    <button onclick="refreshEmergencyData()" class="action-btn" style="border-color: var(--primary-light); color: var(--primary-light); font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem;">
+                        🔄 Refresh Feeds
+                    </button>
+                </div>
+            </div>
+
+            <!-- Surveillance Metrics Summary -->
+            <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 2rem;">
+                <div class="metric-card" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.06);">
+                    <div class="metric-value" id="activeEmergenciesCount" style="color: #ef4444;">0</div>
+                    <div class="metric-label" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        <span class="pulse-dot-red"></span> Active Emergencies
+                    </div>
+                </div>
+                <div class="metric-card" style="border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.05);">
+                    <div class="metric-value" id="breakGlassEventsCount" style="color: #fbbf24;">0</div>
+                    <div class="metric-label">Break-Glass Unlocks</div>
+                </div>
+                <div class="metric-card" style="border-color: rgba(96, 165, 250, 0.3); background: rgba(96, 165, 250, 0.05);">
+                    <div class="metric-value" id="publicScansCount" style="color: #60a5fa;">0</div>
+                    <div class="metric-label">Public QR Scans</div>
+                </div>
+                <div class="metric-card" style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);">
+                    <div class="metric-value" id="flaggedAuditsCount" style="color: #34d399;">0</div>
+                    <div class="metric-label">Under Investigation</div>
+                </div>
+            </div>
+
+            <!-- Active Emergency Command Center (Live Active Sessions) -->
+            <div style="margin-bottom: 2.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 style="font-size: 1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; color: #f87171;">
+                        <span>📡</span> Active Emergency Sessions Command Center
+                    </h3>
+                    <span id="activeSessionsLabel" style="font-size: 0.8rem; color: var(--text-muted);">Auto-refreshed every 15s</span>
+                </div>
+                
+                <div id="activeSessionsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem;">
+                    <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.15); color: var(--text-muted); background: rgba(0,0,0,0.2);">
+                        🟢 No active emergency sessions detected at this time. All patient profiles secure.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Break-Glass & Scan Audit Surveillance Feed -->
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="audit-tab-btn active" id="auditTabAll" onclick="setAuditTab('all')">
+                            All Audit Logs (<span id="tabCountAll">0</span>)
+                        </button>
+                        <button class="audit-tab-btn" id="auditTabBreakglass" onclick="setAuditTab('clinical_breakglass')">
+                            🚨 Break-Glass Unlocks (<span id="tabCountBreakglass">0</span>)
+                        </button>
+                        <button class="audit-tab-btn" id="auditTabScans" onclick="setAuditTab('public_scan')">
+                            📱 Public Scans (<span id="tabCountScans">0</span>)
+                        </button>
+                        <button class="audit-tab-btn" id="auditTabFlagged" onclick="setAuditTab('flagged')">
+                            ⚠️ Under Investigation (<span id="tabCountFlagged">0</span>)
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="text" id="auditSearchInput" oninput="filterAuditLogsTable()" placeholder="Search patient, hospital, clinician, IP..." style="padding: 0.45rem 0.85rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.35); color: white; font-size: 0.82rem; width: 260px;">
+                    </div>
+                </div>
+
+                <div class="admin-table-container" style="margin-top: 0.5rem; max-height: 540px; overflow-y: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 140px;">Timestamp (WAT)</th>
+                                <th style="min-width: 160px;">Patient</th>
+                                <th style="min-width: 130px;">Access Event</th>
+                                <th style="min-width: 200px;">Clinician &amp; Facility</th>
+                                <th style="min-width: 220px;">Reason / Justification</th>
+                                <th style="min-width: 120px;">Network / IP</th>
+                                <th style="min-width: 110px;">NDPC Status</th>
+                                <th style="min-width: 90px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading audit surveillance records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="operatorsSection">
             <h1 style="margin-bottom: 0.5rem;">System Overview</h1>
             <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage users, drivers, and compliance statuses across the ecosystem.</p>
             
@@ -291,7 +572,7 @@
             </div>
 
             <!-- Analytics Dashboard -->
-            <div style="margin-top: 4rem;">
+            <div id="analyticsSection" style="margin-top: 4rem;">
                 <h1 style="margin-bottom: 0.5rem;">Analytics Dashboard</h1>
                 <p style="color: var(--text-muted); margin-bottom: 2rem;">Visualize system growth and activity over time.</p>
                 
@@ -314,7 +595,7 @@
             </div>
 
             <!-- Agent Management Section -->
-            <div style="margin-top: 4rem;">
+            <div id="agentsSection" style="margin-top: 4rem;">
                 <h1 style="margin-bottom: 0.5rem;">Agent Management</h1>
                 <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage cyber café operators and local agents who onboard users.</p>
                 
@@ -361,7 +642,7 @@
             </div>
 
             <!-- Free Registration Links Section -->
-            <div style="margin-top: 4rem;">
+            <div id="freeLinksSection" style="margin-top: 4rem;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
                     <div>
                         <h1 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -524,6 +805,8 @@
         function showDashboard() {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
+            fetchActiveEmergencySessions();
+            fetchAdminAuditLogs();
             fetchRiders();
             fetchAgents();
             fetchAnalytics();
@@ -1529,11 +1812,15 @@
         if (btn) btn.innerHTML = origText;
     }
 
-        // Poll for notifications
+        // Poll for notifications & live emergency feeds
         setInterval(async () => {
             const token = localStorage.getItem('adminToken');
             if (!token) return;
             try {
+                // Background refresh of emergency surveillance
+                fetchActiveEmergencySessions(true);
+                fetchAdminAuditLogs(true);
+
                 const res = await fetch('/api/admin/notifications', {
                     headers: { 'Authorization': `Bearer ${adminToken}` }
                 });
@@ -1551,6 +1838,455 @@
                 console.error('Notification poll error', e);
             }
         }, 15000);
-    </script>
+    
+        // ── CLINICAL EMERGENCY & BREAK-GLASS SURVEILLANCE JS ────────────────────────
+
+        let currentAuditTab = 'all';
+        let allAdminAuditLogs = [];
+        let activeEmergencySessions = [];
+
+        function formatWAT(isoString) {
+            if (!isoString) return '—';
+            try {
+                const d = new Date(isoString);
+                return d.toLocaleString('en-GB', { 
+                    timeZone: 'Africa/Lagos',
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric',
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: false
+                }) + ' WAT';
+            } catch(e) {
+                return isoString;
+            }
+        }
+
+        function timeAgo(isoString) {
+            if (!isoString) return '';
+            try {
+                const diffMs = Date.now() - new Date(isoString).getTime();
+                const diffSec = Math.floor(diffMs / 1000);
+                if (diffSec < 60) return `${diffSec}s ago`;
+                const diffMin = Math.floor(diffSec / 60);
+                if (diffMin < 60) return `${diffMin}m ago`;
+                const diffHr = Math.floor(diffMin / 60);
+                return `${diffHr}h ago`;
+            } catch(e) {
+                return '';
+            }
+        }
+
+        async function fetchActiveEmergencySessions(silent = false) {
+            if (!adminToken) return;
+            try {
+                const res = await fetch('/api/admin/emergency-sessions/active', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    activeEmergencySessions = data.activeSessions || [];
+                    renderActiveSessions(activeEmergencySessions);
+                    document.getElementById('activeEmergenciesCount').textContent = activeEmergencySessions.length;
+                    
+                    const statusPill = document.getElementById('nationalSurveillanceStatus');
+                    if (statusPill) {
+                        if (activeEmergencySessions.length > 0) {
+                            statusPill.innerHTML = `<span class="pulse-dot-red"></span> ${activeEmergencySessions.length} LIVE SOS ACTIVE`;
+                            statusPill.style.background = 'rgba(239, 68, 68, 0.2)';
+                            statusPill.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                            statusPill.style.color = '#f87171';
+                        } else {
+                            statusPill.innerHTML = `<span class="pulse-dot"></span> LIVE SURVEILLANCE`;
+                            statusPill.style.background = 'rgba(16, 185, 129, 0.15)';
+                            statusPill.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+                            statusPill.style.color = '#34d399';
+                        }
+                    }
+                }
+            } catch (e) {
+                if (!silent) console.error('Error fetching active emergency sessions:', e);
+            }
+        }
+
+        function renderActiveSessions(sessions) {
+            const container = document.getElementById('activeSessionsContainer');
+            if (!container) return;
+
+            if (sessions.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.15); color: var(--text-muted); background: rgba(0,0,0,0.2);">
+                        🟢 No active emergency sessions detected at this time. All patient profiles secure.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sessions.map(s => {
+                const unlockedBadge = s.isClinicallyUnlocked 
+                    ? `<span class="audit-badge-breakglass" style="margin-left: 0.5rem;">🚨 CLINICALLY UNLOCKED</span>`
+                    : `<span class="audit-badge-scan" style="margin-left: 0.5rem;">📱 QR ACTIVE</span>`;
+                
+                const locText = s.location?.name ? `📍 ${s.location.name}` : '📍 Location not broadcasted';
+                const bloodText = s.bloodGroup ? `🩸 ${s.bloodGroup}` : '';
+                const genoText = s.genotype ? `🧬 ${s.genotype}` : '';
+
+                return `
+                    <div class="session-active-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div>
+                                <span style="font-size: 0.75rem; color: #f87171; font-weight: 800; letter-spacing: 0.05em;">${s.sessionId}</span>
+                                ${unlockedBadge}
+                                <h4 style="margin: 0.25rem 0 0 0; font-size: 1.1rem; color: white;">${s.citizenName}</h4>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Patient ID: <strong style="color: white;">${s.riderId}</strong></div>
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); background: rgba(0,0,0,0.4); padding: 0.2rem 0.5rem; border-radius: 4px;">${timeAgo(s.createdAt)}</span>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.82rem; flex-wrap: wrap;">
+                            ${bloodText ? `<span style="background: rgba(239,68,68,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #fca5a5; font-weight: 700;">${bloodText}</span>` : ''}
+                            ${genoText ? `<span style="background: rgba(96,165,250,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #93c5fd; font-weight: 700;">${genoText}</span>` : ''}
+                            <span style="color: var(--text-muted); display: inline-flex; align-items: center;">${locText}</span>
+                        </div>
+
+                        ${s.isClinicallyUnlocked && s.clinicalAccessDetails ? `
+                            <div style="margin-bottom: 0.85rem; font-size: 0.78rem; background: rgba(0,0,0,0.3); padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 2px solid #ef4444;">
+                                <strong style="color: #f87171;">Clinician:</strong> ${s.clinicalAccessDetails.accessorName} (${s.clinicalAccessDetails.facility})<br>
+                                <span style="color: var(--text-muted);">Reason: ${s.clinicalAccessDetails.reason}</span>
+                            </div>
+                        ` : ''}
+
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem;">
+                            <a href="/emergency/${s.numericId}" target="_blank" class="action-btn view" style="text-decoration: none; font-size: 0.75rem; padding: 0.35rem 0.7rem;">
+                                🌐 Open Room View
+                            </a>
+                            <button onclick="terminateEmergencySession('${s.sessionId}', '${s.citizenName.replace(/'/g, "\\'")}')" class="action-btn suspend" style="font-size: 0.75rem; padding: 0.35rem 0.7rem; font-weight: 700;">
+                                🛑 Remote Terminate
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function terminateEmergencySession(sessionId, citizenName) {
+            const reason = prompt(`⚠️ CONFIRM REMOTE KILL-SWITCH OVERRIDE\n\nAre you sure you want to terminate the active emergency session for ${citizenName}? (Session: ${sessionId})\n\nEnter reason for administrative termination (e.g. False alarm confirmed, Patient discharged):`, 'Patient stabilized / Discharged from emergency department');
+            if (reason === null) return;
+
+            try {
+                const res = await fetch(`/api/admin/emergency-sessions/terminate/${encodeURIComponent(sessionId)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ reason: reason.trim() || 'Admin terminated active emergency session' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    fetchActiveEmergencySessions();
+                    fetchAdminAuditLogs();
+                } else {
+                    alert('Failed to terminate session: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Error terminating emergency session:', err);
+                alert('Server error terminating emergency session.');
+            }
+        }
+
+        async function fetchAdminAuditLogs(silent = false) {
+            if (!adminToken) return;
+            try {
+                const res = await fetch('/api/admin/access-logs?limit=300', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    allAdminAuditLogs = data.logs || [];
+
+                    // Calculate counts
+                    const breakglassCount = allAdminAuditLogs.filter(l => l.accessType === 'clinical_breakglass').length;
+                    const scansCount = allAdminAuditLogs.filter(l => l.accessType === 'public_scan' || !l.accessType).length;
+                    const flaggedCount = allAdminAuditLogs.filter(l => l.flagStatus && l.flagStatus !== 'normal').length;
+
+                    document.getElementById('breakGlassEventsCount').textContent = breakglassCount;
+                    document.getElementById('publicScansCount').textContent = scansCount;
+                    document.getElementById('flaggedAuditsCount').textContent = flaggedCount;
+
+                    document.getElementById('tabCountAll').textContent = allAdminAuditLogs.length;
+                    document.getElementById('tabCountBreakglass').textContent = breakglassCount;
+                    document.getElementById('tabCountScans').textContent = scansCount;
+                    document.getElementById('tabCountFlagged').textContent = flaggedCount;
+
+                    renderAuditTable();
+                }
+            } catch (e) {
+                if (!silent) console.error('Error fetching audit logs:', e);
+            }
+        }
+
+        function setAuditTab(tab) {
+            currentAuditTab = tab;
+            document.querySelectorAll('.audit-tab-btn').forEach(btn => btn.classList.remove('active'));
+            if (tab === 'all') document.getElementById('auditTabAll')?.classList.add('active');
+            if (tab === 'clinical_breakglass') document.getElementById('auditTabBreakglass')?.classList.add('active');
+            if (tab === 'public_scan') document.getElementById('auditTabScans')?.classList.add('active');
+            if (tab === 'flagged') document.getElementById('auditTabFlagged')?.classList.add('active');
+            renderAuditTable();
+        }
+
+        function filterAuditLogsTable() {
+            renderAuditTable();
+        }
+
+        function renderAuditTable() {
+            const tbody = document.getElementById('auditTableBody');
+            if (!tbody) return;
+
+            const query = (document.getElementById('auditSearchInput')?.value || '').toLowerCase().trim();
+
+            let filtered = allAdminAuditLogs.filter(log => {
+                // Tab filter
+                if (currentAuditTab === 'clinical_breakglass' && log.accessType !== 'clinical_breakglass') return false;
+                if (currentAuditTab === 'public_scan' && (log.accessType !== 'public_scan' && log.accessType)) return false;
+                if (currentAuditTab === 'flagged' && (!log.flagStatus || log.flagStatus === 'normal')) return false;
+
+                // Search query
+                if (query) {
+                    const matchId = String(log.id || '').toLowerCase().includes(query);
+                    const matchRider = String(log.riderId || '').toLowerCase().includes(query);
+                    const matchName = String(log.citizenName || '').toLowerCase().includes(query);
+                    const matchAccessor = String(log.accessorName || '').toLowerCase().includes(query);
+                    const matchFacility = String(log.facility || '').toLowerCase().includes(query);
+                    const matchReason = String(log.reason || '').toLowerCase().includes(query);
+                    const matchIp = String(log.ip || '').toLowerCase().includes(query);
+                    if (!matchId && !matchRider && !matchName && !matchAccessor && !matchFacility && !matchReason && !matchIp) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No audit logs matching current filter.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(log => {
+                // Event Badge
+                let eventBadge = `<span class="audit-badge-scan">📱 Public Scan</span>`;
+                if (log.accessType === 'clinical_breakglass') {
+                    eventBadge = `<span class="audit-badge-breakglass">🚨 Break-Glass</span>`;
+                } else if (log.accessType === 'admin_killswitch') {
+                    eventBadge = `<span class="audit-badge-killswitch">🛡️ Admin Override</span>`;
+                }
+
+                // Status Badge
+                const status = log.flagStatus || 'normal';
+                let statusBadge = `<span class="flag-status-pill flag-status-normal">Compliant</span>`;
+                if (status === 'under_review') statusBadge = `<span class="flag-status-pill flag-status-under_review">⚠️ Review</span>`;
+                if (status === 'flagged') statusBadge = `<span class="flag-status-pill flag-status-flagged">🚨 Flagged</span>`;
+                if (status === 'resolved') statusBadge = `<span class="flag-status-pill flag-status-resolved">✅ Resolved</span>`;
+
+                // Clinician / Facility details
+                let clinicianInfo = '—';
+                if (log.accessorName || log.facility) {
+                    clinicianInfo = `
+                        <div style="font-weight: 600; color: white;">${log.accessorName || 'Clinician'}</div>
+                        <div style="font-size: 0.78rem; color: #fca5a5;">${log.role || 'Healthcare Staff'}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">${log.facility || 'Facility'}</div>
+                        ${log.accessorPhone ? `<div style="font-size: 0.75rem; color: var(--primary-light);">${log.accessorPhone}</div>` : ''}
+                    `;
+                } else if (log.accessType === 'public_scan') {
+                    clinicianInfo = `<span style="color: var(--text-muted); font-size: 0.8rem;">First Responder / Public</span>`;
+                }
+
+                const reasonText = log.reason ? `
+                    <div style="font-style: italic; background: rgba(0,0,0,0.25); padding: 0.35rem 0.6rem; border-radius: 4px; border-left: 2px solid rgba(239,68,68,0.5); font-size: 0.8rem;">
+                        "${log.reason}"
+                    </div>
+                ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Direct QR Scan View</span>';
+
+                const safeNotes = (log.adminNotes || '').replace(/'/g, "\\'");
+
+                return `
+                    <tr>
+                        <td style="font-size: 0.82rem; white-space: nowrap;">
+                            <div style="font-weight: 600; color: white;">${formatWAT(log.timestamp)}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">ID: #${log.id}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: white;">${log.citizenName || 'Unknown Patient'}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">${log.riderId}</div>
+                            ${log.citizenPhone ? `<div style="font-size: 0.75rem; color: #94a3b8;">${log.citizenPhone}</div>` : ''}
+                        </td>
+                        <td>${eventBadge}</td>
+                        <td>${clinicianInfo}</td>
+                        <td>${reasonText}</td>
+                        <td style="font-size: 0.78rem;">
+                            <div style="font-family: monospace; color: #cbd5e1;">${log.ip || '—'}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.userAgent || ''}">${log.userAgent ? log.userAgent.split(' ')[0] : '—'}</div>
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button onclick="openAuditFlagModal(${log.id}, '${status}', '${safeNotes}')" class="action-btn" style="font-size: 0.75rem; padding: 0.3rem 0.6rem; white-space: nowrap;">
+                                ⚖️ Review
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openAuditFlagModal(id, currentStatus, currentNotes) {
+            document.getElementById('flagLogId').value = id;
+            document.getElementById('flagModalSummary').textContent = `Audit Log #${id}`;
+            document.getElementById('flagStatusSelect').value = currentStatus || 'normal';
+            document.getElementById('flagAdminNotes').value = currentNotes || '';
+            document.getElementById('auditFlagModal').style.display = 'flex';
+        }
+
+        function closeAuditFlagModal() {
+            document.getElementById('auditFlagModal').style.display = 'none';
+        }
+
+        async function saveAuditFlag(e) {
+            e.preventDefault();
+            const id = document.getElementById('flagLogId').value;
+            const flagStatus = document.getElementById('flagStatusSelect').value;
+            const adminNotes = document.getElementById('flagAdminNotes').value;
+
+            try {
+                const res = await fetch('/api/admin/access-logs/flag', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ id, flagStatus, adminNotes })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAuditFlagModal();
+                    fetchAdminAuditLogs();
+                } else {
+                    alert('Failed to update audit flag: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Error saving audit flag:', err);
+                alert('Server error updating audit flag.');
+            }
+        }
+
+        function escapeCSV(val) {
+            if (val === null || val === undefined) return '""';
+            const str = String(val).replace(/"/g, '""');
+            return `"${str}"`;
+        }
+
+        function exportNDPAAuditCSV() {
+            if (!allAdminAuditLogs || allAdminAuditLogs.length === 0) {
+                alert('No audit logs available to export.');
+                return;
+            }
+
+            const headers = [
+                'Log ID',
+                'Timestamp UTC',
+                'Timestamp Lagos WAT',
+                'Patient ID',
+                'Patient Name',
+                'Patient Phone',
+                'Access Event Type',
+                'Clinician / Accessor Name',
+                'Clinician Role',
+                'Health Facility / Hospital',
+                'Clinician Phone',
+                'Clinical Emergency Justification',
+                'Client IP Address',
+                'User Agent / Device',
+                'NDPC Flag Status',
+                'Admin Audit Notes'
+            ];
+
+            const rows = allAdminAuditLogs.map(log => [
+                escapeCSV(log.id),
+                escapeCSV(log.timestamp),
+                escapeCSV(formatWAT(log.timestamp)),
+                escapeCSV(log.riderId),
+                escapeCSV(log.citizenName),
+                escapeCSV(log.citizenPhone),
+                escapeCSV(log.accessType || 'public_scan'),
+                escapeCSV(log.accessorName || ''),
+                escapeCSV(log.role || ''),
+                escapeCSV(log.facility || ''),
+                escapeCSV(log.accessorPhone || ''),
+                escapeCSV(log.reason || ''),
+                escapeCSV(log.ip || ''),
+                escapeCSV(log.userAgent || ''),
+                escapeCSV(log.flagStatus || 'normal'),
+                escapeCSV(log.adminNotes || '')
+            ].join(','));
+
+            const csvContent = [headers.join(','), ...rows].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const dateStr = new Date().toISOString().split('T')[0];
+            a.download = `MyVault_NDPA_Clinical_Audit_Trail_${dateStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function refreshEmergencyData() {
+            fetchActiveEmergencySessions();
+            fetchAdminAuditLogs();
+        }
+
+</script>
+
+    <!-- NDPC Audit Flag & Review Modal -->
+    <div id="auditFlagModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 520px; background: #141821; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: #f87171; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>⚖️</span> NDPC Audit Flag &amp; Compliance Review
+                </h3>
+                <button type="button" onclick="closeAuditFlagModal()" class="action-btn" style="border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+            </div>
+            <form id="auditFlagForm" onsubmit="saveAuditFlag(event)">
+                <input type="hidden" id="flagLogId">
+                <div style="margin-bottom: 1rem; background: rgba(0,0,0,0.3); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--glass-border); font-size: 0.85rem;">
+                    <div style="color: var(--text-muted); margin-bottom: 0.25rem;">Access Record:</div>
+                    <div id="flagModalSummary" style="color: white; font-weight: 600;">MV-AUDIT-0000</div>
+                </div>
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Compliance Review Status</label>
+                    <select id="flagStatusSelect" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.9rem;">
+                        <option value="normal">Normal (Statutory Access Compliant)</option>
+                        <option value="under_review">⚠️ Under NDPC Review (Verify with Hospital)</option>
+                        <option value="flagged">🚨 Flagged (Potential Breach / Unauthorized)</option>
+                        <option value="resolved">✅ Resolved (Investigated &amp; Cleared)</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Administrative Audit Notes</label>
+                    <textarea id="flagAdminNotes" rows="3" placeholder="Enter findings, verification officer notes, or hospital liaison contact details..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.85rem; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" onclick="closeAuditFlagModal()" class="action-btn">Cancel</button>
+                    <button type="submit" id="saveFlagBtn" class="btn btn-primary" style="background: #ef4444; border-color: #ef4444;">Save Compliance Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </body>
 </html>

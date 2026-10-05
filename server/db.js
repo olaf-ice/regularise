@@ -88,7 +88,9 @@ try {
         { name: 'facility', type: "TEXT" },
         { name: 'role', type: "TEXT" },
         { name: 'reason', type: "TEXT" },
-        { name: 'accessorPhone', type: "TEXT" }
+        { name: 'accessorPhone', type: "TEXT" },
+        { name: 'flagStatus', type: "TEXT DEFAULT 'normal'" },
+        { name: 'adminNotes', type: "TEXT" }
     ];
     for (const col of colsToAdd) {
         if (!existingCols.includes(col.name)) {
@@ -267,6 +269,72 @@ const dbHelpers = {
     getAccessLogs: (riderId) => {
         const stmt = db.prepare('SELECT * FROM access_logs WHERE riderId = ? ORDER BY id DESC LIMIT 50');
         return stmt.all(riderId);
+    },
+    getAllAccessLogs: (options = {}) => {
+        try {
+            let query = `
+                SELECT a.*, r.data as riderData
+                FROM access_logs a
+                LEFT JOIN riders r ON a.riderId = r.riderId
+            `;
+            const params = [];
+            const conditions = [];
+
+            if (options.type && options.type !== 'all') {
+                conditions.push('a.accessType = ?');
+                params.push(options.type);
+            }
+            if (options.flagStatus && options.flagStatus !== 'all') {
+                conditions.push('a.flagStatus = ?');
+                params.push(options.flagStatus);
+            }
+            if (options.riderId) {
+                conditions.push('a.riderId = ?');
+                params.push(options.riderId);
+            }
+
+            if (conditions.length > 0) {
+                query += ' WHERE ' + conditions.join(' AND ');
+            }
+
+            query += ' ORDER BY a.id DESC LIMIT ?';
+            params.push(parseInt(options.limit, 10) || 300);
+
+            const rows = db.prepare(query).all(...params);
+            return rows.map(row => {
+                let citizenName = 'Unknown Patient';
+                let citizenPhone = '';
+                let citizenPhoto = '';
+                if (row.riderData) {
+                    try {
+                        const parsed = parseSecureData(row.riderData);
+                        citizenName = parsed.fullName || parsed.name || 'Unknown Patient';
+                        citizenPhone = parsed.phone || parsed.emergencyContactPhone || '';
+                        citizenPhoto = parsed.photo || '';
+                    } catch (e) {}
+                }
+                delete row.riderData;
+                return {
+                    ...row,
+                    citizenName,
+                    citizenPhone,
+                    citizenPhoto
+                };
+            });
+        } catch (e) {
+            console.error('Error in getAllAccessLogs:', e);
+            return [];
+        }
+    },
+    flagAccessLog: (id, flagStatus, adminNotes) => {
+        try {
+            const stmt = db.prepare('UPDATE access_logs SET flagStatus = ?, adminNotes = ? WHERE id = ?');
+            stmt.run(flagStatus || 'normal', adminNotes || '', id);
+            return true;
+        } catch (e) {
+            console.error('Error in flagAccessLog:', e);
+            return false;
+        }
     },
     createEmergencyLink: (riderId) => {
         const linkId = require('crypto').randomBytes(16).toString('hex');

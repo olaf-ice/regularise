@@ -631,6 +631,100 @@ app.post('/api/admin/free-links/delete', authenticateAdminToken, (req, res) => {
     }
 });
 
+// ── CLINICAL EMERGENCY & BREAK-GLASS SURVEILLANCE ENDPOINTS ──────────────────
+
+// GET /api/admin/access-logs - Fetch national emergency & QR access audit logs with filtering
+app.get('/api/admin/access-logs', authenticateAdminToken, (req, res) => {
+    try {
+        const { type, flagStatus, riderId, limit } = req.query;
+        const logs = dbHelpers.getAllAccessLogs({ type, flagStatus, riderId, limit });
+        res.json({ success: true, logs });
+    } catch (error) {
+        console.error('Error fetching admin access logs:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch access logs' });
+    }
+});
+
+// POST /api/admin/access-logs/flag - Update compliance audit flag on an access log
+app.post('/api/admin/access-logs/flag', authenticateAdminToken, (req, res) => {
+    try {
+        const { id, flagStatus, adminNotes } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Log ID is required' });
+        const ok = dbHelpers.flagAccessLog(id, flagStatus, adminNotes);
+        if (ok) {
+            res.json({ success: true, message: 'Access log audit flag updated successfully' });
+        } else {
+            res.status(500).json({ success: false, message: 'Failed to update access log audit flag' });
+        }
+    } catch (error) {
+        console.error('Error flagging access log:', error);
+        res.status(500).json({ success: false, message: 'Server error flagging access log' });
+    }
+});
+
+// GET /api/admin/emergency-sessions/active - Surveillance of currently active emergency sessions
+app.get('/api/admin/emergency-sessions/active', authenticateAdminToken, (req, res) => {
+    try {
+        const seen = new Set();
+        const active = [];
+        for (const session of emergencySessions.values()) {
+            if (session && session.sessionId && !seen.has(session.sessionId)) {
+                seen.add(session.sessionId);
+                active.push({
+                    sessionId: session.sessionId,
+                    numericId: session.numericId,
+                    riderId: session.riderId,
+                    sessionUrl: session.sessionUrl,
+                    createdAt: session.createdAt,
+                    location: session.location,
+                    isClinicallyUnlocked: !!session.isClinicallyUnlocked,
+                    clinicalAccessDetails: session.clinicalAccessDetails || null,
+                    citizenName: session.rider?.fullName || session.rider?.name || 'Unknown Patient',
+                    citizenPhone: session.rider?.phone || '',
+                    bloodGroup: session.rider?.emergencyBloodGroup || session.rider?.medical?.bloodGroup || '',
+                    genotype: session.rider?.emergencyGenotype || session.rider?.medical?.genotype || ''
+                });
+            }
+        }
+        res.json({ success: true, activeSessions: active });
+    } catch (error) {
+        console.error('Error fetching active emergency sessions:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch active emergency sessions' });
+    }
+});
+
+// POST /api/admin/emergency-sessions/terminate/:sessionId - Remote kill-switch for emergency sessions
+app.post('/api/admin/emergency-sessions/terminate/:sessionId', authenticateAdminToken, (req, res) => {
+    try {
+        const key = req.params.sessionId;
+        let session = emergencySessions.get(key);
+        if (!session && !isNaN(key)) session = emergencySessions.get(parseInt(key, 10));
+
+        if (!session) {
+            return res.status(404).json({ success: false, message: 'Emergency session not found or already terminated' });
+        }
+
+        emergencySessions.delete(session.sessionId);
+        emergencySessions.delete(session.numericId);
+
+        // Record statutory administrative override into access_logs
+        if (session.riderId) {
+            dbHelpers.logAccess(session.riderId, req.ip, req.headers['user-agent'], 'National Command Center', {
+                accessType: 'admin_killswitch',
+                accessorName: req.body.adminName || 'MyVault National Admin',
+                facility: 'National Command Center (Surveillance)',
+                role: 'System Administrator',
+                reason: req.body.reason || 'Administrative termination of active emergency session'
+            });
+        }
+
+        res.json({ success: true, message: `Emergency session ${session.sessionId} successfully terminated.` });
+    } catch (error) {
+        console.error('Error terminating emergency session:', error);
+        res.status(500).json({ success: false, message: 'Failed to terminate emergency session' });
+    }
+});
+
 // Public Free Registration Link Validation Endpoint
 app.get('/api/free-token/validate', apiLimiter, (req, res) => {
     try {
