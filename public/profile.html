@@ -2856,14 +2856,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 let html = '<table style="width: 100%; border-collapse: collapse; text-align: left;">';
-                html += '<tr style="border-bottom: 1px solid var(--glass-border);"><th style="padding: 0.5rem;">Time</th><th style="padding: 0.5rem;">Action</th><th style="padding: 0.5rem;">IP</th></tr>';
+                html += '<tr style="border-bottom: 1px solid var(--glass-border);"><th style="padding: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">TIME</th><th style="padding: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">EVENT / ACCESSOR</th><th style="padding: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">DETAILS</th></tr>';
                 
                 data.logs.forEach(log => {
-                    const date = new Date(log.timestamp).toLocaleString();
-                    html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td style="padding: 0.5rem;">${date}</td>
-                        <td style="padding: 0.5rem; color: var(--primary-light);">${log.location || 'Access'}</td>
-                        <td style="padding: 0.5rem; color: var(--text-muted);">${log.ip}</td>
+                    const date = new Date(log.timestamp).toLocaleString('en-NG', { dateStyle: 'short', timeStyle: 'short' });
+                    const isBreakglass = log.accessType === 'clinical_breakglass';
+                    const eventTitle = isBreakglass 
+                        ? `<span style="color:#ef4444; font-weight:800; font-size:0.75rem;">🚨 CLINICAL BREAK-GLASS</span><br><span style="font-size:0.7rem; color:#f8fafc;">${log.accessorName || 'Medical Staff'} (${log.role || 'Clinician'})</span><br><span style="font-size:0.68rem; color:#94a3b8;">${log.facility || 'Facility'}</span>`
+                        : `<span style="color:var(--primary-light); font-weight:700; font-size:0.75rem;">📱 QR CODE SCAN</span><br><span style="font-size:0.7rem; color:var(--text-muted);">${log.reason || 'Public Scan'}</span>`;
+                    
+                    const details = isBreakglass && log.reason 
+                        ? `<div style="font-size:0.68rem; color:#fca5a5; font-style:italic;">"${log.reason}"</div><div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">IP: ${log.ip}</div>`
+                        : `<span style="color: var(--text-muted); font-size:0.7rem;">IP: ${log.ip}</span>`;
+
+                    html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.06); ${isBreakglass ? 'background: rgba(239,68,68,0.08);' : ''}">
+                        <td style="padding: 0.65rem 0.5rem; vertical-align: top; white-space: nowrap; font-size: 0.7rem; color: var(--text-muted);">${date}</td>
+                        <td style="padding: 0.65rem 0.5rem; vertical-align: top;">${eventTitle}</td>
+                        <td style="padding: 0.65rem 0.5rem; vertical-align: top;">${details}</td>
                     </tr>`;
                 });
                 

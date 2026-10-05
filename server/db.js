@@ -79,6 +79,26 @@ db.exec(`
   );
 `);
 
+// Dynamic schema migration: ensure enhanced clinical audit columns exist in access_logs
+try {
+    const existingCols = db.prepare("PRAGMA table_info(access_logs)").all().map(c => c.name);
+    const colsToAdd = [
+        { name: 'accessType', type: "TEXT DEFAULT 'public_scan'" },
+        { name: 'accessorName', type: "TEXT" },
+        { name: 'facility', type: "TEXT" },
+        { name: 'role', type: "TEXT" },
+        { name: 'reason', type: "TEXT" },
+        { name: 'accessorPhone', type: "TEXT" }
+    ];
+    for (const col of colsToAdd) {
+        if (!existingCols.includes(col.name)) {
+            db.exec(`ALTER TABLE access_logs ADD COLUMN ${col.name} ${col.type}`);
+        }
+    }
+} catch (err) {
+    console.warn('Note on access_logs schema migration:', err.message);
+}
+
 // Migration script
 if (fs.existsSync(OLD_JSON_FILE)) {
     try {
@@ -217,12 +237,35 @@ const dbHelpers = {
         stmt.run(agentId);
     },
     // Security & Emergency features
-    logAccess: (riderId, ip, userAgent, location = '') => {
-        const stmt = db.prepare('INSERT INTO access_logs (riderId, ip, userAgent, location, timestamp) VALUES (?, ?, ?, ?, ?)');
-        stmt.run(riderId, ip || '', userAgent || '', location, new Date().toISOString());
+    logAccess: (riderId, ip, userAgent, location = '', meta = {}) => {
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO access_logs 
+                (riderId, ip, userAgent, location, timestamp, accessType, accessorName, facility, role, reason, accessorPhone) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            const now = new Date().toISOString();
+            const info = stmt.run(
+                riderId, 
+                ip || '', 
+                userAgent || '', 
+                location || '', 
+                now,
+                meta.accessType || 'public_scan',
+                meta.accessorName || null,
+                meta.facility || null,
+                meta.role || null,
+                meta.reason || null,
+                meta.accessorPhone || null
+            );
+            return { id: info.lastInsertRowid, timestamp: now };
+        } catch (e) {
+            console.error('Error in logAccess:', e);
+            return { id: null, timestamp: new Date().toISOString() };
+        }
     },
     getAccessLogs: (riderId) => {
-        const stmt = db.prepare('SELECT * FROM access_logs WHERE riderId = ? ORDER BY timestamp DESC LIMIT 50');
+        const stmt = db.prepare('SELECT * FROM access_logs WHERE riderId = ? ORDER BY id DESC LIMIT 50');
         return stmt.all(riderId);
     },
     createEmergencyLink: (riderId) => {

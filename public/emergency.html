@@ -345,6 +345,90 @@
             border-radius: 0.75rem; padding: 0.85rem; text-align: center;
             color: var(--amber); font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem;
         }
+        
+        /* Clinical Emergency Access & Break-Glass Protocol */
+        .clinical-access-card {
+            background: var(--surface); border: 1.5px solid rgba(239, 68, 68, 0.35);
+            border-radius: 1.25rem; padding: 1.5rem 1.25rem; margin: 1.5rem 0;
+            box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.1);
+            text-align: center; position: relative; overflow: hidden;
+        }
+        .clinical-access-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #ef4444);
+        }
+        .btn-breakglass {
+            background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none;
+            padding: 0.95rem 1.5rem; border-radius: 0.65rem; font-size: 0.85rem; font-weight: 800;
+            letter-spacing: 0.5px; cursor: pointer; display: inline-flex; align-items: center;
+            justify-content: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
+            transition: all 0.2s; font-family: inherit; width: 100%;
+        }
+        .btn-breakglass:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c); transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+        }
+
+        /* Clinical Break-Glass Modal */
+        .breakglass-modal-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .breakglass-modal-content {
+            background: #0f172a; border: 1.5px solid rgba(239, 68, 68, 0.4);
+            border-radius: 1.25rem; width: 100%; max-width: 480px;
+            max-height: 90vh; overflow-y: auto;
+            color: #f8fafc; padding: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            position: relative; animation: modal-in 0.3s ease-out; text-align: left;
+        }
+        @keyframes modal-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .pill-btn {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+            color: #cbd5e1; font-size: 0.68rem; font-weight: 700;
+            padding: 0.35rem 0.65rem; border-radius: 999px;
+            cursor: pointer; transition: all 0.2s; display: inline-block; margin-right: 0.35rem; margin-bottom: 0.4rem;
+        }
+        .pill-btn:hover, .pill-btn.active {
+            background: rgba(239,68,68,0.25); border-color: #ef4444; color: #fca5a5;
+        }
+        .bg-form-input {
+            width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.5rem;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18);
+            color: #f8fafc; font-size: 0.82rem; font-family: inherit; margin-top: 0.3rem; box-sizing: border-box;
+        }
+        .bg-form-input:focus {
+            outline: none; border-color: #ef4444; background: rgba(255,255,255,0.09);
+        }
+
+        /* Emergency Callouts (Level 1) */
+        .emergency-callout {
+            border-radius: 0.75rem; padding: 0.85rem 1rem; margin-top: 0.75rem;
+            display: flex; flex-direction: column; gap: 0.25rem; text-align: left;
+        }
+        .emergency-callout.alert-red {
+            background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.3);
+        }
+        .emergency-callout.alert-amber {
+            background: rgba(245, 158, 11, 0.08); border: 1.5px solid rgba(245, 158, 11, 0.3);
+        }
+        .emergency-callout.alert-teal {
+            background: rgba(13, 148, 136, 0.08); border: 1.5px solid rgba(13, 148, 136, 0.3);
+        }
+        .emergency-callout.alert-blue {
+            background: rgba(59, 130, 246, 0.08); border: 1.5px solid rgba(59, 130, 246, 0.3);
+        }
+        .callout-header {
+            font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
+            text-transform: uppercase; display: flex; align-items: center; gap: 0.35rem;
+        }
+        .callout-body {
+            font-size: 0.92rem; font-weight: 800; color: var(--text); line-height: 1.35;
+        }
+
         /* Hold to Unlock */
         .unlock-container {
             text-align: center; margin: 2rem 0;
@@ -494,9 +578,14 @@
             <div style="font-size: 0.85rem; font-weight: 600; opacity: 0.9;">Advance Medical Directive Active on Profile</div>
         </div>
 
-        <!-- Scroll Instruction -->
-        <div id="scrollInstruction" style="margin-bottom: 1.5rem; text-align: center; padding: 0.75rem 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 2rem; animation: pulse 2s infinite; cursor: pointer;" onclick="document.getElementById('unlockContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });">
-            <p style="color: #fca5a5; font-size: 0.85rem; font-weight: 700; margin: 0; letter-spacing: 0.5px;">👇 Tap here to automatically scroll down to the unlock circle</p>
+        <!-- MyVault Emergency Motto & Status -->
+        <div style="background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(13,148,136,0.12)); border: 1.5px solid rgba(239,68,68,0.3); border-radius: 0.85rem; padding: 0.85rem 1rem; margin-bottom: 1.25rem; text-align: center;">
+            <div style="font-size: 0.65rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); margin-bottom: 0.25rem;">
+                🔴 EMERGENCY PROFILE · FIRST RESPONDER TIER
+            </div>
+            <div style="font-size: 0.92rem; font-weight: 800; color: var(--text); font-style: italic;">
+                "When you can't speak, MyVault speaks for you."
+            </div>
         </div>
 
         <!-- Citizen Identity -->
@@ -540,121 +629,72 @@
             </div>
         </div>
 
-        <!-- Medical ICE (Level 1 + Level 2) -->
-        <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04);">
-            <div class="card-title" style="color:var(--red)"><span>🩺</span> MEDICAL — IN CASE OF EMERGENCY</div>
+        <!-- 🔴 MEDICAL EMERGENCY PROFILE (Level 1 Responder View) -->
+        <div class="card" style="border-color:rgba(239,68,68,0.35); background:rgba(239,68,68,0.03);">
+            <div class="card-title" style="color:var(--red); font-size: 0.72rem;">
+                <span>🩺</span> EMERGENCY MEDICAL PROFILE
+            </div>
+            
+            <!-- Vitals Grid: Blood Group + Genotype -->
             <div class="medical-vitals">
-                <div class="vital-box" style="grid-column: span 2;">
+                <div class="vital-box">
                     <span class="vital-label">Blood Group</span>
                     <span class="vital-value" id="bloodGroup">---</span>
                 </div>
+                <div class="vital-box" style="border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08);">
+                    <span class="vital-label" style="color: var(--amber);">Genotype</span>
+                    <span class="vital-value" id="genotype" style="color: var(--amber);">---</span>
+                </div>
             </div>
-            
-            <div class="level-2-data" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
-                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">🩸 Core Medical Profile</h5>
-                    <div class="detail-grid">
-                        <div class="detail-item full" style="background:rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); border-radius: 0.5rem; padding: 0.5rem;">
-                            <span class="detail-label">Genotype</span>
-                            <span class="detail-value" style="color:var(--amber);font-weight:900;" id="genotype">---</span>
-                        </div>
-                        <div class="detail-item full">
-                            <span class="detail-label">Health Conditions</span>
-                            <span class="detail-value" id="conditions">---</span>
-                        </div>
-                        <div class="detail-item full">
-                            <span class="detail-label">Medications & Dosages</span>
-                            <span class="detail-value" id="medications">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Date of Birth</span>
-                            <span class="detail-value" id="dateOfBirth">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Nationality</span>
-                            <span class="detail-value" id="nationality">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Immunizations</span>
-                            <span class="detail-value" id="immunizations">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Body Metrics</span>
-                            <span class="detail-value" id="bodyMetrics">---</span>
-                        </div>
-                        <div class="detail-item full">
-                            <span class="detail-label">Identifying Marks</span>
-                            <span class="detail-value" id="identifyingMarks">---</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
-                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">🚨 Emergency & Critical Directives</h5>
-                    <div class="detail-grid">
-                        <div id="emergencyDirectiveBlock" class="detail-item full" style="display:none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 0.5rem; padding: 0.75rem;">
-                            <div style="color: var(--error); font-weight: 800; font-size: 0.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
-                                <span>⚠️</span> ADVANCE MEDICAL DIRECTIVE (NO BLOOD)
-                            </div>
-                            <div id="directiveStatement" style="font-size: 0.85rem; color: var(--text); font-style: italic; margin-bottom: 0.75rem; line-height: 1.4;"></div>
-                            <a id="directiveDocBtn" href="#" target="_blank" style="display:none; text-align: center; background: transparent; border: 1px solid var(--error); color: var(--error); padding: 0.5rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: 700; text-decoration: none;">VIEW OFFICIAL DOCUMENT</a>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Organ Donation</span>
-                            <span class="detail-value" id="organDonation">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Donor Restrictions</span>
-                            <span class="detail-value" id="donorRestrictions">---</span>
-                        </div>
-                    </div>
+            <!-- Critical Allergies -->
+            <div class="emergency-callout alert-red" id="allergiesCallout">
+                <div class="callout-header" style="color: var(--red);">
+                    <span>⚠️</span> KNOWN ALLERGIES
                 </div>
+                <div class="callout-body" id="iceAllergies">Loading...</div>
+            </div>
 
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
-                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">📋 Clinical History</h5>
-                    <div class="detail-grid">
-                        <div class="detail-item full">
-                            <span class="detail-label">Procedures & Surgeries</span>
-                            <span class="detail-value" id="surgeries">---</span>
-                        </div>
-                        <div class="detail-item full">
-                            <span class="detail-label">Recent Vitals</span>
-                            <span class="detail-value" id="recentVitals">---</span>
-                        </div>
-                    </div>
+            <!-- Critical Health Conditions -->
+            <div class="emergency-callout alert-amber" id="conditionsCallout">
+                <div class="callout-header" style="color: var(--amber);">
+                    <span>🩺</span> CRITICAL CONDITIONS
                 </div>
+                <div class="callout-body" id="iceConditions">Loading...</div>
+            </div>
 
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem;">
-                    <h5 style="color: var(--primary-light); margin-bottom: 0.75rem; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.35rem; margin-top: 0;">🤝 Accessibility & Support</h5>
-                    <div class="detail-grid">
-                        <div class="detail-item full">
-                            <span class="detail-label">Communication Needs</span>
-                            <span class="detail-value" id="communicationNeeds">---</span>
-                        </div>
-                        <div class="detail-item full">
-                            <span class="detail-label">Primary Care Doctor</span>
-                            <span class="detail-value" id="primaryDoctor">---</span>
-                        </div>
-                        <div class="detail-item full">
-                            <span class="detail-label">Preferred Rescue Hospital</span>
-                            <span class="detail-value" id="hospital">---</span>
-                        </div>
-                        <div class="detail-item full">
-                            <span class="detail-label">Health Insurance</span>
-                            <span class="detail-value" id="healthInsurance">---</span>
-                        </div>
-                        <div class="detail-item full" id="healthInsuranceDocBlock" style="display: none; margin-top: 0.25rem;">
-                            <a id="healthInsuranceDocBtn" href="#" target="_blank" style="display:block; text-align: center; background: transparent; border: 1px solid var(--primary-light); color: var(--primary-light); padding: 0.5rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: 700; text-decoration: none;">VIEW INSURANCE CARD</a>
-                        </div>
-                    </div>
+            <!-- Emergency Medications -->
+            <div class="emergency-callout alert-teal" id="medicationsCallout">
+                <div class="callout-header" style="color: var(--primary);">
+                    <span>💊</span> CURRENT MEDICATIONS
+                </div>
+                <div class="callout-body" id="iceMedications">Loading...</div>
+            </div>
+
+            <!-- Advance Directives -->
+            <div id="emergencyDirectiveBlock" class="emergency-callout alert-red" style="display:none;">
+                <div class="callout-header" style="color: var(--red);">
+                    <span>🚨</span> ADVANCE MEDICAL DIRECTIVE
+                </div>
+                <div class="callout-body" id="directiveStatement" style="font-size: 0.85rem; font-style: italic;"></div>
+                <a id="directiveDocBtn" href="#" target="_blank" style="display:none; text-align: center; background: transparent; border: 1px solid var(--red); color: var(--red); padding: 0.4rem; border-radius: 0.35rem; font-size: 0.72rem; font-weight: 700; text-decoration: none; margin-top: 0.5rem;">VIEW DIRECTIVE DOCUMENT</a>
+            </div>
+
+            <!-- Primary Care Doctor & Preferred Hospital -->
+            <div id="doctorHospitalBlock" class="emergency-callout alert-blue" style="display:none;">
+                <div class="callout-header" style="color: var(--primary-light);">
+                    <span>🏥</span> DOCTOR & PREFERRED RESCUE HOSPITAL
+                </div>
+                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text); margin-top: 0.2rem;">
+                    <div>Doctor: <a id="primaryDoctorLink" href="#" style="color: var(--primary-light); text-decoration: none;">---</a></div>
+                    <div style="margin-top: 0.2rem;">Hospital: <span id="hospitalDisplay" style="color: var(--text);">---</span></div>
                 </div>
             </div>
         </div>
 
         <!-- Location (Level 2) -->
         <div class="card level-2-data">
-            <div class="card-title"><span>📍</span> LAST KNOWN LOCATION (L2)</div>
+            <div class="card-title"><span>📍</span> LAST KNOWN LOCATION</div>
             <div class="location-block">
                 <span class="location-icon">📍</span>
                 <div>
@@ -668,35 +708,75 @@
             </div>
         </div>
 
-        <!-- Emergency Contacts (Level 1: primary only) -->
-        <div class="card" id="kinCard" style="display:none;">
-            <div class="card-title"><span>📞</span> EMERGENCY CONTACT</div>
-            <div id="kinList"></div>
-            <!-- Additional contacts only visible after unlock -->
-            <div class="level-2-data" id="extraKinSection" style="margin-top:0.75rem; border-top: 1px solid var(--glass-border); padding-top:0.75rem;">
-                <div style="font-size:0.6rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.5rem;">Additional Emergency Contacts</div>
-                <div id="extraKinList"></div>
+        <!-- 🔵 EXTENDED CLINICAL RECORD (Level 2 - Clinical Break-Glass Unlocked) -->
+        <div class="card level-2-data" style="border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.03);">
+            <div class="card-title" style="color: var(--green);"><span>📋</span> EXTENDED CLINICAL PROFILE</div>
+            <div class="detail-grid">
+                <div class="detail-item full">
+                    <span class="detail-label">Past Surgeries & Procedures</span>
+                    <span class="detail-value" id="surgeries">---</span>
+                </div>
+                <div class="detail-item full">
+                    <span class="detail-label">Recent Vitals & Notes</span>
+                    <span class="detail-value" id="recentVitals">---</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Immunizations</span>
+                    <span class="detail-value" id="immunizations">---</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Body Metrics</span>
+                    <span class="detail-value" id="bodyMetrics">---</span>
+                </div>
+                <div class="detail-item full">
+                    <span class="detail-label">Identifying Marks</span>
+                    <span class="detail-value" id="identifyingMarks">---</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Organ Donation</span>
+                    <span class="detail-value" id="organDonation">---</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Communication Needs</span>
+                    <span class="detail-value" id="communicationNeeds">---</span>
+                </div>
+                <div class="detail-item full" style="border-top: 1px solid var(--glass-border); padding-top: 0.6rem; margin-top: 0.4rem;">
+                    <span class="detail-label">Health Insurance</span>
+                    <span class="detail-value" id="healthInsurance">---</span>
+                </div>
+                <div class="detail-item full" id="healthInsuranceDocBlock" style="display: none;">
+                    <a id="healthInsuranceDocBtn" href="#" target="_blank" style="display:block; text-align: center; background: transparent; border: 1px solid var(--green); color: var(--green); padding: 0.5rem; border-radius: 0.35rem; font-size: 0.75rem; font-weight: 700; text-decoration: none;">VIEW INSURANCE CARD</a>
+                </div>
             </div>
         </div>
-        
-        <!-- Nearby Help Network (Level 1 - Concept) -->
-        <div class="card" id="helpNetworkCard">
-            <div class="card-title"><span>🏥</span> NEARBY HELP NETWORK</div>
-            <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom: 0.75rem; line-height: 1.4;">
-                Connecting you to the closest emergency response facilities.
+
+        <!-- 🚨 Clinical Emergency Access (Break-Glass Protocol Card) -->
+        <div class="clinical-access-card" id="clinicalAccessCard">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 1.4rem;">🚨</span>
+                <h4 style="font-size: 0.95rem; font-weight: 900; letter-spacing: 1px; color: var(--red); text-transform: uppercase; margin: 0;">
+                    CLINICAL EMERGENCY ACCESS
+                </h4>
+            </div>
+            <p style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.5; max-width: 380px; margin: 0 auto 1rem;">
+                For doctors, nurses, and paramedics treating a patient unable to communicate. Unlocks extended clinical history and documents.
             </p>
-            <div class="help-network-grid" id="helpNetworkList">
-                <!-- Populated via JS -->
+            <div style="background: rgba(239, 68, 68, 0.08); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 0.6rem 0.8rem; margin-bottom: 1.1rem; font-size: 0.68rem; color: #fca5a5;">
+                ⚖️ <strong>NDPA 2023 Compliant:</strong> Emergency break-glass access is logged in the immutable audit trail and immediately alerts the patient's Next of Kin.
             </div>
-        </div>
-        
-        <!-- Unlock Section -->
-        <div class="unlock-container" id="unlockContainer">
-            <button class="hold-btn" id="holdUnlockBtn">
-                <span class="hold-btn-icon">🔒</span>
-                <span class="hold-btn-text">HOLD TO<br>UNLOCK</span>
+            <button class="btn-breakglass" onclick="openBreakGlassModal()">
+                <span>🛡️</span> REQUEST CLINICAL EMERGENCY ACCESS
             </button>
-            <div class="unlock-msg">Press and hold for 3 seconds to access full medical history and documents.</div>
+        </div>
+
+        <!-- Active Clinical Access Audit Watermark Banner (Displayed when unlocked) -->
+        <div id="clinicalAuditBanner" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1.5px solid #10b981; border-radius: 1rem; padding: 1.1rem 1.25rem; margin: 1.5rem 0; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.3rem;">✅</span>
+                <div style="font-size: 0.85rem; font-weight: 900; color: #10b981; letter-spacing: 0.5px;">AUTHORISED CLINICAL ACCESS ACTIVE</div>
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text); line-height: 1.5;" id="clinicalAuditDetails"></div>
+        </div>
         </div>
 
         <!-- Session Info -->
@@ -1076,66 +1156,101 @@
             return s.charAt(0).toUpperCase() + s.slice(1);
         }
 
-        // --- UNLOCK LOGIC ---
-        const holdBtn = document.getElementById('holdUnlockBtn');
-        let holdTimeout;
-        
-        function startHold(e) {
-            if(e.type === 'touchstart') e.preventDefault();
-            if(isUnlocked) return;
-            holdBtn.classList.add('holding');
-            holdTimeout = setTimeout(() => {
-                unlockLevel2();
-            }, 3000); // 3 seconds hold
+        // --- CLINICAL EMERGENCY BREAK-GLASS LOGIC ---
+        function openBreakGlassModal() {
+            const modal = document.getElementById('breakGlassModal');
+            if (modal) modal.style.display = 'flex';
         }
-        
-        function stopHold() {
-            if(isUnlocked) return;
-            holdBtn.classList.remove('holding');
-            clearTimeout(holdTimeout);
-        }
-        
-        holdBtn.addEventListener('mousedown', startHold);
-        holdBtn.addEventListener('touchstart', startHold);
-        holdBtn.addEventListener('mouseup', stopHold);
-        holdBtn.addEventListener('mouseleave', stopHold);
-        holdBtn.addEventListener('touchend', stopHold);
 
-        async function unlockLevel2() {
-            isUnlocked = true;
-            holdBtn.classList.remove('holding');
-            holdBtn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:3px;border-top-color:#fff;"></span>';
-            
+        function closeBreakGlassModal() {
+            const modal = document.getElementById('breakGlassModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function selectBgReason(text) {
+            const input = document.getElementById('bgReason');
+            if (input) input.value = text;
+            document.querySelectorAll('.pill-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === text || text.includes(btn.textContent.trim()));
+            });
+        }
+
+        async function handleBreakGlassSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('bgSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Authorizing...';
+
             const pathMatch = window.location.pathname.match(/\/emergency\/([^/?\s]+)/);
-            if (!pathMatch) return;
-            
+            if (!pathMatch) {
+                showToast('Invalid emergency session URL');
+                btn.disabled = false;
+                btn.textContent = 'DECLARE & UNLOCK';
+                return;
+            }
+
+            const payload = {
+                accessorName: document.getElementById('bgAccessorName').value.trim(),
+                facility: document.getElementById('bgFacility').value.trim(),
+                role: document.getElementById('bgRole').value,
+                reason: document.getElementById('bgReason').value.trim(),
+                accessorPhone: document.getElementById('bgAccessorPhone').value.trim()
+            };
+
             try {
-                const res = await fetch('/api/emergency/' + pathMatch[1] + '/unlock', { method: 'POST' });
+                const res = await fetch('/api/emergency/' + pathMatch[1] + '/unlock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
                 const data = await res.json();
-                
+
                 if (data.success) {
                     sessionData = data.session;
-                    populateLevel2Data(sessionData.rider, sessionData);
-                    
-                    document.getElementById('unlockContainer').style.display = 'none';
-                    document.querySelectorAll('.level-2-data').forEach(el => {
-                        el.classList.add('unlocked');
-                    });
-                    
-                    showToast('🔓 Full medical profile unlocked');
-                    if ("vibrate" in navigator) navigator.vibrate(200);
+                    closeBreakGlassModal();
+                    activateClinicalView(sessionData.rider, data.audit || sessionData.clinicalAccessDetails);
+                    showToast('🚨 Clinical emergency access granted. Next of Kin alerted.');
+                    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
                 } else {
-                    showToast('⚠️ Failed to unlock session');
-                    holdBtn.innerHTML = '<span class="hold-btn-icon">🔒</span><span class="hold-btn-text">HOLD TO<br>UNLOCK</span>';
-                    isUnlocked = false;
+                    showToast('⚠️ ' + (data.message || 'Access failed'));
+                    btn.disabled = false;
+                    btn.textContent = 'DECLARE & UNLOCK';
                 }
-            } catch(e) {
-                showToast('Connection error');
-                holdBtn.innerHTML = '<span class="hold-btn-icon">🔒</span><span class="hold-btn-text">HOLD TO<br>UNLOCK</span>';
-                isUnlocked = false;
+            } catch (err) {
+                console.error(err);
+                showToast('Connection error. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'DECLARE & UNLOCK';
             }
         }
-        // --------------------
+
+        function activateClinicalView(rider, audit) {
+            isUnlocked = true;
+            const card = document.getElementById('clinicalAccessCard');
+            if (card) card.style.display = 'none';
+
+            const banner = document.getElementById('clinicalAuditBanner');
+            if (banner && audit) {
+                banner.style.display = 'block';
+                const details = document.getElementById('clinicalAuditDetails');
+                if (details) {
+                    details.innerHTML = `
+                        <div><strong>Clinician:</strong> ${audit.accessorName || 'Staff'} (${audit.role || 'Clinician'})</div>
+                        <div><strong>Facility:</strong> ${audit.facility || 'Emergency Center'}</div>
+                        <div><strong>Clinical Reason:</strong> ${audit.reason || 'Emergency Declaration'}</div>
+                        <div style="margin-top: 0.35rem; font-size: 0.68rem; color: #a7f3d0;">
+                            🛡️ Audit Ref: <strong>${audit.auditId || 'MV-AUDIT'}</strong> · Logged: ${fmt(audit.accessedAt)} · Next of Kin Notified via SMS
+                        </div>
+                    `;
+                }
+            }
+
+            document.querySelectorAll('.level-2-data').forEach(el => {
+                el.classList.add('unlocked');
+            });
+
+            populateLevel2Data(rider, sessionData);
+        }
 
         function buildKinCards(contactsList, fallbackEc) {
             const list = document.getElementById('kinList');
@@ -1447,12 +1562,58 @@
                     document.getElementById('riderPhoto').src = src;
                 }
 
-                // Medical (Level 1)
+                // Medical (Level 1 Emergency Profile)
                 if (rider.medical) {
                     document.getElementById('bloodGroup').textContent = rider.medical.bloodGroup || '---';
+                    document.getElementById('genotype').textContent = rider.medical.genotype || '---';
+
+                    const allergies = rider.medical.allergies || 'None reported';
+                    const allergiesEl = document.getElementById('iceAllergies');
+                    if (allergiesEl) allergiesEl.textContent = allergies;
+                    const allergiesBox = document.getElementById('allergiesCallout');
+                    if (allergiesBox) {
+                        if (allergies.toLowerCase() !== 'none reported' && allergies.toLowerCase() !== 'none') {
+                            allergiesBox.className = 'emergency-callout alert-red';
+                        } else {
+                            allergiesBox.className = 'emergency-callout alert-teal';
+                        }
+                    }
+
+                    const conditions = rider.medical.conditions || 'None reported';
+                    const conditionsEl = document.getElementById('iceConditions');
+                    if (conditionsEl) conditionsEl.textContent = conditions;
+
+                    const meds = rider.medical.medications || 'None reported';
+                    const medsEl = document.getElementById('iceMedications');
+                    if (medsEl) medsEl.textContent = meds;
+
                     if (rider.medical.refusesBloodTransfusion) {
                         document.getElementById('noBloodBanner').style.display = 'block';
                     }
+                    if (rider.medical.advanceDirectiveStatement) {
+                        document.getElementById('directiveStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
+                        document.getElementById('emergencyDirectiveBlock').style.display = 'block';
+                    }
+
+                    const docName = rider.medical.primaryDoctorName || '';
+                    const docPhone = rider.medical.primaryDoctorPhone || '';
+                    const hosp = rider.medical.hospitalPreference || '';
+                    const docBlock = document.getElementById('doctorHospitalBlock');
+                    if (docName || hosp) {
+                        if (docBlock) docBlock.style.display = 'block';
+                        const docEl = document.getElementById('primaryDoctorLink');
+                        if (docEl) {
+                            docEl.textContent = [docName, docPhone].filter(Boolean).join(' - ') || 'Not specified';
+                            if (docPhone) docEl.href = 'tel:' + docPhone;
+                        }
+                        const hospEl = document.getElementById('hospitalDisplay');
+                        if (hospEl) hospEl.textContent = hosp || 'Not specified';
+                    }
+                }
+
+                // Check if session was already clinically unlocked
+                if (s.isClinicallyUnlocked) {
+                    activateClinicalView(rider, s.clinicalAccessDetails);
                 }
 
                 // Kin (Level 1)
@@ -1695,5 +1856,92 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
     <script src="js/global.js"></script>
+
+    <!-- Clinical Emergency Access Break-Glass Modal -->
+    <div id="breakGlassModal" class="breakglass-modal-overlay">
+        <div class="breakglass-modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #ef4444; letter-spacing: 1px; text-transform: uppercase;">
+                        🚨 NDPA Protected Access
+                    </div>
+                    <h3 style="font-size: 1.15rem; font-weight: 900; color: white; margin-top: 0.2rem;">
+                        Clinical Break-Glass Access
+                    </h3>
+                </div>
+                <button onclick="closeBreakGlassModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0.2rem;">&times;</button>
+            </div>
+
+            <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 1rem;">
+                Declare clinical necessity to unlock detailed surgical history, vitals, and identity records. Your entry will be recorded in the audit trail.
+            </p>
+
+            <form onsubmit="handleBreakGlassSubmit(event)">
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                        Clinician Full Name *
+                    </label>
+                    <input type="text" id="bgAccessorName" class="bg-form-input" placeholder="e.g. Dr. Babatunde Alabi" required>
+                </div>
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                        Medical Facility / Hospital *
+                    </label>
+                    <input type="text" id="bgFacility" class="bg-form-input" placeholder="e.g. UCH Ibadan - ER Trauma Center" required>
+                </div>
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                        Clinical Designation / Role *
+                    </label>
+                    <select id="bgRole" class="bg-form-input" style="cursor: pointer;" required>
+                        <option value="ER Doctor / Registrar">ER Doctor / Registrar</option>
+                        <option value="Trauma / Triage Nurse">Trauma / Triage Nurse</option>
+                        <option value="Paramedic / First Responder">Paramedic / First Responder</option>
+                        <option value="Hospital Emergency Desk">Hospital Emergency Desk</option>
+                        <option value="Other Medical Staff">Other Medical Staff</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.35rem; display: block;">
+                        Emergency Clinical Reason *
+                    </label>
+                    <div style="margin-bottom: 0.4rem;">
+                        <span class="pill-btn" onclick="selectBgReason('Patient Unconscious / Unresponsive')">Patient Unconscious</span>
+                        <span class="pill-btn" onclick="selectBgReason('Severe Road Accident (RTA)')">Severe RTA</span>
+                        <span class="pill-btn" onclick="selectBgReason('Acute Trauma Resuscitation')">Acute Trauma</span>
+                        <span class="pill-btn" onclick="selectBgReason('Respiratory Distress')">Respiratory Distress</span>
+                    </div>
+                    <input type="text" id="bgReason" class="bg-form-input" placeholder="Specify clinical justification..." required>
+                </div>
+
+                <div style="margin-bottom: 1.1rem;">
+                    <label style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                        Staff Badge / Contact Phone (Optional)
+                    </label>
+                    <input type="text" id="bgAccessorPhone" class="bg-form-input" placeholder="e.g. MDCN: 68124 or 0803...">
+                </div>
+
+                <div style="margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 0.5rem; background: rgba(255,255,255,0.04); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="checkbox" id="bgConsent" required style="margin-top: 0.2rem; cursor: pointer;">
+                    <label for="bgConsent" style="font-size: 0.7rem; color: #cbd5e1; line-height: 1.4; cursor: pointer;">
+                        I certify under medical authority that this emergency access is clinically necessary to treat this patient, and understand this request is logged under NDPA compliance.
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" onclick="closeBreakGlassModal()" style="flex: 1; padding: 0.75rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; border-radius: 0.5rem; font-weight: 700; font-size: 0.8rem; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" id="bgSubmitBtn" style="flex: 2; padding: 0.75rem; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; color: white; border-radius: 0.5rem; font-weight: 800; font-size: 0.82rem; cursor: pointer; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">
+                        DECLARE & UNLOCK
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </body>
 </html>

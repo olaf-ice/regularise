@@ -995,6 +995,14 @@ app.get('/scan/:riderId', async (req, res) => {
         emergencySessions.set(sessionId, session);
         emergencySessions.set(numericId, session);
 
+        // Audit Trail: Log QR scan event
+        const clientIp = req.ip || req.headers['x-forwarded-for'] || '';
+        const userAgent = req.get('user-agent') || '';
+        dbHelpers.logAccess(riderId, clientIp, userAgent, '', {
+            accessType: scanDetails.scanType || 'public_scan',
+            reason: scanDetails.message || 'QR Code Scan'
+        });
+
         // Notify emergency contacts with appropriate context
         const contacts = rider.emergencyContacts || [];
         if (contacts.length === 0 && rider.emergencyContact) contacts.push(rider.emergencyContact);
@@ -1021,37 +1029,52 @@ app.get('/scan/:riderId', async (req, res) => {
     }
 });
 
-// ── GET Emergency Session (LEVEL 1 PUBLIC SCAN) ──────────────────────────────
-// GET /api/emergency/:sessionId  (public — no auth required)
+// Mask phone helper (protects personal privacy on public scan)
+function maskPhoneNumber(p) {
+    if (!p || p.length < 6) return '---';
+    const s = String(p).trim();
+    return s.slice(0, 4) + ' *** ' + s.slice(-4);
+}
+
+// ── GET Emergency Session (🔴 LEVEL 1 EMERGENCY PROFILE - PUBLIC SCAN) ─────────
+// Answers: "What do I need to know about this person RIGHT NOW?"
+// Data minimization: excludes NIN, full addresses, internal docs, unmasked phone.
 app.get('/api/emergency/:sessionId', (req, res) => {
     const key = req.params.sessionId;
     let session = emergencySessions.get(key);
     if (!session && !isNaN(key)) session = emergencySessions.get(parseInt(key, 10));
 
     if (!session) {
-        return res.status(404).json({ success: false, message: 'Session not found or expired' });
+        return res.status(404).json({ success: false, message: 'Emergency session not found or expired' });
     }
 
-    // Refresh from DB in case rider data changed
     try {
         const { pin, ...fullRider } = dbHelpers.getRiderById(session.riderId) || session.rider;
-        
-        // Strip sensitive data for Level 1 access
+        const med = fullRider.medical || {};
+
         const level1Rider = {
-            name: fullRider.name,
-            phone: fullRider.phone,
+            name: fullRider.name || fullRider.fullName || 'Citizen Profile',
+            maskedPhone: maskPhoneNumber(fullRider.phone),
             riderId: fullRider.riderId,
-            userType: fullRider.userType || 'driver',
-            emergencyContact: fullRider.emergencyContact,
+            userType: fullRider.userType || 'citizen',
+            plateNumber: fullRider.plateNumber || (fullRider.bike && fullRider.bike.plateNumber) || (fullRider.vehicle && fullRider.vehicle.plateNumber) || '',
+            emergencyContact: fullRider.emergencyContact || null,
             emergencyContacts: fullRider.emergencyContacts || (fullRider.emergencyContact ? [fullRider.emergencyContact] : []),
-            medical: fullRider.medical ? { 
-                bloodGroup: fullRider.medical.bloodGroup,
-                refusesBloodTransfusion: fullRider.medical.refusesBloodTransfusion,
-                gender: fullRider.medical.gender,
-                dateOfBirth: fullRider.medical.dateOfBirth
-            } : {},
-            // Include photo for identity
-            documents: fullRider.documents && fullRider.documents.passportPhoto ? { passportPhoto: fullRider.documents.passportPhoto } : {}
+            medical: {
+                bloodGroup: med.bloodGroup || '---',
+                genotype: med.genotype || '---',
+                allergies: med.allergies || 'None reported',
+                conditions: med.conditions || 'None reported',
+                medications: med.medications || 'None reported',
+                refusesBloodTransfusion: !!med.refusesBloodTransfusion,
+                advanceDirectiveStatement: med.advanceDirectiveStatement || '',
+                primaryDoctorName: med.primaryDoctorName || '',
+                primaryDoctorPhone: med.primaryDoctorPhone || '',
+                hospitalPreference: med.hospitalPreference || '',
+                gender: med.gender || '',
+                dateOfBirth: med.dateOfBirth || fullRider.dob || ''
+            },
+            documents: (fullRider.documents && fullRider.documents.passportPhoto) ? { passportPhoto: fullRider.documents.passportPhoto } : {}
         };
 
         const level1Session = { 
@@ -1059,55 +1082,99 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             numericId: session.numericId,
             createdAt: session.createdAt,
             rider: level1Rider,
+            isClinicallyUnlocked: !!session.isClinicallyUnlocked,
+            clinicalAccessDetails: session.clinicalAccessDetails || null,
             scanDetails: session.scanDetails || { scanType: 'standard', status: 'live', isLive: true, message: 'Standard Scan', cvv: generateCardCvv(session.riderId) }
         };
         
         res.json({ success: true, session: level1Session, isLevel1: true });
     } catch (e) {
-        // Fallback Level 1 stripping
-        const rider = session.rider;
-        const level1Rider = {
-            name: rider.name,
-            phone: rider.phone,
-            riderId: rider.riderId,
-            userType: rider.userType || 'driver',
-            emergencyContact: rider.emergencyContact,
-            emergencyContacts: rider.emergencyContacts || (rider.emergencyContact ? [rider.emergencyContact] : []),
-            medical: rider.medical ? { 
-                bloodGroup: rider.medical.bloodGroup,
-                refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
-            } : {},
-            documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
-        };
-        const level1Session = {
-            sessionId: session.sessionId,
-            numericId: session.numericId,
-            createdAt: session.createdAt,
-            rider: level1Rider,
-            scanDetails: session.scanDetails || { scanType: 'standard', status: 'live', isLive: true, message: 'Standard Scan', cvv: generateCardCvv(session.riderId) }
-        };
-        res.json({ success: true, session: level1Session, isLevel1: true });
+        console.error('Level 1 Error:', e);
+        res.status(500).json({ success: false, message: 'Error retrieving emergency profile' });
     }
 });
 
-// ── UNLOCK Emergency Session (LEVEL 2) ─────────────────────────────────────────
-// POST /api/emergency/:sessionId/unlock
-app.post('/api/emergency/:sessionId/unlock', apiLimiter, (req, res) => {
-    const key = req.params.sessionId;
-    let session = emergencySessions.get(key);
-    if (!session && !isNaN(key)) session = emergencySessions.get(parseInt(key, 10));
-
-    if (!session) {
-        return res.status(404).json({ success: false, message: 'Session not found or expired' });
-    }
-
-    // Return the full safe rider data for Level 2
+// ── CLINICAL EMERGENCY ACCESS / BREAK-GLASS (🔵 LEVEL 2 AUTHORISED CLINICAL DATA) ─────
+// Protocol for ER doctors, triage nurses, and paramedics treating patients unable to communicate.
+// Required: Clinician Name, Facility/Hospital, Role, Emergency Justification.
+// Automatically records immutable audit trail and notifies next of kin.
+app.post(['/api/emergency/:sessionId/unlock', '/api/emergency/:sessionId/breakglass'], apiLimiter, async (req, res) => {
     try {
-        const { pin, ...safeRider } = dbHelpers.getRiderById(session.riderId) || session.rider;
-        const freshSession = { ...session, rider: safeRider };
-        res.json({ success: true, session: freshSession });
-    } catch (e) {
-        res.json({ success: true, session });
+        const key = req.params.sessionId;
+        let session = emergencySessions.get(key);
+        if (!session && !isNaN(key)) session = emergencySessions.get(parseInt(key, 10));
+
+        if (!session) {
+            return res.status(404).json({ success: false, message: 'Emergency session not found or expired' });
+        }
+
+        const { accessorName, facility, role, reason, accessorPhone } = req.body || {};
+
+        if (!accessorName || !facility || !reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Clinical Access requires Clinician Name, Medical Facility, and Emergency Reason.' 
+            });
+        }
+
+        const riderId = session.riderId;
+        const rider = dbHelpers.getRiderById(riderId) || session.rider;
+
+        const auditMeta = {
+            accessType: 'clinical_breakglass',
+            accessorName: String(accessorName).trim(),
+            facility: String(facility).trim(),
+            role: (role || 'Healthcare Professional').trim(),
+            reason: String(reason).trim(),
+            accessorPhone: accessorPhone ? String(accessorPhone).trim() : null
+        };
+
+        const clientIp = req.ip || req.headers['x-forwarded-for'] || '';
+        const userAgent = req.get('user-agent') || '';
+
+        // 1. Immutable Audit Logging
+        const logResult = dbHelpers.logAccess(riderId, clientIp, userAgent, session.location?.name || '', auditMeta);
+
+        // 2. Automated Alert to Next of Kin
+        const contacts = rider.emergencyContacts || [];
+        if (contacts.length === 0 && rider.emergencyContact) contacts.push(rider.emergencyContact);
+
+        contacts.forEach(contact => {
+            if (contact && contact.phone) {
+                const alertMsg = `🚨 MyVault Notice: Emergency Clinical Access was requested for ${rider.name} at ${auditMeta.facility} by ${auditMeta.accessorName} (${auditMeta.role}). Reason: ${auditMeta.reason}.`;
+                sendSMS(contact.phone, alertMsg).catch(() => {});
+            }
+        });
+
+        // 3. Mark session as clinically unlocked with audit trail details
+        const auditInfo = {
+            auditId: logResult.id ? `MV-AUDIT-${logResult.id}` : `MV-AUDIT-${Date.now().toString().slice(-6)}`,
+            ...auditMeta,
+            accessedAt: logResult.timestamp,
+            ip: clientIp
+        };
+
+        session.isClinicallyUnlocked = true;
+        session.clinicalAccessDetails = auditInfo;
+
+        const { pin, ...safeRider } = rider;
+        const unlockedSession = {
+            ...session,
+            rider: safeRider,
+            clinicalAccessDetails: auditInfo
+        };
+
+        console.log(`[BREAKGLASS] Clinical access granted for ${riderId} by ${auditMeta.accessorName} at ${auditMeta.facility}`);
+
+        res.json({
+            success: true,
+            message: 'Clinical emergency access granted and audit log committed.',
+            session: unlockedSession,
+            audit: auditInfo
+        });
+    } catch (err) {
+        console.error('Break-glass Error:', err);
+        res.status(500).json({ success: false, message: 'Failed to process clinical emergency access' });
     }
 });
 
