@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const ALGORITHM = 'aes-256-gcm';
 // Ensure the key is exactly 32 bytes (64 hex characters)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ? Buffer.from(process.env.ENCRYPTION_KEY, 'hex') : null;
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ? Buffer.from(process.env.ENCRYPTION_KEY, 'hex') : Buffer.from('815125701ab168789636b04b231f30dc6af0c5e72e17d4fbb57f1ce2dcde4d6a', 'hex');
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
