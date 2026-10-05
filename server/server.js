@@ -223,9 +223,6 @@ function authenticateAdminToken(req, res, next) {
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err || user.role !== 'admin') return res.status(403).json({ success: false, message: 'Invalid or expired admin token.' });
-        if (user.tokenVersion !== adminTokenVersion) {
-            return res.status(401).json({ success: false, message: 'Session expired. You have logged in from another device.' });
-        }
         req.user = user;
         next();
     });
