@@ -1961,7 +1961,10 @@ let hasExpired = false;
             kinPhone = rawPhone.trim();
         }
 
-        const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
+        // Printed credentials must always point at the production site, never localhost/staging
+        const _qrHost = window.location.hostname;
+        const _qrOrigin = (_qrHost === 'myvault.com.ng' || _qrHost === 'www.myvault.com.ng') ? window.location.origin : 'https://myvault.com.ng';
+        const emergencyUrl = `${_qrOrigin}/scan/${encodeURIComponent(rider.riderId)}`;
 
         let computedExpiry = rider.expiryDate || '';
         if (!computedExpiry && rider.createdAt) {
@@ -1993,11 +1996,9 @@ let hasExpired = false;
         if (qrContainer) {
             qrContainer.innerHTML = '';
             try {
-                // Use level L for faster scanning matching the overview QR code
-                const d = _printRiderData || {};
-                const safeAllergies = (d.allergies || 'None').replace(/[\r\n]+/g, ' ').substring(0, 30);
-                const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${d.name || rider.name};;;;\nFN:${d.name || rider.name}\nORG:MyVault Emergency ID - ${d.riderId || rider.riderId}\nTITLE:Blood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'} | Alrg: ${safeAllergies}\nNOTE:EMERGENCY CONTACT (ICE): ${d.kinName || '---'} - ${d.kinPhone || '---'}\nURL:${emergencyUrl}\nEND:VCARD`;
-                new QRCode(qrContainer, { text: qrPayload, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+                // Same short-URL payload as the printed card/sticker QR
+                const qrPayload = emergencyUrl;
+                new QRCode(qrContainer, { text: qrPayload, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.Q });
             } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
     }
@@ -2133,12 +2134,9 @@ let hasExpired = false;
             tempDiv.style.top = '-9999px';
             document.body.appendChild(tempDiv);
 
-            const safeName = (d.name || '').trim().replace(/[\r\n]+/g, ' ').substring(0, 35);
-            const safeBg = (d.bg || 'O+').trim();
-            const safeGt = (d.gt || 'AA').trim();
-            const safeAllergies = (d.allergies || 'None').trim().replace(/[\r\n]+/g, ' ').substring(0, 25);
-            const safeKin = `${(d.kinName || '---').trim().substring(0, 20)} - ${(d.kinPhone || '---').trim()}`;
-            const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${safeName};;;;\nFN:${safeName}\nORG:MyVault - ${d.riderId}\nTITLE:Blood: ${safeBg} | Geno: ${safeGt}\nNOTE:Allergies: ${safeAllergies} | ICE: ${safeKin}\nURL:${d.profileUrl}\nEND:VCARD`;
+            // Short URL payload => low-density QR with large modules that scans reliably when printed small.
+            // (Medical details are printed as text on the card and shown on the page after scanning.)
+            const qrPayload = String(d.profileUrl || '');
 
             new QRCode(tempDiv, {
                 text: qrPayload,
@@ -2146,11 +2144,24 @@ let hasExpired = false;
                 height: 700,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.L
+                correctLevel: QRCode.CorrectLevel.Q
             });
 
             const canvas = tempDiv.querySelector('canvas');
-            const dataUrl = canvas ? canvas.toDataURL('image/png') : '';
+            let dataUrl = '';
+            if (canvas) {
+                // qrcodejs draws no quiet zone, so add a clean white margin (>= 4 modules) around the code
+                const pad = 100;
+                const out = document.createElement('canvas');
+                out.width = canvas.width + pad * 2;
+                out.height = canvas.height + pad * 2;
+                const ctx = out.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, out.width, out.height);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(canvas, pad, pad);
+                dataUrl = out.toDataURL('image/png');
+            }
             document.body.removeChild(tempDiv);
             if (dataUrl && dataUrl.length > 100) return dataUrl;
         } catch (e) {
