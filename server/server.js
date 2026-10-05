@@ -93,13 +93,11 @@ app.use(helmet({
             styleSrc: [
                 "'self'",
                 "'unsafe-inline'",
-                "https://fonts.googleapis.com",
                 "https://cdnjs.cloudflare.com",
                 "https://*.tawk.to"
             ],
             fontSrc: [
                 "'self'",
-                "https://fonts.gstatic.com",
                 "https://*.tawk.to",
                 "data:"
             ],

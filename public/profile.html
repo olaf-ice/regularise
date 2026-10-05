@@ -21,7 +21,7 @@
 
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <link href="/css/fonts.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="js/html2canvas.min.js"></script>
     <script src="js/jspdf.umd.min.js"></script>
@@ -2299,7 +2299,6 @@ let hasExpired = false;
 
             container.innerHTML = `
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
                 .pdf-card {
                     width: 1040px; height: 656px;
                     border-radius: 35px;
@@ -2540,7 +2539,6 @@ let hasExpired = false;
         pw.document.write(`<!DOCTYPE html><html><head><title>PVC Emergency ID - ${d.name}</title>
         <style>
             @page { size: A4 landscape; margin: 0; }
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
             * { margin:0; padding:0; box-sizing:border-box; }
             html, body { width:297mm; height:210mm; background:white; font-family:'Inter',sans-serif; }
             body { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }

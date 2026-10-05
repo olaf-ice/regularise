@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ndpr-accept').addEventListener('click', () => {
             localStorage.setItem('ndpr_consent', 'accepted');
             banner.style.display = 'none';
+            document.dispatchEvent(new Event('ndpr-consent-accepted'));
         });
 
         document.getElementById('ndpr-reject').addEventListener('click', () => {
@@ -29,16 +30,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Tawk.to Live Chat Widget
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/6a1da712f961bc1c2ff57452/1jq1t989h';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    if(s0 && s0.parentNode) {
-        s0.parentNode.insertBefore(s1,s0);
+    // 2. Tawk.to Live Chat Widget - loaded ONLY after the visitor accepts (NDPA consent)
+    let tawkLoaded = false;
+    function loadTawk() {
+        if (tawkLoaded) return;
+        tawkLoaded = true;
+        window.Tawk_API = window.Tawk_API || {};
+        window.Tawk_LoadStart = new Date();
+        var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+        s1.async = true;
+        s1.src = 'https://embed.tawk.to/6a1da712f961bc1c2ff57452/1jq1t989h';
+        s1.charset = 'UTF-8';
+        s1.setAttribute('crossorigin', '*');
+        if (s0 && s0.parentNode) {
+            s0.parentNode.insertBefore(s1, s0);
+        } else {
+            document.head.appendChild(s1);
+        }
+    }
+
+    if (localStorage.getItem('ndpr_consent') === 'accepted') {
+        loadTawk();
     } else {
-        document.head.appendChild(s1);
+        document.addEventListener('ndpr-consent-accepted', loadTawk, { once: true });
     }
 });
