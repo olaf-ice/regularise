@@ -1,5 +1,13 @@
-// global.js
-// Handles globally shared scripts like NDPR banner and Live Chat (tawk.to)
+// Global Security Helper: Anti-XSS HTML Sanitizer
+window.escapeHTML = function(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. NDPR Privacy Banner Logic
