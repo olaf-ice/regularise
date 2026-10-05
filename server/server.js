@@ -89,6 +89,7 @@ app.use(helmet({
                 "https://embed.tawk.to",
                 "https://*.tawk.to"
             ],
+            scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: [
                 "'self'",
                 "'unsafe-inline'",

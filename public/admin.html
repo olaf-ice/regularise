@@ -363,7 +363,7 @@
             <h2 style="text-align:center; margin-bottom: 0.25rem;">Admin Portal</h2>
             <p style="color: var(--text-muted); text-align:center; margin-bottom: 1.5rem; font-size: 0.88rem;">Authorized Personnel &amp; Statutory Command</p>
             
-            <form id="adminLoginForm" onsubmit="event.preventDefault(); adminLogin();">
+            <form id="adminLoginForm" action="javascript:void(0)">
                 <div class="form-input-container" style="display: flex; flex-direction: column; gap: 1rem;">
                     <div style="display: flex; flex-direction: column; gap: 0.4rem;">
                         <label for="adminUsername" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Username</label>
@@ -853,6 +853,15 @@
                 btn.textContent = 'Access Dashboard';
             }
         }
+
+        (function bindAdminLoginForm() {
+            const bind = () => {
+                const f = document.getElementById('adminLoginForm');
+                if (f) f.addEventListener('submit', (e) => { e.preventDefault(); adminLogin(); });
+            };
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+            else bind();
+        })();
 
         function logout() {
             localStorage.removeItem('adminToken');
