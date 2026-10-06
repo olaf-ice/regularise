@@ -21,7 +21,7 @@
 
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <link href="/css/fonts.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="js/html2canvas.min.js"></script>
     <script src="js/jspdf.umd.min.js"></script>
@@ -489,6 +489,8 @@
                             <span id="iceBloodGroup" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span></div>
                             <div><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Genotype</span>
                             <span id="iceGenotype" style="font-weight: 900; font-size: 1.15rem; color: var(--error);">---</span></div>
+                            <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Severe Allergies</span>
+                            <span id="iceAllergies" style="font-weight: 700; font-size: 0.85rem; color: #ef4444;">None</span></div>
                             <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Health Conditions</span>
                             <span id="iceConditions" style="font-weight: 700; font-size: 0.85rem; color: var(--text);">---</span></div>
                             <div style="grid-column: span 2;"><span style="color: var(--text-muted); font-size: 0.6rem; text-transform: uppercase; display: block;">Medications</span>
@@ -977,6 +979,7 @@
                     // Populate hidden data
                     if (rider.medical) {
                         document.getElementById('iceGenotype').textContent = rider.medical.genotype || '---';
+                        if (document.getElementById('iceAllergies')) document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None';
                         document.getElementById('iceConditions').textContent = rider.medical.conditions || 'None reported';
                         document.getElementById('iceMedications').textContent = rider.medical.medications || 'None reported';
                         document.getElementById('iceDateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
@@ -1404,6 +1407,7 @@
                     if (rider.medical) {
                         const bg = rider.medical.bloodGroup || 'O+';
                         document.getElementById('iceBloodGroup').textContent = bg;
+                        if (document.getElementById('iceAllergies')) document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None';
                         let badgeText = `${bg}`;
                         if (rider.medical.refusesBloodTransfusion) {
                             badgeText += ' | 🚨 NO BLOOD';
@@ -1636,6 +1640,10 @@ let hasExpired = false;
                 </select>
             </div>
             <div class="input-group">
+                <label>Severe Allergies / Critical Reactions</label>
+                <textarea id="editAllergies" name="allergies" placeholder="e.g. Penicillin, Peanuts, Sulfa (or 'None')" rows="2" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text); padding: 0.75rem; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
+            </div>
+            <div class="input-group">
                 <label>Health Conditions</label>
                 <textarea id="editConditions" name="conditions" placeholder="e.g. Asthma, Diabetes..." rows="2" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 0.5rem; color: var(--text); padding: 0.75rem; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
             </div>
@@ -1829,6 +1837,7 @@ let hasExpired = false;
         // Pre-fill
         const med = (window.globalRiderData && window.globalRiderData.medical) || {};
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
+        if (document.getElementById('editAllergies')) document.getElementById('editAllergies').value = med.allergies || '';
         document.getElementById('editDateOfBirth').value = med.dateOfBirth || window.globalRiderData.dob || '';
         document.getElementById('editNationality').value = window.globalRiderData.nationality || '';
         document.getElementById('editConditions').value = med.conditions || '';
@@ -1961,7 +1970,10 @@ let hasExpired = false;
             kinPhone = rawPhone.trim();
         }
 
-        const emergencyUrl = `${window.location.origin}/scan/${encodeURIComponent(rider.riderId)}`;
+        // Printed credentials must always point at the production site, never localhost/staging
+        const _qrHost = window.location.hostname;
+        const _qrOrigin = (_qrHost === 'myvault.com.ng' || _qrHost === 'www.myvault.com.ng') ? window.location.origin : 'https://myvault.com.ng';
+        const emergencyUrl = `${_qrOrigin}/scan/${encodeURIComponent(rider.riderId)}`;
 
         let computedExpiry = rider.expiryDate || '';
         if (!computedExpiry && rider.createdAt) {
@@ -1993,11 +2005,9 @@ let hasExpired = false;
         if (qrContainer) {
             qrContainer.innerHTML = '';
             try {
-                // Use level L for faster scanning matching the overview QR code
-                const d = _printRiderData || {};
-                const safeAllergies = (d.allergies || 'None').replace(/[\r\n]+/g, ' ').substring(0, 30);
-                const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${d.name || rider.name};;;;\nFN:${d.name || rider.name}\nORG:MyVault Emergency ID - ${d.riderId || rider.riderId}\nTITLE:Blood: ${d.bg || 'O+'} | Geno: ${d.gt || 'AA'} | Alrg: ${safeAllergies}\nNOTE:EMERGENCY CONTACT (ICE): ${d.kinName || '---'} - ${d.kinPhone || '---'}\nURL:${emergencyUrl}\nEND:VCARD`;
-                new QRCode(qrContainer, { text: qrPayload, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+                // Same short-URL payload as the printed card/sticker QR
+                const qrPayload = emergencyUrl;
+                new QRCode(qrContainer, { text: qrPayload, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.Q });
             } catch(e) { qrContainer.innerHTML = '<div style="font-size:0.5rem;color:#999;">QR</div>'; }
         }
     }
@@ -2133,12 +2143,9 @@ let hasExpired = false;
             tempDiv.style.top = '-9999px';
             document.body.appendChild(tempDiv);
 
-            const safeName = (d.name || '').trim().replace(/[\r\n]+/g, ' ').substring(0, 35);
-            const safeBg = (d.bg || 'O+').trim();
-            const safeGt = (d.gt || 'AA').trim();
-            const safeAllergies = (d.allergies || 'None').trim().replace(/[\r\n]+/g, ' ').substring(0, 25);
-            const safeKin = `${(d.kinName || '---').trim().substring(0, 20)} - ${(d.kinPhone || '---').trim()}`;
-            const qrPayload = `BEGIN:VCARD\nVERSION:3.0\nN:${safeName};;;;\nFN:${safeName}\nORG:MyVault - ${d.riderId}\nTITLE:Blood: ${safeBg} | Geno: ${safeGt}\nNOTE:Allergies: ${safeAllergies} | ICE: ${safeKin}\nURL:${d.profileUrl}\nEND:VCARD`;
+            // Short URL payload => low-density QR with large modules that scans reliably when printed small.
+            // (Medical details are printed as text on the card and shown on the page after scanning.)
+            const qrPayload = String(d.profileUrl || '');
 
             new QRCode(tempDiv, {
                 text: qrPayload,
@@ -2146,11 +2153,24 @@ let hasExpired = false;
                 height: 700,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.L
+                correctLevel: QRCode.CorrectLevel.Q
             });
 
             const canvas = tempDiv.querySelector('canvas');
-            const dataUrl = canvas ? canvas.toDataURL('image/png') : '';
+            let dataUrl = '';
+            if (canvas) {
+                // qrcodejs draws no quiet zone, so add a clean white margin (>= 4 modules) around the code
+                const pad = 100;
+                const out = document.createElement('canvas');
+                out.width = canvas.width + pad * 2;
+                out.height = canvas.height + pad * 2;
+                const ctx = out.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, out.width, out.height);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(canvas, pad, pad);
+                dataUrl = out.toDataURL('image/png');
+            }
             document.body.removeChild(tempDiv);
             if (dataUrl && dataUrl.length > 100) return dataUrl;
         } catch (e) {
@@ -2299,7 +2319,6 @@ let hasExpired = false;
 
             container.innerHTML = `
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
                 .pdf-card {
                     width: 1040px; height: 656px;
                     border-radius: 35px;
@@ -2322,7 +2341,7 @@ let hasExpired = false;
                 }
                 .pvc-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-30deg); font-size:90px; font-weight:900; color:rgba(255,255,255,0.03); white-space:nowrap; pointer-events:none; z-index:0; letter-spacing:12px; text-transform:uppercase; }
                 .hologram-seal {
-                    position: absolute; top: 32px; right: 380px;
+                    position: absolute; top: 32px; right: 335px;
                     width: 72px; height: 72px; border-radius: 50%;
                     background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
                     display: flex; align-items: center; justify-content: center; z-index: 2;
@@ -2330,7 +2349,7 @@ let hasExpired = false;
                 }
                 .hologram-seal::before { content: '✓'; font-size: 38px; font-weight: 900; color: #aa771c; text-shadow: 1px 1px 0px rgba(255,255,255,0.8); }
                 .card-left { flex:1; padding:42px 28px 42px 48px; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:1; }
-                .card-right { width:350px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 20px; gap:14px; background:rgba(0,0,0,0.25); position:relative; z-index:1; border-left:1px solid rgba(245,158,11,0.35); }
+                .card-right { width:310px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:22px 18px; gap:12px; background:rgba(0,0,0,0.25); position:relative; z-index:1; border-left:1px solid rgba(245,158,11,0.35); }
                 .header-row { display:flex; align-items:center; gap:16px; }
                 .brand-badge { font-size:20px; font-weight:900; color:#f59e0b; letter-spacing:3px; text-transform:uppercase; }
                 .emergency-badge { font-size:16px; font-weight:900; color:#ef4444; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.5); padding:5px 16px; border-radius:8px; letter-spacing:1px; }
@@ -2345,9 +2364,9 @@ let hasExpired = false;
                 .kin-value { font-size:22px; font-weight:800; color:white; margin-top:3px; }
                 .allergy-bar { padding:8px 16px; background:rgba(239,68,68,0.15); border-left:4px solid #ef4444; border-radius:4px; margin-top:16px; }
                 .allergy-text { font-size:17px; font-weight:800; color:#ef4444; }
-                .card-qr { width:290px; height:290px; background:white; border-radius:20px; padding:10px; position: relative; }
-                .card-qr::before { content:''; position:absolute; top:-6px; left:-6px; right:-6px; bottom:-6px; background:linear-gradient(135deg, #f59e0b, #60a5fa); border-radius:26px; z-index:-1; opacity:0.8; }
-                .card-qr img { width:100%; height:100%; object-fit:contain; border-radius:14px; }
+                .card-qr { width:245px; height:245px; background:white; border-radius:18px; padding:9px; position: relative; }
+                .card-qr::before { content:''; position:absolute; top:-5px; left:-5px; right:-5px; bottom:-5px; background:linear-gradient(135deg, #f59e0b, #60a5fa); border-radius:23px; z-index:-1; opacity:0.8; }
+                .card-qr img { width:100%; height:100%; object-fit:contain; border-radius:12px; }
                 .scan-label { font-size:14px; font-weight:800; color:#94a3b8; letter-spacing:2px; text-align:center; text-transform:uppercase; }
                 .verified-id-row { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:4px; }
                 .verified-id-row span { font-size:17px; font-weight:800; color:#10b981; }
@@ -2540,7 +2559,6 @@ let hasExpired = false;
         pw.document.write(`<!DOCTYPE html><html><head><title>PVC Emergency ID - ${d.name}</title>
         <style>
             @page { size: A4 landscape; margin: 0; }
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
             * { margin:0; padding:0; box-sizing:border-box; }
             html, body { width:297mm; height:210mm; background:white; font-family:'Inter',sans-serif; }
             body { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
@@ -2576,7 +2594,7 @@ let hasExpired = false;
             .pvc-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-30deg); font-size:56px; font-weight:900; color:rgba(255,255,255,0.03); white-space:nowrap; pointer-events:none; z-index:0; letter-spacing:8px; text-transform:uppercase; }
             .hologram-seal {
                 position: absolute;
-                top: 20px; right: 255px;
+                top: 20px; right: 220px;
                 width: 45px; height: 45px;
                 border-radius: 50%;
                 background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
@@ -2593,7 +2611,7 @@ let hasExpired = false;
             .holographic-sheen { position:absolute; inset:0; z-index:10; pointer-events:none; background:linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 25%, rgba(255,100,200,0.15) 28%, rgba(100,200,255,0.15) 32%, transparent 40%); background-size: 200% 200%; animation: holo-shine 6s infinite linear; mix-blend-mode: color-dodge; }
             @keyframes holo-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
             .card-left { flex:1; padding:28px 18px 28px 28px; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:1; }
-            .card-right { width:230px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px 12px; gap:8px; background:rgba(0,0,0,0.25); position:relative; z-index:1; border-left:1px solid rgba(245,158,11,0.35); }
+            .card-right { width:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px 10px; gap:8px; background:rgba(0,0,0,0.25); position:relative; z-index:1; border-left:1px solid rgba(245,158,11,0.35); }
             .header-row { display:flex; align-items:center; gap:10px; }
             .brand-badge { font-size:13px; font-weight:900; color:#f59e0b; letter-spacing:2px; text-transform:uppercase; }
             .emergency-badge { font-size:10px; font-weight:900; color:#ef4444; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.5); padding:3px 10px; border-radius:5px; letter-spacing:1px; }
@@ -2608,8 +2626,8 @@ let hasExpired = false;
             .kin-value { font-size:14px; font-weight:800; color:white; margin-top:2px; }
             .allergy-bar { padding:5px 10px; background:rgba(239,68,68,0.15); border-left:3px solid #ef4444; border-radius:3px; margin-top:10px; }
             .allergy-text { font-size:11px; font-weight:800; color:#ef4444; }
-            .card-qr { width:185px; height:185px; background:white; border-radius:12px; padding:6px; position: relative; }
-            .card-qr::before { content:''; position:absolute; top:-4px; left:-4px; right:-4px; bottom:-4px; background:linear-gradient(135deg, #f59e0b, #60a5fa); border-radius:16px; z-index:-1; opacity:0.8; }
+            .card-qr { width:155px; height:155px; background:white; border-radius:12px; padding:6px; position: relative; }
+            .card-qr::before { content:''; position:absolute; top:-4px; left:-4px; right:-4px; bottom:-4px; background:linear-gradient(135deg, #f59e0b, #60a5fa); border-radius:15px; z-index:-1; opacity:0.8; }
             .card-qr img { width:100%; height:100%; object-fit:contain; border-radius:8px; }
             .scan-label { font-size:10px; font-weight:800; color:#94a3b8; letter-spacing:1px; text-align:center; text-transform:uppercase; }
             .rider-id-small { font-size:10px; font-weight:700; color:#64748b; text-align:center; }
@@ -2856,21 +2874,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 let html = '<table style="width: 100%; border-collapse: collapse; text-align: left;">';
-                html += '<tr style="border-bottom: 1px solid var(--glass-border);"><th style="padding: 0.5rem;">Time</th><th style="padding: 0.5rem;">Action</th><th style="padding: 0.5rem;">IP</th></tr>';
+                html += '<tr style="border-bottom: 1px solid var(--glass-border);"><th style="padding: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">TIME</th><th style="padding: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">EVENT / ACCESSOR</th><th style="padding: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">DETAILS</th></tr>';
                 
                 data.logs.forEach(log => {
-                    const date = new Date(log.timestamp).toLocaleString();
-                    html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td style="padding: 0.5rem;">${date}</td>
-                        <td style="padding: 0.5rem; color: var(--primary-light);">${log.location || 'Access'}</td>
-                        <td style="padding: 0.5rem; color: var(--text-muted);">${log.ip}</td>
+                    const date = new Date(log.timestamp).toLocaleString('en-NG', { dateStyle: 'short', timeStyle: 'short' });
+                    const isBreakglass = log.accessType === 'clinical_breakglass';
+                    const eventTitle = isBreakglass 
+                        ? `<span style="color:#ef4444; font-weight:800; font-size:0.75rem;">🚨 CLINICAL BREAK-GLASS</span><br><span style="font-size:0.7rem; color:#f8fafc;">${log.accessorName || 'Medical Staff'} (${log.role || 'Clinician'})</span><br><span style="font-size:0.68rem; color:#94a3b8;">${log.facility || 'Facility'}</span>`
+                        : `<span style="color:var(--primary-light); font-weight:700; font-size:0.75rem;">📱 QR CODE SCAN</span><br><span style="font-size:0.7rem; color:var(--text-muted);">${log.reason || 'Public Scan'}</span>`;
+                    
+                    const details = isBreakglass && log.reason 
+                        ? `<div style="font-size:0.68rem; color:#fca5a5; font-style:italic;">"${log.reason}"</div><div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">IP: ${log.ip}</div>`
+                        : `<span style="color: var(--text-muted); font-size:0.7rem;">IP: ${log.ip}</span>`;
+
+                    html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.06); ${isBreakglass ? 'background: rgba(239,68,68,0.08);' : ''}">
+                        <td style="padding: 0.65rem 0.5rem; vertical-align: top; white-space: nowrap; font-size: 0.7rem; color: var(--text-muted);">${date}</td>
+                        <td style="padding: 0.65rem 0.5rem; vertical-align: top;">${eventTitle}</td>
+                        <td style="padding: 0.65rem 0.5rem; vertical-align: top;">${details}</td>
                     </tr>`;
                 });
                 
                 html += '</table>';
                 container.innerHTML = html;
             } else {
-                container.innerHTML = `<div style="padding: 1rem; text-align: center; color: #ef4444;">${data.message}</div>`;
+                container.innerHTML = `<div style="padding: 1rem; text-align: center; color: #ef4444;">${window.escapeHTML(data.message || 'Failed to fetch logs')}</div>`;
             }
         } catch (err) {
             container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #ef4444;">Failed to fetch logs.</div>';
@@ -2893,7 +2920,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (data.success) {
                 container.style.display = 'block';
-                container.innerHTML = `<strong>One-Time Link (Valid for 1 view):</strong><br><br><a href="${data.link}" target="_blank" style="color: var(--primary-light);">${data.link}</a>`;
+                const safeUrl = encodeURI(data.link);
+                container.innerHTML = `<strong>One-Time Link (Valid for 1 view):</strong><br><br><a href="${safeUrl}" target="_blank" style="color: var(--primary-light);">${window.escapeHTML(data.link)}</a>`;
             } else {
                 alert(data.message || 'Failed to generate link');
             }
