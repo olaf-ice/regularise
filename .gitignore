@@ -20,4 +20,5 @@ myvault.db
 server/riders.json.backup
 scratch/
 dummy.txt
+check_deploy.js
 
