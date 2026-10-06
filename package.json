@@ -8,7 +8,6 @@
     "dev": "node server/server.js",
     "build": "node build.js",
     "rotate-keys": "node server/rotate_encryption_key.js",
-    "postinstall": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
