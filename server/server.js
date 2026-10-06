@@ -2416,7 +2416,7 @@ function ensureRider71447() {
 ensureRider71447();
 
 // ── API 404 HANDLER ─────────────────────────────────────────────────────────────
-app.all('/api/*', (req, res) => {
+app.use('/api', (req, res) => {
     res.status(404).json({ success: false, message: 'API endpoint not found' });
 });
 
