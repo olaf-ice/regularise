@@ -692,6 +692,20 @@
             </div>
         </div>
 
+        <!-- 📞 EMERGENCY CONTACTS / NEXT OF KIN (Level 1 Responder View) -->
+        <div class="card" id="kinCard" style="border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.03);">
+            <div class="card-title" style="color: var(--red); font-size: 0.72rem;">
+                <span>📞</span> EMERGENCY CONTACTS (NEXT OF KIN)
+            </div>
+            <div id="kinList"></div>
+            <div id="extraKinSection" style="display: none; margin-top: 0.5rem; border-top: 1px dashed rgba(239,68,68,0.25); padding-top: 0.5rem;">
+                <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.4rem; text-transform: uppercase;">
+                    Additional Contacts (L2 Clinical Unlock)
+                </div>
+                <div id="extraKinList"></div>
+            </div>
+        </div>
+
         <!-- Location (Level 2) -->
         <div class="card level-2-data">
             <div class="card-title"><span>📍</span> LAST KNOWN LOCATION</div>
@@ -777,7 +791,6 @@
             </div>
             <div style="font-size: 0.74rem; color: var(--text); line-height: 1.5;" id="clinicalAuditDetails"></div>
         </div>
-        </div>
 
         <!-- Session Info -->
         <div class="card">
@@ -824,51 +837,6 @@
         </div>
     </div>
 
-    <!-- Physical Tag Anti-Screen Liveness Modal -->
-    <div id="livenessModal" style="display:none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 1rem;">
-        <div style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 1.25rem; max-width: 440px; width: 100%; padding: 1.25rem; color: #f8fafc; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.25rem;">🔍</span>
-                    <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;">Physical Tag Liveness Test</span>
-                </div>
-                <button onclick="closeLivenessModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
-            </div>
-
-            <!-- Video Viewport / Reticle -->
-            <div style="position: relative; width: 100%; height: 260px; background: #000; border-radius: 0.75rem; overflow: hidden; margin-bottom: 1rem; border: 2px solid #334155;">
-                <video id="livenessVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
-                <canvas id="livenessCanvas" style="display: none;"></canvas>
-
-                <!-- Scanning Reticle Overlay -->
-                <div style="position: absolute; inset: 20px; border: 2px dashed rgba(59, 130, 246, 0.7); border-radius: 12px; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 10px;">
-                    <span style="background: rgba(0,0,0,0.7); color: #93c5fd; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;">ALIGN PHYSICAL CARD INSIDE BOX</span>
-                    <div id="livenessReticleAnim" style="width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 8px #60a5fa; animation: scanline-sweep 2s ease-in-out infinite;"></div>
-                    <span id="livenessStatusText" style="background: rgba(0,0,0,0.75); color: #f8fafc; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 6px;">Hold steady... analyzing reflection</span>
-                </div>
-            </div>
-
-            <!-- Results Card -->
-            <div id="livenessResultBox" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 0.85rem; margin-bottom: 1rem;">
-                <div style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.35rem;">Physical Verification Checks</div>
-                <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.5;" id="livenessDetails">
-                    &bull; Verify the physical card has a matte surface and authentic gold hologram seal.<br>
-                    &bull; Confirm the cardholder is presenting the actual physical card in person.
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem;">
-                <button id="livenessAnalyzeBtn" onclick="runOpticalAnalysis()" style="flex: 1; background: #2563eb; color: white; border: none; border-radius: 8px; padding: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer;">
-                    ⚡ Analyze Surface Reflection
-                </button>
-                <button onclick="closeLivenessModal()" style="background: #334155; color: white; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div class="toast" id="toast"></div>
 
     <script>
@@ -911,30 +879,19 @@
             } else if (scanDetails.status === 'physical') {
                 const tagLabel = scanDetails.tagLabel || 'Physical PVC ID Card';
                 bannerEl.innerHTML = `
-                    <div style="background: rgba(59, 130, 246, 0.1); border: 1.5px solid #3b82f6; border-radius: 1rem; padding: 1.1rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.4rem;">🏷️</span>
-                                <div>
-                                    <span style="font-size: 0.88rem; font-weight: 900; color: #60a5fa; letter-spacing: 0.5px; text-transform: uppercase;">
-                                        AUTHENTIC PHYSICAL CREDENTIAL (${tagLabel.toUpperCase()})
-                                    </span>
-                                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
-                                        Permanent Physical Card &bull; Direct Verified Scan
-                                    </div>
+                    <div style="background: rgba(59, 130, 246, 0.1); border: 1.5px solid #3b82f6; border-radius: 1rem; padding: 1rem 1.1rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <span style="font-size: 1.3rem;">🏷️</span>
+                            <div>
+                                <div style="font-size: 0.88rem; font-weight: 900; color: #60a5fa; letter-spacing: 0.5px; text-transform: uppercase;">
+                                    AUTHENTIC PHYSICAL CREDENTIAL
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                    ${tagLabel} &bull; Direct Physical Tag Scan Verified
                                 </div>
                             </div>
-                            <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;">PERMANENT ID</span>
                         </div>
-
-                        <div style="background: rgba(0,0,0,0.25); border-radius: 0.5rem; padding: 0.65rem 0.85rem; margin-top: 0.6rem; border: 1px dashed rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
-                            <div style="font-size: 0.72rem; color: #cbd5e1; line-height: 1.4;">
-                                Suspect a photo or screenshot of this card on a phone screen?
-                            </div>
-                            <button onclick="openPhysicalLivenessTester()" style="background: #2563eb; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);">
-                                <span>📷</span> Test Card vs Screen
-                            </button>
-                        </div>
+                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;">VERIFIED ID</span>
                     </div>
                 `;
             } else {
@@ -956,125 +913,6 @@
                         <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;">REAL-TIME</span>
                     </div>
                 `;
-            }
-        }
-
-        // ── Physical Card Optical Liveness Camera Tester ────────────────────
-        let livenessStream = null;
-
-        async function openPhysicalLivenessTester() {
-            const modal = document.getElementById('livenessModal');
-            if (!modal) return;
-            modal.style.display = 'flex';
-            const cvvEl = document.getElementById('modalCardCvv');
-            if (cvvEl) cvvEl.textContent = window._currentCardCvv || 'SEC-84B';
-            const statusEl = document.getElementById('livenessStatusText');
-            if (statusEl) {
-                statusEl.textContent = 'Hold camera close to card...';
-                statusEl.style.color = '#f8fafc';
-            }
-
-            const video = document.getElementById('livenessVideo');
-            try {
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    livenessStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
-                    });
-                    video.srcObject = livenessStream;
-                    video.play();
-                    // Automatically analyze after 1.5s
-                    setTimeout(runOpticalAnalysis, 1500);
-                } else {
-                    throw new Error('Camera access not supported on this browser context');
-                }
-            } catch (e) {
-                console.warn('Camera stream error', e);
-                if (statusEl) statusEl.textContent = 'Manual Check: Verify Physical Seal & Card';
-                const details = document.getElementById('livenessDetails');
-                if (details) {
-                    details.innerHTML = `
-                        <div style="color: #f59e0b; margin-bottom: 6px;">📷 Camera reflection test unavailable (${e.message || 'permission denied'}).</div>
-                        <div>&bull; Confirm the cardholder is holding the physical plastic card.</div>
-                        <div>&bull; Confirm gold hologram seal is reflective.</div>
-                    `;
-                }
-            }
-        }
-
-        function closeLivenessModal() {
-            const modal = document.getElementById('livenessModal');
-            if (modal) modal.style.display = 'none';
-            if (livenessStream) {
-                livenessStream.getTracks().forEach(track => track.stop());
-                livenessStream = null;
-            }
-        }
-
-        function runOpticalAnalysis() {
-            const video = document.getElementById('livenessVideo');
-            const canvas = document.getElementById('livenessCanvas');
-            const statusText = document.getElementById('livenessStatusText');
-            const details = document.getElementById('livenessDetails');
-            if (!video || !canvas || video.readyState < 2) return;
-
-            canvas.width = 120;
-            canvas.height = 120;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, 120, 120);
-
-            const imgData = ctx.getImageData(0, 0, 120, 120);
-            const data = imgData.data;
-
-            // Detect high-frequency periodic gradient variance (screen Moire pattern and narrow RGB spikes)
-            let highFreqCount = 0;
-            let totalBrightness = 0;
-            let specularPixels = 0;
-
-            for (let i = 0; i < data.length - 4; i += 4) {
-                const r = data[i], g = data[i+1], b = data[i+2];
-                const rNext = data[i+4], gNext = data[i+5], bNext = data[i+6];
-                const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                const lumNext = 0.299 * rNext + 0.587 * gNext + 0.114 * bNext;
-                totalBrightness += lum;
-
-                const diff = Math.abs(lum - lumNext);
-                // Strong sharp pixel transitions typical of digital screen RGB subpixels
-                if (diff > 45) highFreqCount++;
-                // Specular screen glare hot spots
-                if (lum > 240) specularPixels++;
-            }
-
-            const avgLum = totalBrightness / (120 * 120);
-            const isScreenGlitter = (highFreqCount > 1800 && avgLum > 60) || (specularPixels > 300);
-
-            if (isScreenGlitter) {
-                if (statusText) {
-                    statusText.textContent = '⚠️ SCREEN GLITTER DETECTED!';
-                    statusText.style.color = '#ef4444';
-                }
-                if (details) {
-                    details.innerHTML = `
-                        <div style="background: rgba(239,68,68,0.15); border: 1px solid #ef4444; padding: 8px; border-radius: 6px; color: #fca5a5; margin-bottom: 6px;">
-                            <strong>⚠️ Caution: Screen Glare / Pixel Grid Pattern Detected!</strong><br>
-                            The optical reflection resembles an electronic OLED/LCD phone screen displaying a photo, rather than a matte PVC card.
-                        </div>
-                        &bull; Please inspect the physical card in hand to confirm it is not a photo on a screen.
-                    `;
-                }
-            } else {
-                if (statusText) {
-                    statusText.textContent = '✅ REAL PVC PLASTIC / MATTE SURFACE';
-                    statusText.style.color = '#10b981';
-                }
-                if (details) {
-                    details.innerHTML = `
-                        <div style="background: rgba(16,185,129,0.15); border: 1px solid #10b981; padding: 8px; border-radius: 6px; color: #a7f3d0; margin-bottom: 6px;">
-                            <strong>✅ Confirmed Physical Surface!</strong><br>
-                            Diffuse ambient light reflection and matte surface texture verified. No digital screen refresh grid detected.
-                        </div>
-                        &bull; Physical card surface authentic.
-                    `;
-                }
             }
         }
 
@@ -1252,12 +1090,25 @@
             populateLevel2Data(rider, sessionData);
         }
 
+        // Safe DOM helpers to avoid any uncaught TypeError
+        function safeSetText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = (text !== undefined && text !== null) ? text : '---';
+        }
+
+        function safeSetDisplay(id, display) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = display;
+        }
+
         function buildKinCards(contactsList, fallbackEc) {
             const list = document.getElementById('kinList');
             const extraList = document.getElementById('extraKinList');
             const extraSection = document.getElementById('extraKinSection');
-            list.innerHTML = '';
-            extraList.innerHTML = '';
+            const kinCard = document.getElementById('kinCard');
+            
+            if (list) list.innerHTML = '';
+            if (extraList) extraList.innerHTML = '';
             
             let contacts = [];
             if (contactsList && contactsList.length > 0) {
@@ -1267,44 +1118,47 @@
             }
             
             if (contacts.length === 0) {
-                document.getElementById('kinCard').style.display = 'none';
+                if (kinCard) kinCard.style.display = 'none';
                 return;
             }
 
-            document.getElementById('kinCard').style.display = 'block';
+            if (kinCard) kinCard.style.display = 'block';
 
             // Always show the first (primary) contact
             const primary = contacts[0];
-            if (primary && primary.phone) {
+            if (primary && primary.phone && list) {
+                const nameText = window.escapeHTML ? window.escapeHTML(primary.name || 'Emergency Contact') : (primary.name || 'Emergency Contact');
+                const relText = window.escapeHTML ? window.escapeHTML(primary.rel || primary.relationship || 'Primary Emergency Contact') : (primary.rel || primary.relationship || 'Primary Emergency Contact');
                 const row = document.createElement('div');
                 row.className = 'kin-row';
                 row.innerHTML = `
                     <div>
-                        <div class="kin-name">${primary.name || 'Emergency Contact'}</div>
-                        <div class="kin-rel">${primary.rel || primary.relationship || 'Primary Emergency Contact'}</div>
+                        <div class="kin-name">${nameText}</div>
+                        <div class="kin-rel">${relText}</div>
                     </div>
-                    <a href="tel:${primary.phone}" class="call-btn">📞 CALL</a>
+                    <a href="tel:${encodeURIComponent(primary.phone)}" class="call-btn">📞 CALL</a>
                 `;
                 list.appendChild(row);
             }
 
             // Additional contacts only visible after Level 2 unlock
             const additional = contacts.slice(1);
-            if (additional.length > 0) {
+            if (additional.length > 0 && extraList && extraSection) {
                 additional.forEach(c => {
                     if (!c.phone) return;
+                    const nameText = window.escapeHTML ? window.escapeHTML(c.name || 'Emergency Contact') : (c.name || 'Emergency Contact');
+                    const relText = window.escapeHTML ? window.escapeHTML(c.rel || c.relationship || 'Emergency Contact') : (c.rel || c.relationship || 'Emergency Contact');
                     const row = document.createElement('div');
                     row.className = 'kin-row';
                     row.innerHTML = `
                         <div>
-                            <div class="kin-name">${c.name || 'Emergency Contact'}</div>
-                            <div class="kin-rel">${c.rel || c.relationship || 'Emergency Contact'}</div>
+                            <div class="kin-name">${nameText}</div>
+                            <div class="kin-rel">${relText}</div>
                         </div>
-                        <a href="tel:${c.phone}" class="call-btn">📞 CALL</a>
+                        <a href="tel:${encodeURIComponent(c.phone)}" class="call-btn">📞 CALL</a>
                     `;
                     extraList.appendChild(row);
                 });
-                // extraKinSection is a level-2-data element — shown on unlock
                 extraSection.style.display = 'none'; // hidden by default, shown by unlock
             }
         }
@@ -1492,11 +1346,16 @@
         }
 
         async function loadSession() {
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const mainContent = document.getElementById('mainContent');
+
             // Extract session ID from URL path: /emergency/XXXXX
             const pathMatch = window.location.pathname.match(/\/emergency\/([^/?\s]+)/);
             if (!pathMatch) {
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('errorState').style.display = 'block';
+                if (loadingState) loadingState.style.display = 'none';
+                if (mainContent) mainContent.style.display = 'none';
+                if (errorState) errorState.style.display = 'block';
                 return;
             }
             const sessionId = pathMatch[1];
@@ -1504,46 +1363,45 @@
             try {
                 const res = await fetch('/api/emergency/' + sessionId);
                 const data = await res.json();
-                document.getElementById('loadingState').style.display = 'none';
 
-                if (!data.success) {
-                    document.getElementById('errorState').style.display = 'block';
+                if (!data || !data.success || !data.session) {
+                    if (loadingState) loadingState.style.display = 'none';
+                    if (mainContent) mainContent.style.display = 'none';
+                    if (errorState) errorState.style.display = 'block';
                     return;
                 }
 
                 sessionData = data.session;
                 const s = sessionData;
-                const rider = s.rider;
+                const rider = s.rider || {};
 
-                document.getElementById('mainContent').style.display = 'block';
-
-                // Scan Authenticity & Liveness Banner
+                // Scan Authenticity Banner (clean verified badge without test modal)
                 renderScanAuthBanner(s.scanDetails);
 
                 // Check if older than 6h
-                if (Date.now() - new Date(s.createdAt).getTime() > 6 * 60 * 60 * 1000) {
-                    document.getElementById('expiredBanner').style.display = 'block';
+                if (s.createdAt && (Date.now() - new Date(s.createdAt).getTime() > 6 * 60 * 60 * 1000)) {
+                    safeSetDisplay('expiredBanner', 'block');
                 }
 
                 // Banner
-                document.getElementById('sessionIdDisplay').textContent = s.sessionId;
-                document.getElementById('sessionLinkText').textContent = currentUrl;
+                safeSetText('sessionIdDisplay', s.sessionId || '---');
+                safeSetText('sessionLinkText', currentUrl);
 
                 // Identity (Level 1)
                 const isNonDriver = rider.userType === 'non-driver';
                 const plate = (rider.plateNumber || '---').toUpperCase();
-                document.getElementById('riderName').textContent = rider.name || '---';
+                safeSetText('riderName', rider.name || rider.fullName || '---');
                 if (isNonDriver) {
-                    document.getElementById('riderPlate').style.display = 'none';
+                    safeSetDisplay('riderPlate', 'none');
                 } else {
-                    document.getElementById('riderPlate').textContent = plate;
+                    safeSetText('riderPlate', plate);
+                    safeSetDisplay('riderPlate', 'inline-block');
                 }
-                document.getElementById('riderIdBadge').textContent = 'ID: ' + (rider.riderId || '---');
+                safeSetText('riderIdBadge', 'ID: ' + (rider.riderId || '---'));
 
                 if (rider.medical && rider.medical.gender) {
-                    const sBadge = document.getElementById('riderSexBadge');
-                    sBadge.textContent = 'Sex: ' + rider.medical.gender;
-                    sBadge.style.display = 'inline-block';
+                    safeSetText('riderSexBadge', 'Sex: ' + rider.medical.gender);
+                    safeSetDisplay('riderSexBadge', 'inline-block');
                 }
                 if (rider.medical && rider.medical.dateOfBirth) {
                     const dob = new Date(rider.medical.dateOfBirth);
@@ -1551,25 +1409,24 @@
                         const ageDiff = Date.now() - dob.getTime();
                         const ageDate = new Date(ageDiff);
                         const calculatedAge = Math.abs(ageDate.getUTCFullYear() - 1970);
-                        const aBadge = document.getElementById('riderAgeBadge');
-                        aBadge.textContent = 'Age: ' + calculatedAge;
-                        aBadge.style.display = 'inline-block';
+                        safeSetText('riderAgeBadge', 'Age: ' + calculatedAge);
+                        safeSetDisplay('riderAgeBadge', 'inline-block');
                     }
                 }
 
                 if (rider.documents && rider.documents.passportPhoto) {
                     const src = rider.documents.passportPhoto.url || rider.documents.passportPhoto;
-                    document.getElementById('riderPhoto').src = src;
+                    const photoEl = document.getElementById('riderPhoto');
+                    if (photoEl) photoEl.src = src;
                 }
 
                 // Medical (Level 1 Emergency Profile)
                 if (rider.medical) {
-                    document.getElementById('bloodGroup').textContent = rider.medical.bloodGroup || '---';
-                    document.getElementById('genotype').textContent = rider.medical.genotype || '---';
+                    safeSetText('bloodGroup', rider.medical.bloodGroup || '---');
+                    safeSetText('genotype', rider.medical.genotype || '---');
 
                     const allergies = rider.medical.allergies || 'None reported';
-                    const allergiesEl = document.getElementById('iceAllergies');
-                    if (allergiesEl) allergiesEl.textContent = allergies;
+                    safeSetText('iceAllergies', allergies);
                     const allergiesBox = document.getElementById('allergiesCallout');
                     if (allergiesBox) {
                         if (allergies.toLowerCase() !== 'none reported' && allergies.toLowerCase() !== 'none') {
@@ -1579,35 +1436,28 @@
                         }
                     }
 
-                    const conditions = rider.medical.conditions || 'None reported';
-                    const conditionsEl = document.getElementById('iceConditions');
-                    if (conditionsEl) conditionsEl.textContent = conditions;
-
-                    const meds = rider.medical.medications || 'None reported';
-                    const medsEl = document.getElementById('iceMedications');
-                    if (medsEl) medsEl.textContent = meds;
+                    safeSetText('iceConditions', rider.medical.conditions || 'None reported');
+                    safeSetText('iceMedications', rider.medical.medications || 'None reported');
 
                     if (rider.medical.refusesBloodTransfusion) {
-                        document.getElementById('noBloodBanner').style.display = 'block';
+                        safeSetDisplay('noBloodBanner', 'block');
                     }
                     if (rider.medical.advanceDirectiveStatement) {
-                        document.getElementById('directiveStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
-                        document.getElementById('emergencyDirectiveBlock').style.display = 'block';
+                        safeSetText('directiveStatement', '"' + rider.medical.advanceDirectiveStatement + '"');
+                        safeSetDisplay('emergencyDirectiveBlock', 'block');
                     }
 
                     const docName = rider.medical.primaryDoctorName || '';
                     const docPhone = rider.medical.primaryDoctorPhone || '';
                     const hosp = rider.medical.hospitalPreference || '';
-                    const docBlock = document.getElementById('doctorHospitalBlock');
                     if (docName || hosp) {
-                        if (docBlock) docBlock.style.display = 'block';
+                        safeSetDisplay('doctorHospitalBlock', 'block');
                         const docEl = document.getElementById('primaryDoctorLink');
                         if (docEl) {
                             docEl.textContent = [docName, docPhone].filter(Boolean).join(' - ') || 'Not specified';
                             if (docPhone) docEl.href = 'tel:' + docPhone;
                         }
-                        const hospEl = document.getElementById('hospitalDisplay');
-                        if (hospEl) hospEl.textContent = hosp || 'Not specified';
+                        safeSetText('hospitalDisplay', hosp || 'Not specified');
                     }
                 }
 
@@ -1622,9 +1472,26 @@
                 // Session timing
                 const created = new Date(s.createdAt);
                 const expires = new Date(created.getTime() + 6 * 60 * 60 * 1000);
-                document.getElementById('sessionIdSmall').textContent = s.sessionId;
-                document.getElementById('triggeredAt').textContent = fmt(s.createdAt);
-                document.getElementById('expiresAt').textContent = fmt(expires.toISOString());
+                safeSetText('sessionIdSmall', s.sessionId || '---');
+                safeSetText('triggeredAt', fmt(s.createdAt));
+                safeSetText('expiresAt', fmt(expires.toISOString()));
+
+                // Location
+                if (s.location) {
+                    const loc = s.location;
+                    safeSetText('locationName', loc.name || 'Unknown Location');
+                    if (loc.latitude && loc.longitude) {
+                        safeSetText('locationCoords', loc.latitude.toFixed(6) + ', ' + loc.longitude.toFixed(6));
+                        const ml = document.getElementById('mapsLink');
+                        if (ml) {
+                            ml.href = 'https://www.google.com/maps?q=' + loc.latitude + ',' + loc.longitude;
+                            ml.style.display = 'inline-flex';
+                        }
+                    }
+                    safeSetText('locationTime', '⏱ Captured: ' + fmt(s.createdAt));
+                } else {
+                    safeSetText('locationName', 'Location not shared');
+                }
 
                 // WhatsApp share
                 const shareText = encodeURIComponent(
@@ -1645,7 +1512,8 @@
                     if (d.startsWith('0')) d = '234' + d.substring(1);
                     waParam = '&phone=' + d;
                 }
-                document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText + waParam;
+                const waBtn = document.getElementById('waShareBtn');
+                if (waBtn) waBtn.href = 'https://api.whatsapp.com/send?text=' + shareText + waParam;
 
                 // Render Help Network concept
                 if (s.location && s.location.latitude && s.location.longitude) {
@@ -1666,10 +1534,22 @@
                     }
                 }
 
+                // Once completely rendered without error -> Reveal content, hide loading and error
+                if (loadingState) loadingState.style.display = 'none';
+                if (errorState) errorState.style.display = 'none';
+                if (mainContent) mainContent.style.display = 'block';
+
             } catch(err) {
-                console.error(err);
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('errorState').style.display = 'block';
+                console.error('Session loading error:', err);
+                if (loadingState) loadingState.style.display = 'none';
+                if (sessionData) {
+                    // Data was loaded from API, keep main content visible and hide errorState
+                    if (errorState) errorState.style.display = 'none';
+                    if (mainContent) mainContent.style.display = 'block';
+                } else {
+                    if (mainContent) mainContent.style.display = 'none';
+                    if (errorState) errorState.style.display = 'block';
+                }
             }
         }
 
@@ -1679,13 +1559,16 @@
             const vehicleInfo = rider.vehicle || rider.bike || {};
             
             if (isNonDriver) {
-                document.getElementById('licenseNumber').parentElement.style.display = 'none';
-                document.getElementById('vehicleColor').parentElement.style.display = 'none';
-                document.getElementById('vehicleType').parentElement.style.display = 'none';
+                const licEl = document.getElementById('licenseNumber');
+                if (licEl && licEl.parentElement) licEl.parentElement.style.display = 'none';
+                const colEl = document.getElementById('vehicleColor');
+                if (colEl && colEl.parentElement) colEl.parentElement.style.display = 'none';
+                const typEl = document.getElementById('vehicleType');
+                if (typEl && typEl.parentElement) typEl.parentElement.style.display = 'none';
             } else {
-                document.getElementById('licenseNumber').textContent = rider.documents?.licenseDoc?.number || '---';
-                document.getElementById('vehicleColor').textContent = vehicleInfo.color || '---';
-                document.getElementById('vehicleType').textContent = cap(rider.vehicleType || 'motorcycle');
+                safeSetText('licenseNumber', rider.documents?.licenseDoc?.number || '---');
+                safeSetText('vehicleColor', vehicleInfo.color || '---');
+                safeSetText('vehicleType', cap(rider.vehicleType || 'motorcycle'));
             }
             
             const phone = rider.phone || '---';
@@ -1697,99 +1580,64 @@
             } else {
                 maskedPhone = phone;
             }
-            document.getElementById('riderPhoneLink').textContent = maskedPhone;
-            document.getElementById('riderPhoneLink').removeAttribute('href');
-            document.getElementById('riderPhoneLink').style.cursor = 'default';
+            const phoneLink = document.getElementById('riderPhoneLink');
+            if (phoneLink) {
+                phoneLink.textContent = maskedPhone;
+                phoneLink.removeAttribute('href');
+                phoneLink.style.cursor = 'default';
+            }
 
             // Medical Details
             if (rider.medical) {
-                document.getElementById('genotype').textContent = rider.medical.genotype || '---';
-                document.getElementById('conditions').textContent = rider.medical.conditions || 'None reported';
-                document.getElementById('medications').textContent = rider.medical.medications || 'None reported';
-                document.getElementById('dateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
-                document.getElementById('nationality').textContent = rider.nationality || 'Not specified';
-                document.getElementById('immunizations').textContent = rider.medical.immunizations || 'None reported';
+                safeSetText('genotype', rider.medical.genotype || '---');
+                safeSetText('iceConditions', rider.medical.conditions || 'None reported');
+                safeSetText('iceMedications', rider.medical.medications || 'None reported');
+                safeSetText('immunizations', rider.medical.immunizations || 'None reported');
                 
                 const bodyArr = [];
                 if (rider.medical.height) bodyArr.push(`H: ${rider.medical.height}`);
                 if (rider.medical.weight) bodyArr.push(`W: ${rider.medical.weight}`);
                 if (rider.medical.gender) bodyArr.push(`Sex: ${rider.medical.gender}`);
-                document.getElementById('bodyMetrics').textContent = bodyArr.length > 0 ? bodyArr.join(' | ') : 'Not specified';
+                safeSetText('bodyMetrics', bodyArr.length > 0 ? bodyArr.join(' | ') : 'Not specified');
                 
-                document.getElementById('identifyingMarks').textContent = rider.medical.identifyingMarks || 'None';
+                safeSetText('identifyingMarks', rider.medical.identifyingMarks || 'None');
                 
                 // Directives
-                document.getElementById('organDonation').textContent = rider.medical.organDonor ? '✅ Yes' : '❌ No';
-                document.getElementById('donorRestrictions').textContent = rider.medical.donorRestrictions || 'None';
+                safeSetText('organDonation', rider.medical.organDonor ? '✅ Yes' : '❌ No');
                 
                 // Clinical
-                document.getElementById('surgeries').textContent = rider.medical.surgeries || 'None reported';
-                document.getElementById('recentVitals').textContent = rider.medical.recentVitals || 'None reported';
+                safeSetText('surgeries', rider.medical.surgeries || 'None reported');
+                safeSetText('recentVitals', rider.medical.recentVitals || 'None reported');
                 
                 // Accessibility
-                document.getElementById('communicationNeeds').textContent = rider.medical.communicationNeeds || 'None reported';
+                safeSetText('communicationNeeds', rider.medical.communicationNeeds || 'None reported');
                 const docStr = [rider.medical.primaryDoctorName, rider.medical.primaryDoctorPhone].filter(Boolean).join(' - ');
-                document.getElementById('primaryDoctor').textContent = docStr || 'Not specified';
-                document.getElementById('hospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                const docEl = document.getElementById('primaryDoctorLink');
+                if (docEl) docEl.textContent = docStr || 'Not specified';
+                safeSetText('hospitalDisplay', rider.medical.hospitalPreference || 'Not specified');
                 
                 const insStr = [rider.medical.healthInsuranceProvider, rider.medical.healthInsurancePolicy].filter(Boolean).join(' | No: ');
-                document.getElementById('healthInsurance').textContent = insStr || 'Not specified';
+                safeSetText('healthInsurance', insStr || 'Not specified');
 
                 if (rider.documents && rider.documents.healthInsuranceDoc) {
-                    document.getElementById('healthInsuranceDocBlock').style.display = 'block';
-                    document.getElementById('healthInsuranceDocBtn').href = rider.documents.healthInsuranceDoc.url;
+                    safeSetDisplay('healthInsuranceDocBlock', 'block');
+                    const insBtn = document.getElementById('healthInsuranceDocBtn');
+                    if (insBtn) insBtn.href = rider.documents.healthInsuranceDoc.url;
                 }
                 
                 if (rider.medical.advanceDirectiveStatement) {
-                    document.getElementById('directiveStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
-                    document.getElementById('emergencyDirectiveBlock').style.display = 'block';
+                    safeSetText('directiveStatement', '"' + rider.medical.advanceDirectiveStatement + '"');
+                    safeSetDisplay('emergencyDirectiveBlock', 'block');
                 }
             }
             if (rider.documents && rider.documents.advanceDirectiveDoc) {
-                document.getElementById('emergencyDirectiveBlock').style.display = 'block';
-                document.getElementById('directiveDocBtn').href = rider.documents.advanceDirectiveDoc.url;
-                document.getElementById('directiveDocBtn').style.display = 'block';
-            }
-
-            // Location
-            if (s.location) {
-                const loc = s.location;
-                document.getElementById('locationName').textContent = loc.name || 'Unknown Location';
-                if (loc.latitude && loc.longitude) {
-                    document.getElementById('locationCoords').textContent =
-                        loc.latitude.toFixed(6) + ', ' + loc.longitude.toFixed(6);
-                    const ml = document.getElementById('mapsLink');
-                    ml.href = 'https://www.google.com/maps?q=' + loc.latitude + ',' + loc.longitude;
-                    ml.style.display = 'inline-flex';
+                safeSetDisplay('emergencyDirectiveBlock', 'block');
+                const dirBtn = document.getElementById('directiveDocBtn');
+                if (dirBtn) {
+                    dirBtn.href = rider.documents.advanceDirectiveDoc.url;
+                    dirBtn.style.display = 'block';
                 }
-                document.getElementById('locationTime').textContent = '⏱ Captured: ' + fmt(s.createdAt);
-            } else {
-                document.getElementById('locationName').textContent = 'Location not shared';
             }
-            
-            // Update WhatsApp share with more info if location exists
-            const plate = (rider.plateNumber || '---').toUpperCase();
-            const shareText = encodeURIComponent(
-                '🚨 *EMERGENCY ALERT — MyVault SOS*\n\n' +
-                'A rider may need immediate assistance!\n\n' +
-                '👤 *Name:* ' + (rider.name || '---') + '\n' +
-                '🏍️ *Plate:* ' + plate + '\n' +
-                '📍 *Location:* ' + (s.location?.name || 'Unknown') + '\n' +
-                '🕐 *Time:* ' + fmt(s.createdAt) + '\n\n' +
-                'View full emergency profile:\n' + currentUrl
-            );
-            
-            let kinPhone2 = '';
-            if (rider.emergencyContact && rider.emergencyContact.phone) kinPhone2 = String(rider.emergencyContact.phone);
-            else if (rider.emergencyContacts && rider.emergencyContacts.length > 0 && rider.emergencyContacts[0].phone) kinPhone2 = String(rider.emergencyContacts[0].phone);
-            
-            let waParam2 = '';
-            if (kinPhone2) {
-                let d = kinPhone2.replace(/\D/g, '');
-                if (d.startsWith('0')) d = '234' + d.substring(1);
-                waParam2 = '&phone=' + d;
-            }
-            document.getElementById('waShareBtn').href = 'https://api.whatsapp.com/send?text=' + shareText + waParam2;
         }
 
         loadSession();

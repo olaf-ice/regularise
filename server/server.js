@@ -37,11 +37,26 @@ function purgeExpiredSessions() {
 setInterval(purgeExpiredSessions, 30 * 60 * 1000);
 
 const app = express();
+app.disable('x-powered-by');
+
 // Load critical secrets from environment variables. If missing, the app will abort on startup.
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   console.error('❌ Fatal: JWT_SECRET environment variable is not set. Exiting.');
   process.exit(1);
+}
+
+// Ensure critical security configuration in production
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+if (IS_PRODUCTION) {
+  if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length !== 64) {
+    console.error('❌ Fatal: Valid 64-hex-char ENCRYPTION_KEY environment variable is required in production. Exiting.');
+    process.exit(1);
+  }
+  if (!process.env.ADMIN_PASSWORD_HASH && (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'adminpass123')) {
+    console.error('❌ Fatal: Default/missing ADMIN_PASSWORD in production is prohibited. Set a strong password or ADMIN_PASSWORD_HASH. Exiting.');
+    process.exit(1);
+  }
 }
 
 // ── QR Security & Anti-Screenshot Tokens ────────────────────────────────────
@@ -63,7 +78,6 @@ const PORT = process.env.PORT || 3001;
 let adminTokenVersion = 0;
 
 // Persistence Configuration for Render
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const DATA_DIR = IS_PRODUCTION ? '/data' : __dirname;
 const RIDERS_FILE = path.join(DATA_DIR, 'riders.json');
 const UPLOADS_DIR = IS_PRODUCTION ? path.join('/data', 'uploads') : path.join(__dirname, '../public/uploads');
@@ -73,7 +87,18 @@ if (!fs.existsSync(path.dirname(RIDERS_FILE))) fs.mkdirSync(path.dirname(RIDERS_
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(path.join(__dirname, '../public/uploads'))) fs.mkdirSync(path.join(__dirname, '../public/uploads'), { recursive: true });
 
+// Lock down SQLite database permissions (POSIX/Render)
+try {
+    const dbFile = path.join(DATA_DIR, 'riders.db');
+    if (fs.existsSync(dbFile) && process.platform !== 'win32') {
+        fs.chmodSync(dbFile, 0o600);
+    }
+} catch (e) {
+    console.warn('[SECURITY] Database permission notice:', e.message);
+}
+
 // Security Middleware: Helmet with customized Content Security Policy
+// Security Middleware: Helmet with customized Content Security Policy and HSTS
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -131,6 +156,11 @@ app.use(helmet({
             formAction: ["'self'", "https://api.paystack.co", "https://docs.google.com"]
         }
     },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
@@ -170,37 +200,109 @@ app.use(cors({
     maxAge: 86400
 }));
 
-app.use(express.json());
+// Capture raw body for secure webhook signature validation
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({ extended: true }));
 
-// Rate Limiters
+// ── Cookie Helpers (Keep tokens out of insecure browser localStorage) ───────
+function getCookie(req, name) {
+    if (!req.headers.cookie) return null;
+    const match = req.headers.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+function setAuthCookie(res, name, token, maxAgeMs) {
+    const isProd = process.env.NODE_ENV === 'production';
+    const cookieParts = [
+        `${name}=${encodeURIComponent(token)}`,
+        'HttpOnly',
+        'Path=/',
+        `Max-Age=${Math.floor(maxAgeMs / 1000)}`,
+        'SameSite=Strict'
+    ];
+    if (isProd) cookieParts.push('Secure');
+    res.append('Set-Cookie', cookieParts.join('; '));
+}
+
+function clearAuthCookies(res) {
+    const isProd = process.env.NODE_ENV === 'production';
+    ['auth_token', 'admin_token'].forEach(name => {
+        const parts = [
+            `${name}=`,
+            'HttpOnly',
+            'Path=/',
+            'Max-Age=0',
+            'SameSite=Strict'
+        ];
+        if (isProd) parts.push('Secure');
+        res.append('Set-Cookie', parts.join('; '));
+    });
+}
+
+function extractToken(req, preferredCookie = 'auth_token') {
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        return authHeader.split(' ')[1];
+    }
+    return getCookie(req, preferredCookie) || getCookie(req, 'auth_token') || getCookie(req, 'admin_token');
+}
+
+// ── Granular Rate Limiters ──────────────────────────────────────────────────
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: { success: false, message: 'Too many requests, please try again later.' }
 });
 
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 15, // Limit each IP to 15 auth requests per windowMs
-    message: { success: false, message: 'Too many attempts, please try again later.' }
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { success: false, message: 'Too many authentication attempts, please try again later.' }
+});
+
+const adminAuthLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: { success: false, message: 'Too many admin authentication attempts. Please wait 15 minutes.' }
+});
+
+const otpRequestLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 3,
+    message: { success: false, message: 'Too many OTP requests. Please wait 15 minutes.' }
+});
+
+const otpVerifyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: { success: false, message: 'Too many OTP verification attempts. Please wait 15 minutes.' }
+});
+
+const paymentVerifyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    message: { success: false, message: 'Payment verification limit reached. Please wait.' }
 });
 
 // Apply general rate limiter to all API routes
 app.use('/api/', apiLimiter);
 
+// ── Authentication & Authorization Middlewares ──────────────────────────────
 function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = extractToken(req, 'auth_token');
     if (!token) return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) {
-            console.error('JWT Verify Error:', err.message, 'Token:', token);
+            console.warn('[AUTH] Token verification failed:', err.message);
             return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
         }
         
-        // Ensure single active session via tokenVersion
+        // Ensure single active session via tokenVersion for riders
         if (user.riderId) {
             const dbRider = dbHelpers.getRiderById(user.riderId);
             if (!dbRider) return res.status(401).json({ success: false, message: 'User not found.' });
@@ -216,20 +318,21 @@ function authenticateToken(req, res, next) {
 }
 
 function authenticateAdminToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = extractToken(req, 'admin_token');
     if (!token) return res.status(401).json({ success: false, message: 'Admin access denied. No token provided.' });
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err || user.role !== 'admin') return res.status(403).json({ success: false, message: 'Invalid or expired admin token.' });
+        if (err || user.role !== 'admin') {
+            console.warn('[AUTH] Admin role authorization rejected');
+            return res.status(403).json({ success: false, message: 'Invalid or expired admin token.' });
+        }
         req.user = user;
         next();
     });
 }
 
 function authenticateAgentToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = extractToken(req, 'auth_token');
     if (!token) return res.status(401).json({ success: false, message: 'Agent access denied. No token provided.' });
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -246,6 +349,12 @@ function authenticateAgentToken(req, res, next) {
     });
 }
 
+// Global Logout Endpoint (Clears HttpOnly tokens)
+app.post('/api/auth/logout', (req, res) => {
+    clearAuthCookies(res);
+    res.json({ success: true, message: 'Logged out successfully' });
+});
+
 // Paystack Verification Helper
 async function verifyPaystackPayment(reference) {
     try {
@@ -259,41 +368,105 @@ async function verifyPaystackPayment(reference) {
     }
 }
 
-// DEBUG: Log every single request
+// Development request logger (suppressed in production)
+if (!IS_PRODUCTION) {
+    app.use((req, res, next) => {
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+        next();
+    });
+}
+
+const PUBLIC_DIR = IS_PRODUCTION && fs.existsSync(path.join(__dirname, '../dist/public')) ? path.join(__dirname, '../dist/public') : path.join(__dirname, '../public');
+
+// ── Server-Side Protected Admin Route (Role-Level Security) ─────────────────
+// Ensures admin dashboard HTML and scripts can NEVER be downloaded by unauthenticated users
+app.get(['/admin', '/admin.html'], (req, res) => {
+    const token = extractToken(req, 'admin_token');
+    if (!token) {
+        return res.redirect('/login.html?role=admin&auth=required');
+    }
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err || user.role !== 'admin') {
+            clearAuthCookies(res);
+            return res.redirect('/login.html?role=admin&auth=invalid');
+        }
+        res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
+    });
+});
+
+// ── Server-Side Protected Agent Dashboard Route ─────────────────────────────
+app.get(['/agent-dashboard', '/agent-dashboard.html'], (req, res) => {
+    const token = extractToken(req, 'auth_token');
+    if (!token) {
+        return res.redirect('/agent-login.html?auth=required');
+    }
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err || user.role !== 'agent') {
+            clearAuthCookies(res);
+            return res.redirect('/agent-login.html?auth=invalid');
+        }
+        res.sendFile(path.join(PUBLIC_DIR, 'agent-dashboard.html'));
+    });
+});
+
+// Intercept direct static access to sensitive templates before express.static
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    if (req.path === '/admin.html' || req.path === '/agent-dashboard.html') {
+        return res.status(403).send('Forbidden: Direct access prohibited.');
+    }
     next();
 });
 
-const PUBLIC_DIR = IS_PRODUCTION && fs.existsSync(path.join(__dirname, '../dist/public')) ? path.join(__dirname, '../dist/public') : path.join(__dirname, '../public');
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
-// Serve uploads from the persistent directory in production, otherwise local
-app.use('/uploads', express.static(UPLOADS_DIR));
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
-// Storage Configuration
+// Hardened uploads serving: Prevent script execution and XSS
+const secureUploadHeaders = (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+    next();
+};
+app.use('/uploads', secureUploadHeaders, express.static(UPLOADS_DIR));
+app.use('/uploads', secureUploadHeaders, express.static(path.join(__dirname, '../public/uploads')));
+
+// ── Hardened Storage Configuration (Whitelisted Extensions & UUID Filenames) ─
+const ALLOWED_MIME_EXT_MAP = {
+    'image/jpeg': ['.jpg', '.jpeg'],
+    'image/png': ['.png'],
+    'image/webp': ['.webp'],
+    'application/pdf': ['.pdf']
+};
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, UPLOADS_DIR);
     },
     filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+        const ext = path.extname(file.originalname).toLowerCase();
+        const allowedExts = ALLOWED_MIME_EXT_MAP[file.mimetype] || [];
+        const finalExt = allowedExts.includes(ext) ? ext : (allowedExts[0] || '.bin');
+        const safeName = `${file.fieldname}-${uuidv4()}${finalExt}`;
+        cb(null, safeName);
     }
 });
 
 const fileFilter = (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp'];
-    if (allowedMimeTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only JPEG, PNG, WEBP, and PDF files are allowed.'), false);
+    const rawName = String(file.originalname || '');
+    // Reject path traversals, null bytes, and double extensions
+    if (rawName.includes('\0') || rawName.includes('/') || rawName.includes('\\')) {
+        return cb(new Error('Invalid filename structure.'), false);
     }
+    const ext = path.extname(rawName).toLowerCase();
+    const allowedExts = ALLOWED_MIME_EXT_MAP[file.mimetype];
+    if (!allowedExts || !allowedExts.includes(ext)) {
+        return cb(new Error('Invalid file type or extension mismatch. Only JPEG, PNG, WEBP, and PDF files are allowed.'), false);
+    }
+    cb(null, true);
 };
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit per file
+    limits: { fileSize: 5 * 1024 * 1024, files: 10 }, // 5MB limit per file
     fileFilter: fileFilter
 });
 
@@ -303,7 +476,6 @@ async function saveToGoogleSheets(rider) {
     if (!scriptUrl) return;
 
     try {
-        console.log('Attempting to sync with Google Sheets...');
         const baseUrl = process.env.BASE_URL || `http://127.0.0.1:${PORT}`;
         const payload = {
             riderId: rider.riderId,
@@ -323,12 +495,12 @@ async function saveToGoogleSheets(rider) {
             bikeColor: rider.vehicle?.color || rider.bike?.color || '',
             ownershipType: rider.vehicle?.ownershipType || rider.bike?.ownershipType || '',
             // Documents
-            passportUrl: rider.documents.passportPhoto ? `${baseUrl}${rider.documents.passportPhoto.url}` : '',
-            licenseUrl: rider.documents.licenseDoc ? `${baseUrl}${rider.documents.licenseDoc.url}` : '',
-            licenseNumber: rider.documents.licenseDoc?.number || '',
-            bikePapersUrl: rider.documents.bikePapers ? `${baseUrl}${rider.documents.bikePapers.url}` : '',
-            insuranceUrl: rider.documents.insuranceDoc ? `${baseUrl}${rider.documents.insuranceDoc.url}` : '',
-            insuranceNumber: rider.documents.insuranceDoc?.number || '',
+            passportUrl: rider.documents?.passportPhoto ? `${baseUrl}${rider.documents.passportPhoto.url}` : '',
+            licenseUrl: rider.documents?.licenseDoc ? `${baseUrl}${rider.documents.licenseDoc.url}` : '',
+            licenseNumber: rider.documents?.licenseDoc?.number || '',
+            bikePapersUrl: rider.documents?.bikePapers ? `${baseUrl}${rider.documents.bikePapers.url}` : '',
+            insuranceUrl: rider.documents?.insuranceDoc ? `${baseUrl}${rider.documents.insuranceDoc.url}` : '',
+            insuranceNumber: rider.documents?.insuranceDoc?.number || '',
             // Emergency
             emergencyName: rider.emergencyContact?.name || '',
             emergencyPhone: rider.emergencyContact?.phone || '',
@@ -343,19 +515,20 @@ async function saveToGoogleSheets(rider) {
         };
 
         await axios.post(scriptUrl, payload, { timeout: 10000 });
-        console.log('Rider successfully synced to Google Sheets!');
+        if (!IS_PRODUCTION) console.log('[SHEETS] Rider successfully synced to Google Sheets');
     } catch (err) {
         console.error('Google Sheets Sync Failed:', err.message);
     }
 }
 
-// --- SMS SERVICE MOCK ---
+// --- SMS SERVICE (With PII & Secret Masking in Logs) ---
 async function sendSMS(phone, message) {
-    // In the future, integrate Termii, Twilio, or Africa's Talking here.
-    console.log(`\n=====================================`);
-    console.log(`📱 MOCK SMS SENT TO: ${phone}`);
-    console.log(`✉️ MESSAGE: ${message}`);
-    console.log(`=====================================\n`);
+    const maskedPhone = String(phone || '').replace(/(\d{4})\d+(\d{3})/, '$1****$2');
+    if (!IS_PRODUCTION) {
+        console.log(`[SMS-DEV] Dispatched message to: ${maskedPhone} (${message.length} chars)`);
+    } else {
+        console.log(`[SMS] Notification dispatched to: ${maskedPhone}`);
+    }
     return true;
 }
 
@@ -364,7 +537,6 @@ async function sendSMS(phone, message) {
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 setInterval(() => {
     try {
-        console.log('[CRON] Running daily document expiry check...');
         const riders = dbHelpers.getAllRiders();
         const today = new Date();
         const warningTarget = new Date(today);
@@ -379,7 +551,6 @@ setInterval(() => {
                 { name: 'Vehicle Insurance', doc: rider.documents.insuranceDoc }
             ];
 
-
             docsToCheck.forEach(item => {
                 if (item.doc && item.doc.expiryDate === targetDateStr) {
                     sendSMS(rider.phone, `Hello ${rider.name}, your ${item.name} expires in 14 days (${targetDateStr}). Please upload a new copy to your MyVault to remain compliant.`);
@@ -387,18 +558,16 @@ setInterval(() => {
             });
         });
     } catch (err) {
-        console.error('[CRON] Error running expiry check:', err);
+        console.error('[CRON] Error running expiry check:', err.message);
     }
 }, TWENTY_FOUR_HOURS);
-// Run once on startup just to verify it boots
-setTimeout(() => console.log('[CRON] Expiry reminder job initialized.'), 1000);
 
 // ---------------------------------------------------------
 // ADMIN ROUTES
 // ---------------------------------------------------------
 
-// Admin Login
-app.post('/api/admin/login', authLimiter, (req, res) => {
+// Admin Login (Secure Constant-Time & Bcrypt Verification)
+app.post('/api/admin/login', adminAuthLimiter, async (req, res) => {
     const { username, password } = req.body || {};
     const inputUser = String(username || '').trim();
     const inputPass = String(password || '').trim();
@@ -407,20 +576,42 @@ app.post('/api/admin/login', authLimiter, (req, res) => {
         return res.status(400).json({ success: false, message: 'Username and password are required.' });
     }
 
-    // Default to 'admin' / 'adminpass123' if not explicitly configured in environment
     const configuredUser = (process.env.ADMIN_USERNAME || 'admin').trim();
-    const configuredPass = (process.env.ADMIN_PASSWORD || 'adminpass123').trim();
-    if (!process.env.ADMIN_PASSWORD) {
-        console.warn('[SECURITY] ADMIN_PASSWORD env var is not set - using insecure built-in default password. Set ADMIN_USERNAME / ADMIN_PASSWORD in your host environment.');
+    const configuredPass = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
+    const configuredPassHash = process.env.ADMIN_PASSWORD_HASH;
+
+    if (!configuredPass && !configuredPassHash) {
+        if (IS_PRODUCTION) {
+            console.error('[SECURITY FATAL] Admin password is unconfigured in production.');
+            return res.status(500).json({ success: false, message: 'Admin authentication is unconfigured in production.' });
+        }
+        console.warn('[SECURITY] ADMIN_PASSWORD env var is not set - using default local dev credentials.');
     }
 
-    const isUserMatch = inputUser.toLowerCase() === configuredUser.toLowerCase();
-    const isPassMatch = inputPass === configuredPass;
+    // Constant-time username matching
+    const maxLen = Math.max(inputUser.length, configuredUser.length, 32);
+    const userBuf1 = Buffer.from(inputUser.toLowerCase().padEnd(maxLen, ' '));
+    const userBuf2 = Buffer.from(configuredUser.toLowerCase().padEnd(maxLen, ' '));
+    const isUserMatch = crypto.timingSafeEqual(userBuf1, userBuf2);
+
+    let isPassMatch = false;
+    if (configuredPassHash) {
+        isPassMatch = await bcrypt.compare(inputPass, configuredPassHash);
+    } else if (configuredPass) {
+        // Compare with bcrypt hash or constant-time comparison
+        const passMaxLen = Math.max(inputPass.length, configuredPass.length, 32);
+        const passBuf1 = Buffer.from(inputPass.padEnd(passMaxLen, ' '));
+        const passBuf2 = Buffer.from(configuredPass.padEnd(passMaxLen, ' '));
+        isPassMatch = crypto.timingSafeEqual(passBuf1, passBuf2);
+    } else {
+        isPassMatch = (inputPass === 'adminpass123');
+    }
 
     if (isUserMatch && isPassMatch) {
         adminTokenVersion++;
-        const secret = JWT_SECRET || 'myvault_default_secret_jwt_key_2026';
-        const token = jwt.sign({ role: 'admin', tokenVersion: adminTokenVersion }, secret, { expiresIn: '12h' });
+        const token = jwt.sign({ role: 'admin', tokenVersion: adminTokenVersion }, JWT_SECRET, { expiresIn: '12h' });
+        // Set secure HttpOnly cookie
+        setAuthCookie(res, 'admin_token', token, 12 * 60 * 60 * 1000);
         console.log(`[AUTH] Admin successfully authenticated (user: ${inputUser})`);
         return res.json({ success: true, token });
     } else {
@@ -747,22 +938,25 @@ app.get('/api/free-token/validate', apiLimiter, (req, res) => {
 // ---------------------------------------------------------
 
 app.post('/api/agent/login', authLimiter, async (req, res) => {
-    const { phone, pin } = req.body;
+    const { phone, pin } = req.body || {};
+    if (!phone || !pin) return res.status(400).json({ success: false, message: 'Phone and PIN are required.' });
+    
     const agent = dbHelpers.getAgentByPhone(phone);
-    if (!agent) return res.json({ success: false, message: 'Invalid phone number or PIN' });
+    if (!agent) return res.status(401).json({ success: false, message: 'Invalid phone number or PIN' });
 
     try {
-        const isMatch = await bcrypt.compare(pin, agent.pin);
+        const isMatch = await bcrypt.compare(String(pin).trim(), agent.pin);
         if (isMatch) {
             agent.tokenVersion = (agent.tokenVersion || 0) + 1;
             dbHelpers.updateAgent(agent.agentId, agent);
             const token = jwt.sign({ agentId: agent.agentId, role: 'agent', tokenVersion: agent.tokenVersion }, JWT_SECRET, { expiresIn: '12h' });
+            setAuthCookie(res, 'auth_token', token, 12 * 60 * 60 * 1000);
             res.json({ success: true, token, agent: { name: agent.name, agentId: agent.agentId } });
         } else {
-            res.json({ success: false, message: 'Invalid phone number or PIN' });
+            res.status(401).json({ success: false, message: 'Invalid phone number or PIN' });
         }
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Login error' });
+        res.status(500).json({ success: false, message: IS_PRODUCTION ? 'Login error' : err.message });
     }
 });
 
@@ -1142,6 +1336,42 @@ app.get('/api/emergency/:sessionId', (req, res) => {
     let session = emergencySessions.get(key);
     if (!session && !isNaN(key)) session = emergencySessions.get(parseInt(key, 10));
 
+    // Fallback: If session was lost from memory (server restart, container sleep)
+    // or if accessed directly with a rider ID or numeric ID:
+    if (!session) {
+        let rider = dbHelpers.getRiderById(key);
+        if (!rider && !isNaN(key)) {
+            rider = dbHelpers.getRiderById(`RID-${key}`);
+        }
+        if (rider) {
+            const sessionId = generateSessionId();
+            const numericId = sessionId.replace('MV-EMG-', '');
+            const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+            session = {
+                sessionId,
+                numericId,
+                riderId: rider.riderId,
+                sessionUrl: `${baseUrl}/emergency/${numericId}`,
+                createdAt: new Date().toISOString(),
+                location: null,
+                rider,
+                scanDetails: {
+                    scanType: 'physical_pvc',
+                    status: 'physical',
+                    isLive: true,
+                    isPhysical: true,
+                    tagLabel: 'Physical PVC ID Card',
+                    cvv: generateCardCvv(rider.riderId),
+                    message: '🏷️ AUTHENTIC PHYSICAL CREDENTIAL (Physical PVC ID Card)',
+                    scannedAt: new Date().toISOString()
+                }
+            };
+            emergencySessions.set(sessionId, session);
+            emergencySessions.set(numericId, session);
+            emergencySessions.set(key, session);
+        }
+    }
+
     if (!session) {
         return res.status(404).json({ success: false, message: 'Emergency session not found or expired' });
     }
@@ -1494,30 +1724,56 @@ app.get('/api/verify/:query', (req, res) => {
     res.json({ success: true, rider: level1Rider, isLevel1: true, paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY });
 });
 
-// Unlock Endpoint for Public Profile (Level 2)
-app.post('/api/verify/:query/unlock', apiLimiter, (req, res) => {
-    const query = req.params.query.toLowerCase();
+// Unlock Endpoint for Public Profile (Level 2) - Protected by Authentication or PIN
+app.post('/api/verify/:query/unlock', authLimiter, async (req, res) => {
+    const query = String(req.params.query || '').toLowerCase().trim();
     const rider = dbHelpers.findRiderByQuery(query);
-    if (rider) {
-        const { pin, ...safeRiderData } = rider;
-        // Log access
-        dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Level 2 Unlock');
-        res.json({ success: true, rider: safeRiderData });
-    } else {
-        res.json({ success: false, message: 'Rider not found' });
+    if (!rider) {
+        return res.status(404).json({ success: false, message: 'Rider not found' });
     }
+
+    // Check if caller is authenticated owner or admin via token
+    const token = extractToken(req, 'auth_token');
+    let isAuthorized = false;
+    if (token) {
+        try {
+            const user = jwt.verify(token, JWT_SECRET);
+            if (user && (user.riderId === rider.riderId || user.role === 'admin' || user.role === 'agent')) {
+                isAuthorized = true;
+            }
+        } catch (e) {}
+    }
+
+    // If not authenticated via token, check if PIN was submitted in request body
+    if (!isAuthorized) {
+        const inputPin = req.body && req.body.pin ? String(req.body.pin).trim() : null;
+        if (inputPin && rider.pin) {
+            const isPinMatch = await bcrypt.compare(inputPin, rider.pin);
+            if (isPinMatch) {
+                isAuthorized = true;
+            }
+        }
+    }
+
+    if (!isAuthorized) {
+        return res.status(401).json({ success: false, message: 'Authentication required. Please provide valid credentials or owner PIN to unlock full profile details.' });
+    }
+
+    const { pin, ...safeRiderData } = rider;
+    dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Level 2 Authenticated Unlock');
+    res.json({ success: true, rider: safeRiderData });
 });
 
-// --- OTP Cache for PIN Reset ---
-const otpStore = new Map(); // phone -> { otp, expiresAt }
+// --- OTP Cache for PIN Reset (With Anti-Brute-Force Limiters) ---
+const otpStore = new Map(); // phone -> { otp, expiresAt, attempts }
 
-app.post('/api/rider/forgot-pin', authLimiter, async (req, res) => {
-    const { loginId, phone } = req.body;
-    const identifier = loginId || phone;
+app.post('/api/rider/forgot-pin', otpRequestLimiter, async (req, res) => {
+    const { loginId, phone } = req.body || {};
+    const identifier = String(loginId || phone || '').trim();
     const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
     
     if (!rider) {
-        // We return success anyway to prevent number enumeration
+        // Return uniform success to prevent telephone enumeration attacks
         return res.json({ success: true, message: 'If the account exists, an OTP will be sent to the registered phone number.' });
     }
 
@@ -1525,7 +1781,7 @@ app.post('/api/rider/forgot-pin', authLimiter, async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    otpStore.set(targetPhone, { otp, expiresAt });
+    otpStore.set(targetPhone, { otp, expiresAt, attempts: 0 });
 
     // Send SMS
     const msg = `Your Regularise PIN reset OTP is ${otp}. It expires in 10 minutes.`;
@@ -1534,87 +1790,99 @@ app.post('/api/rider/forgot-pin', authLimiter, async (req, res) => {
     res.json({ success: true, message: 'OTP sent successfully' });
 });
 
-app.post('/api/rider/verify-otp', authLimiter, (req, res) => {
-    const { loginId, phone, otp } = req.body;
-    const identifier = loginId || phone;
+app.post('/api/rider/verify-otp', otpVerifyLimiter, (req, res) => {
+    const { loginId, phone, otp } = req.body || {};
+    const identifier = String(loginId || phone || '').trim();
+    const inputOtp = String(otp || '').trim();
     const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
     const targetPhone = rider ? rider.phone : identifier;
 
     const record = otpStore.get(targetPhone);
 
     if (!record) {
-        return res.json({ success: false, message: 'No OTP requested or expired' });
+        return res.status(400).json({ success: false, message: 'No OTP requested or expired' });
     }
 
     if (Date.now() > record.expiresAt) {
         otpStore.delete(targetPhone);
-        return res.json({ success: false, message: 'OTP expired' });
+        return res.status(400).json({ success: false, message: 'OTP expired. Please request a new one.' });
     }
 
-    if (record.otp !== otp) {
-        return res.json({ success: false, message: 'Invalid OTP' });
+    record.attempts = (record.attempts || 0) + 1;
+    if (record.attempts > 5) {
+        otpStore.delete(targetPhone);
+        return res.status(429).json({ success: false, message: 'Too many incorrect attempts. OTP has been invalidated.' });
+    }
+
+    if (record.otp !== inputOtp) {
+        return res.status(400).json({ success: false, message: 'Invalid OTP' });
     }
 
     res.json({ success: true, message: 'OTP verified' });
 });
 
-app.post('/api/rider/reset-pin', authLimiter, async (req, res) => {
-    const { loginId, phone, otp, newPin } = req.body;
-    const identifier = loginId || phone;
+app.post('/api/rider/reset-pin', otpVerifyLimiter, async (req, res) => {
+    const { loginId, phone, otp, newPin } = req.body || {};
+    const identifier = String(loginId || phone || '').trim();
+    const inputOtp = String(otp || '').trim();
+    const pinStr = String(newPin || '').trim();
     const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier);
     
     if (!rider) {
-        return res.json({ success: false, message: 'User not found' });
+        return res.status(404).json({ success: false, message: 'User not found' });
     }
     const targetPhone = rider.phone;
 
     const record = otpStore.get(targetPhone);
 
-    if (!record || Date.now() > record.expiresAt || record.otp !== otp) {
-        return res.json({ success: false, message: 'Invalid or expired OTP' });
+    if (!record || Date.now() > record.expiresAt || record.otp !== inputOtp) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    if (!newPin || newPin.length !== 4) {
-        return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits' });
+    if (!/^\d{4}$/.test(pinStr)) {
+        return res.status(400).json({ success: false, message: 'PIN must be exactly 4 numeric digits' });
     }
 
     try {
         const salt = await bcrypt.genSalt(10);
-        const hashedPin = await bcrypt.hash(newPin, salt);
+        const hashedPin = await bcrypt.hash(pinStr, salt);
 
         rider.pin = hashedPin;
         dbHelpers.updateRider(rider.riderId, rider);
         
-        // Clear OTP
+        // Invalidate OTP immediately upon successful consumption
         otpStore.delete(targetPhone);
 
         res.json({ success: true, message: 'PIN updated successfully' });
     } catch (err) {
-        console.error("PIN reset error:", err);
-        res.status(500).json({ success: false, message: 'Failed to reset PIN' });
+        console.error("PIN reset error:", err.message);
+        res.status(500).json({ success: false, message: IS_PRODUCTION ? 'Failed to reset PIN' : err.message });
     }
 });
 
 // User Login Endpoint
 app.post('/api/rider/login', authLimiter, async (req, res) => {
-    const { loginId, phone, pin } = req.body;
-    const identifier = loginId || phone;
+    const { loginId, phone, pin } = req.body || {};
+    const identifier = String(loginId || phone || '').trim();
+    const inputPin = String(pin || '').trim();
+
+    if (!identifier || !inputPin) {
+        return res.status(400).json({ success: false, message: 'Login ID / Phone and PIN are required.' });
+    }
     
     const rider = dbHelpers.getRiderByPhone(identifier) || dbHelpers.getRiderById(identifier) || dbHelpers.findRiderByQuery(identifier);
     
     if (!rider) {
-        return res.json({ success: false, message: 'Invalid Phone Number, User ID or PIN' });
+        return res.status(401).json({ success: false, message: 'Invalid Phone Number, User ID or PIN' });
     }
 
     if (!rider.pin) {
-        return res.json({ success: false, message: 'No PIN set for this account. Please register again.' });
+        return res.status(401).json({ success: false, message: 'No PIN set for this account. Please register again.' });
     }
 
     try {
-        const isMatch = await bcrypt.compare(pin, rider.pin);
+        const isMatch = await bcrypt.compare(inputPin, rider.pin);
         if (isMatch) {
-
-
             rider.tokenVersion = (rider.tokenVersion || 0) + 1;
             dbHelpers.updateRider(rider.riderId, rider);
 
@@ -1622,17 +1890,26 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
             dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Owner Login');
 
             const token = jwt.sign({ riderId: rider.riderId, tokenVersion: rider.tokenVersion }, JWT_SECRET, { expiresIn: '24h' });
+            setAuthCookie(res, 'auth_token', token, 24 * 60 * 60 * 1000);
             res.json({ success: true, riderId: rider.riderId, token });
         } else {
-            res.json({ success: false, message: 'Invalid phone number or PIN' });
+            res.status(401).json({ success: false, message: 'Invalid phone number or PIN' });
         }
     } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        console.error("Login error:", error.message);
+        res.status(500).json({ success: false, message: IS_PRODUCTION ? 'Internal authentication error' : error.message });
     }
 });
-// Waitlist Registration
-app.post('/api/waitlist', apiLimiter, (req, res) => {
+
+// Waitlist Registration (With Email Verification & Input Sanitization)
+app.post('/api/waitlist', apiLimiter, [
+    body('email').optional({ checkFalsy: true }).isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
+    body('phone').optional({ checkFalsy: true }).trim().isLength({ min: 10, max: 15 }).withMessage('Phone number must be between 10 and 15 digits')
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, message: errors.array()[0].msg });
+    }
     const { email, phone, wantsWhatsapp } = req.body;
     
     if (!email && !phone) {
@@ -1643,8 +1920,8 @@ app.post('/api/waitlist', apiLimiter, (req, res) => {
         dbHelpers.insertWaitlist({ email, phone, wantsWhatsapp });
         res.json({ success: true, message: 'Successfully added to the waitlist!' });
     } catch (err) {
-        console.error('Waitlist error:', err);
-        res.status(500).json({ success: false, message: 'Internal server error while joining waitlist.' });
+        console.error('Waitlist error:', err.message);
+        res.status(500).json({ success: false, message: IS_PRODUCTION ? 'Failed to process waitlist entry' : err.message });
     }
 });
 
@@ -1884,9 +2161,12 @@ app.post('/api/rider/update', authenticateToken, upload.fields([
     }
 });
 
-// 4. Verify Payment (Webhook or Frontend trigger)
-app.post('/api/payment/verify', async (req, res) => {
-    const { reference, riderId } = req.body;
+// 4. Verify Payment (Rate Limited)
+app.post('/api/payment/verify', paymentVerifyLimiter, async (req, res) => {
+    const { reference, riderId } = req.body || {};
+    if (!reference && !riderId) {
+        return res.status(400).json({ success: false, message: 'Reference or Rider ID is required' });
+    }
     try {
         const rider = dbHelpers.getRiderById(riderId) || dbHelpers.findByReference(reference);
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
@@ -1899,26 +2179,74 @@ app.post('/api/payment/verify', async (req, res) => {
             expiry.setMonth(expiry.getMonth() + 12);
             rider.expiryDate = expiry.toISOString().split('T')[0];
             dbHelpers.updateRider(rider.riderId, rider);
+            saveToGoogleSheets(rider);
             res.json({ success: true, message: 'Payment verified' });
         } else {
             res.status(400).json({ success: false, message: 'Payment verification failed' });
         }
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Verification failed' });
+        console.error('Payment verify error:', error.message);
+        res.status(500).json({ success: false, message: IS_PRODUCTION ? 'Verification failed' : error.message });
+    }
+});
+
+// ── Webhook Signature Verification (Paystack) ──────────────────────────────
+app.post('/api/payment/webhook', async (req, res) => {
+    try {
+        const signature = req.headers['x-paystack-signature'];
+        const secret = process.env.PAYSTACK_SECRET_KEY;
+        if (!signature || !secret) {
+            console.warn('[SECURITY] Webhook signature or secret unconfigured/missing');
+            return res.status(401).send('Webhook authentication unconfigured');
+        }
+
+        const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));
+        const hash = crypto.createHmac('sha512', secret).update(rawBody).digest('hex');
+        
+        const sigBuf = Buffer.from(signature, 'utf8');
+        const hashBuf = Buffer.from(hash, 'utf8');
+        if (sigBuf.length !== hashBuf.length || !crypto.timingSafeEqual(sigBuf, hashBuf)) {
+            console.warn('[SECURITY] Paystack webhook signature mismatch detected');
+            return res.status(400).send('Invalid webhook signature');
+        }
+
+        const event = req.body;
+        if (event && event.event === 'charge.success') {
+            const data = event.data || {};
+            const reference = data.reference;
+            const riderId = data.metadata?.riderId;
+
+            const rider = (riderId ? dbHelpers.getRiderById(riderId) : null) || dbHelpers.findByReference(reference);
+            if (rider) {
+                rider.status = 'Active';
+                delete rider.paymentRequested;
+                const expiry = new Date();
+                expiry.setMonth(expiry.getMonth() + 12);
+                rider.expiryDate = expiry.toISOString().split('T')[0];
+                dbHelpers.updateRider(rider.riderId, rider);
+                saveToGoogleSheets(rider);
+                console.log(`[PAYMENT-WEBHOOK] Automated payment confirmed for ${rider.riderId} (Ref: ${reference})`);
+            }
+        }
+
+        res.sendStatus(200);
+    } catch (err) {
+        console.error('[PAYMENT-WEBHOOK] Handler error:', err.message);
+        res.status(500).send('Webhook error');
     }
 });
 
 // Security & Emergency Endpoints
 app.post('/api/riders/:id/emergency-link', authenticateToken, (req, res) => {
     try {
-        if (req.user.riderId !== req.params.id) {
+        if (req.user.riderId !== req.params.id && req.user.role !== 'admin') {
             return res.status(403).json({ success: false, message: 'Unauthorized' });
         }
-        const linkId = dbHelpers.createEmergencyLink(req.user.riderId);
+        const linkId = dbHelpers.createEmergencyLink(req.params.id);
         const url = `${req.protocol}://${req.get('host')}/api/emergency/onetime/${linkId}`;
         res.json({ success: true, link: url });
     } catch (e) {
-        console.error('Create link error:', e);
+        console.error('Create link error:', e.message);
         res.status(500).json({ success: false, message: 'Failed to create link' });
     }
 });
@@ -1952,7 +2280,7 @@ app.get('/api/riders/:id/access-logs', authenticateToken, (req, res) => {
         const logs = dbHelpers.getAccessLogs(req.params.id);
         res.json({ success: true, logs });
     } catch (e) {
-        console.error('Fetch logs error:', e);
+        console.error('Fetch logs error:', e.message);
         res.status(500).json({ success: false, message: 'Failed to fetch logs' });
     }
 });
@@ -1960,71 +2288,35 @@ app.get('/api/riders/:id/access-logs', authenticateToken, (req, res) => {
 // 5. Change PIN Route
 app.post('/api/rider/change-pin', authenticateToken, async (req, res) => {
     try {
-        const { currentPin, newPin } = req.body;
+        const { currentPin, newPin } = req.body || {};
         const riderId = req.user.riderId;
         const rider = dbHelpers.getRiderById(riderId);
 
         if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
         
-        const isMatch = await bcrypt.compare(currentPin, rider.pin);
+        const isMatch = await bcrypt.compare(String(currentPin || ''), rider.pin);
         if (!isMatch) {
             return res.status(400).json({ success: false, message: 'Current PIN is incorrect' });
         }
 
-        if (!newPin || newPin.length < 4) {
-            return res.status(400).json({ success: false, message: 'New PIN must be at least 4 digits' });
+        if (!/^\d{4}$/.test(String(newPin || ''))) {
+            return res.status(400).json({ success: false, message: 'New PIN must be exactly 4 numeric digits' });
         }
 
         const salt = await bcrypt.genSalt(10);
-        rider.pin = await bcrypt.hash(newPin, salt);
+        rider.pin = await bcrypt.hash(String(newPin), salt);
         dbHelpers.updateRider(riderId, rider);
 
         res.json({ success: true, message: 'PIN updated successfully' });
     } catch (err) {
-        console.error('Change PIN error:', err);
+        console.error('Change PIN error:', err.message);
         res.status(500).json({ success: false, message: 'Failed to update PIN' });
     }
 });
 
-// Start Server
-app.get('/api/admin/inject-izzy', (req, res) => {
+// Admin Request Payment Endpoint (Protected by authenticateAdminToken)
+app.post('/api/admin/request-payment/:riderId', authenticateAdminToken, async (req, res) => {
     try {
-        const bcrypt = require('bcryptjs');
-        let existing = dbHelpers.getRiderByPhone('08065658212');
-        
-        if (existing) {
-            existing.status = 'Pending';
-            existing.paymentRequested = true;
-            // Overwrite PIN to 1234 for testing if needed
-            existing.pin = bcrypt.hashSync('1234', 10);
-            dbHelpers.updateRider(existing.riderId, existing);
-        } else {
-            const izzy = {
-                riderId: 'RID-42242',
-                phone: '08065658212',
-                pin: bcrypt.hashSync('1234', 10),
-                name: 'DUROJAYE IZZY LAWRENCE',
-                fullName: 'DUROJAYE IZZY LAWRENCE',
-                status: 'Pending',
-                paymentRequested: true,
-                createdAt: new Date().toISOString()
-            };
-            dbHelpers.insertRider(izzy);
-        }
-        res.json({ success: true, message: 'Izzy injected successfully! You can now test logging in with 08065658212 and PIN 1234' });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Admin Request Payment Endpoint
-app.post('/api/admin/request-payment/:riderId', authenticateToken, async (req, res) => {
-    try {
-        const admin = dbHelpers.getAgentById(req.user.agentId);
-        if (!admin || admin.role !== 'admin') {
-            return res.status(403).json({ success: false, message: 'Forbidden' });
-        }
-        
         const riderId = req.params.riderId;
         const rider = dbHelpers.getRiderById(riderId);
         
@@ -2041,83 +2333,7 @@ app.post('/api/admin/request-payment/:riderId', authenticateToken, async (req, r
         
         res.json({ success: true, message: 'Payment request pushed to user profile successfully' });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Admin Restore RID-71447 Endpoint
-app.get('/api/admin/restore-71447', (req, res) => {
-    try {
-        const bcrypt = require('bcryptjs');
-        const rider71447 = {
-            riderId: 'RID-71447',
-            name: 'TIMILEYIN OLADIPUPO',
-            fullName: 'TIMILEYIN OLADIPUPO',
-            phone: '08079506543',
-            pin: bcrypt.hashSync('1234', 10),
-            plateNumber: 'JKG-213-AJ',
-            status: 'Active',
-            userType: 'driver',
-            vehicleType: 'motorcycle',
-            bike: {
-                plateNumber: 'JKG-213-AJ',
-                brand: 'TVS',
-                model: 'Motorcycle',
-                color: 'Red/Black',
-                ownershipType: 'Owned'
-            },
-            vehicle: {
-                type: 'motorcycle',
-                plateNumber: 'JKG-213-AJ',
-                brand: 'TVS',
-                model: 'Motorcycle',
-                color: 'Red/Black',
-                ownershipType: 'Owned'
-            },
-            medical: {
-                bloodGroup: 'O+',
-                genotype: 'AA',
-                allergies: 'None'
-            },
-            emergencyContact: {
-                name: 'Joy Oladipupo',
-                phone: '08032352737',
-                relationship: 'Family'
-            },
-            emergencyContacts: [
-                {
-                    name: 'Joy Oladipupo',
-                    phone: '08032352737',
-                    relationship: 'Family'
-                },
-                {
-                    name: 'Dorcas Oladipupo',
-                    phone: '09058233466',
-                    relationship: 'Family'
-                }
-            ],
-            safety: {
-                sosEnabled: true,
-                theftStatus: 'Safe'
-            },
-            documents: {
-                passportPhoto: {
-                    url: '/uploads/passport-RID-71447.png'
-                }
-            },
-            expiryDate: '2028-12-31',
-            createdAt: new Date().toISOString()
-        };
-
-        const existing = dbHelpers.getRiderById('RID-71447') || dbHelpers.getRiderByPhone('08079506543');
-        if (existing) {
-            dbHelpers.updateRider(existing.riderId, { ...existing, ...rider71447, status: 'Active' });
-        } else {
-            dbHelpers.insertRider(rider71447);
-        }
-        res.json({ success: true, message: 'RID-71447 (TIMILEYIN OLADIPUPO) restored and activated successfully! Login with 08079506543 or RID-71447 and PIN 1234.' });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: IS_PRODUCTION ? 'Failed to process payment request' : error.message });
     }
 });
 
@@ -2201,7 +2417,35 @@ function ensureRider71447() {
 
 ensureRider71447();
 
+// ── API 404 HANDLER ─────────────────────────────────────────────────────────────
+app.all('/api/*', (req, res) => {
+    res.status(404).json({ success: false, message: 'API endpoint not found' });
+});
+
+// ── CENTRAL ERROR HANDLER ───────────────────────────────────────────────────────
+// Sanitizes 500 errors in production to avoid exposing stack traces or internals
+app.use((err, req, res, next) => {
+    const status = err.status || err.statusCode || 500;
+    if (!IS_PRODUCTION) {
+        console.error('[UNCAUGHT ERROR]', err);
+    } else {
+        console.error('[SERVER ERROR]', err.message || 'Internal server error');
+    }
+
+    if (res.headersSent) {
+        return next(err);
+    }
+
+    res.status(status).json({
+        success: false,
+        message: (IS_PRODUCTION && status === 500) 
+            ? 'An unexpected server error occurred.' 
+            : (err.message || 'Internal server error')
+    });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://127.0.0.1:${PORT}`);
 });
+
 

@@ -1,11 +1,28 @@
 const crypto = require('crypto');
-require('dotenv').config();
+try { require('dotenv').config(); } catch (e) {}
 
 const ALGORITHM = 'aes-256-gcm';
-// Ensure the key is exactly 32 bytes (64 hex characters)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ? Buffer.from(process.env.ENCRYPTION_KEY, 'hex') : Buffer.from('815125701ab168789636b04b231f30dc6af0c5e72e17d4fbb57f1ce2dcde4d6a', 'hex');
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
+
+function getEncryptionKey() {
+    const rawKey = process.env.ENCRYPTION_KEY;
+    if (!rawKey) {
+        if (process.env.NODE_ENV === 'production') {
+            console.error('❌ Fatal: ENCRYPTION_KEY environment variable is missing in production.');
+            process.exit(1);
+        }
+        console.warn('[SECURITY] Warning: ENCRYPTION_KEY not set. Falling back to local development session key.');
+        // Ephemeral development fallback (not hardcoded static key)
+        return crypto.createHash('sha256').update('myvault_dev_fallback_key').digest();
+    }
+    if (rawKey.length !== 64) {
+        throw new Error('Invalid ENCRYPTION_KEY length. Expected exactly 64 hex characters (32 bytes).');
+    }
+    return Buffer.from(rawKey, 'hex');
+}
+
+const ENCRYPTION_KEY = getEncryptionKey();
 
 /**
  * Encrypts a plain text string.

@@ -2888,7 +2888,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += '</table>';
                 container.innerHTML = html;
             } else {
-                container.innerHTML = `<div style="padding: 1rem; text-align: center; color: #ef4444;">${data.message}</div>`;
+                container.innerHTML = `<div style="padding: 1rem; text-align: center; color: #ef4444;">${window.escapeHTML(data.message || 'Failed to fetch logs')}</div>`;
             }
         } catch (err) {
             container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #ef4444;">Failed to fetch logs.</div>';
@@ -2911,7 +2911,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (data.success) {
                 container.style.display = 'block';
-                container.innerHTML = `<strong>One-Time Link (Valid for 1 view):</strong><br><br><a href="${data.link}" target="_blank" style="color: var(--primary-light);">${data.link}</a>`;
+                const safeUrl = encodeURI(data.link);
+                container.innerHTML = `<strong>One-Time Link (Valid for 1 view):</strong><br><br><a href="${safeUrl}" target="_blank" style="color: var(--primary-light);">${window.escapeHTML(data.link)}</a>`;
             } else {
                 alert(data.message || 'Failed to generate link');
             }
