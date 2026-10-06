@@ -1624,7 +1624,10 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
         // Update medical
         rider.medical = rider.medical || {};
         if (bloodType) rider.medical.bloodGroup = bloodType;
-        if (allergies) rider.medical.allergies = allergies;
+        if (allergies !== undefined) {
+            rider.medical.allergies = allergies;
+            rider.allergies = allergies;
+        }
         if (refusesBloodTransfusion !== undefined) {
             rider.medical.refusesBloodTransfusion = refusesBloodTransfusion === 'true' || refusesBloodTransfusion === true;
         }
@@ -1712,10 +1715,15 @@ app.get('/api/verify/:query', (req, res) => {
         bike: rider.bike,
         emergencyContact: rider.emergencyContact,
         paymentRequested: rider.paymentRequested,
-        medical: rider.medical ? { 
-            bloodGroup: rider.medical.bloodGroup,
-            refusesBloodTransfusion: rider.medical.refusesBloodTransfusion
-        } : {},
+        allergies: (rider.medical && rider.medical.allergies) || rider.allergies || rider.riderAllergies || 'None',
+        dob: rider.dob || (rider.medical && rider.medical.dateOfBirth) || '',
+        medical: { 
+            bloodGroup: (rider.medical && rider.medical.bloodGroup) || '---',
+            genotype: (rider.medical && rider.medical.genotype) || '---',
+            allergies: (rider.medical && rider.medical.allergies) || rider.allergies || rider.riderAllergies || 'None',
+            dateOfBirth: (rider.medical && rider.medical.dateOfBirth) || rider.dob || '',
+            refusesBloodTransfusion: rider.medical ? !!rider.medical.refusesBloodTransfusion : false
+        },
         // Only include passport photo, hide all other documents and expiry dates
         documents: rider.documents && rider.documents.passportPhoto ? { passportPhoto: rider.documents.passportPhoto } : {}
     };
@@ -1758,6 +1766,18 @@ app.post('/api/verify/:query/unlock', authLimiter, async (req, res) => {
     }
 
     const { pin, ...safeRiderData } = rider;
+    if (safeRiderData.medical) {
+        if (!safeRiderData.medical.allergies && (rider.allergies || rider.riderAllergies)) {
+            safeRiderData.medical.allergies = rider.allergies || rider.riderAllergies;
+        }
+    } else if (rider.allergies || rider.riderAllergies) {
+        safeRiderData.medical = {
+            allergies: rider.allergies || rider.riderAllergies,
+            bloodGroup: rider.bloodType || '---',
+            genotype: rider.genotype || '---'
+        };
+    }
+    safeRiderData.allergies = (safeRiderData.medical && safeRiderData.medical.allergies) || rider.allergies || rider.riderAllergies || 'None';
     dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Level 2 Authenticated Unlock');
     res.json({ success: true, rider: safeRiderData });
 });

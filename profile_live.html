@@ -1039,6 +1039,9 @@
                             document.getElementById('pvcPreviewId').textContent = `DOB: ${_printRiderData.dob || '---'} | ID: ${rider.riderId}`;
                         }
                     }
+                    if (typeof initPrintData === 'function') {
+                        initPrintData(rider, window.globalVehicleInfo || (rider.vehicle || rider.bike || {}));
+                    }
 
                     // Populate documents
                     window.populateDocuments(rider);
@@ -1403,13 +1406,21 @@
                         if (ghostImg) { ghostImg.src = photoSrc; ghostImg.style.opacity = '0.12'; }
                     }
 
-                    // Populate Emergency ICE Card details (Level 1 only)
-                    if (rider.medical) {
-                        const bg = rider.medical.bloodGroup || 'O+';
+                    // Populate Emergency ICE Card details (Level 1)
+                    if (rider.medical || rider.allergies || rider.riderAllergies) {
+                        const bg = (rider.medical && rider.medical.bloodGroup) || 'O+';
+                        const gt = (rider.medical && rider.medical.genotype) || '---';
+                        const al = (rider.medical && rider.medical.allergies) || rider.allergies || rider.riderAllergies || 'None';
                         document.getElementById('iceBloodGroup').textContent = bg;
-                        if (document.getElementById('iceAllergies')) document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None';
+                        if (document.getElementById('iceGenotype') && gt && gt !== '---') {
+                            document.getElementById('iceGenotype').textContent = gt;
+                        }
+                        if (document.getElementById('iceAllergies')) {
+                            document.getElementById('iceAllergies').textContent = al;
+                            document.getElementById('iceAllergies').style.color = (typeof hasAllergies === 'function' ? hasAllergies(al) : (al.toLowerCase() !== 'none')) ? '#ef4444' : '#10b981';
+                        }
                         let badgeText = `${bg}`;
-                        if (rider.medical.refusesBloodTransfusion) {
+                        if (rider.medical && rider.medical.refusesBloodTransfusion) {
                             badgeText += ' | 🚨 NO BLOOD';
                             document.getElementById('iceMedicalSummaryBadge').style.background = '#7f1d1d';
                         }
@@ -1837,7 +1848,10 @@ let hasExpired = false;
         // Pre-fill
         const med = (window.globalRiderData && window.globalRiderData.medical) || {};
         document.getElementById('editBloodType').value = document.getElementById('iceBloodGroup').textContent;
-        if (document.getElementById('editAllergies')) document.getElementById('editAllergies').value = med.allergies || '';
+        const userAllergy = (med && med.allergies) || 
+                            (window.globalRiderData && (window.globalRiderData.allergies || window.globalRiderData.riderAllergies)) || 
+                            (document.getElementById('iceAllergies') && document.getElementById('iceAllergies').textContent !== 'None' ? document.getElementById('iceAllergies').textContent : '') || '';
+        if (document.getElementById('editAllergies')) document.getElementById('editAllergies').value = userAllergy;
         document.getElementById('editDateOfBirth').value = med.dateOfBirth || window.globalRiderData.dob || '';
         document.getElementById('editNationality').value = window.globalRiderData.nationality || '';
         document.getElementById('editConditions').value = med.conditions || '';
@@ -1947,14 +1961,31 @@ let hasExpired = false;
     // ---- PRINT ASSETS ----
     let _printRiderData = {};
 
+    function hasAllergies(al) {
+        if (!al) return false;
+        const clean = String(al).trim().toLowerCase();
+        return clean !== '' && 
+               clean !== 'none' && 
+               clean !== 'nil' && 
+               clean !== 'n/a' && 
+               clean !== 'na' && 
+               clean !== 'no' && 
+               clean !== 'none reported' && 
+               clean !== 'no known allergies' &&
+               clean !== 'none known';
+    }
+
     function initPrintData(rider, vehicleInfo) {
+        vehicleInfo = vehicleInfo || rider.vehicle || rider.bike || window.globalVehicleInfo || {};
         const plate = (vehicleInfo.plateNumber || rider.plateNumber || '---').toUpperCase();
-        let bg = 'O+'; let gt = 'AA'; let allergies = 'None'; let kinName = '---'; let kinPhone = '---';
-        if (rider.medical) {
-            bg = rider.medical.bloodGroup || 'O+';
-            gt = rider.medical.genotype || 'AA';
-            allergies = rider.medical.allergies || 'None';
-        }
+        let bg = (rider.medical && rider.medical.bloodGroup) || rider.bloodType || 'O+';
+        let gt = (rider.medical && rider.medical.genotype) || rider.genotype || '---';
+        let allergies = (rider.medical && rider.medical.allergies) || 
+                        rider.allergies || 
+                        rider.riderAllergies || 
+                        (window.globalRiderData && window.globalRiderData.medical && window.globalRiderData.medical.allergies) || 
+                        (window.globalRiderData && (window.globalRiderData.allergies || window.globalRiderData.riderAllergies)) || 
+                        'None';
         if (rider.emergencyContact) {
             let rawName = String(rider.emergencyContact.name || '---');
             if (rawName.includes(',')) rawName = rawName.split(',')[0];
@@ -1993,11 +2024,15 @@ let hasExpired = false;
         if (primaryPhone.includes(' and ')) primaryPhone = primaryPhone.split(' and ')[0];
         primaryPhone = primaryPhone.trim();
 
-        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: primaryPhone, dob: rider.medical?.dateOfBirth || rider.dob || '', expiryDate: computedExpiry };
+        _printRiderData = { name: rider.name, riderId: rider.riderId, plate, bg, gt, allergies, kinName, kinPhone, profileUrl: emergencyUrl, phone: primaryPhone, dob: (rider.medical && rider.medical.dateOfBirth) || rider.dob || '', expiryDate: computedExpiry };
 
         // Update mini preview
         if (document.getElementById('pvcPreviewName')) document.getElementById('pvcPreviewName').textContent = rider.name || '---';
-        if (document.getElementById('pvcPreviewMedical')) document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | Geno: --- | Allergies: ${allergies}`;
+        if (document.getElementById('pvcPreviewMedical')) {
+            const displayAl = hasAllergies(allergies) ? allergies.toUpperCase() : 'None';
+            document.getElementById('pvcPreviewMedical').textContent = `Blood: ${bg} | Geno: ${gt} | Allergies: ${displayAl}`;
+            document.getElementById('pvcPreviewMedical').style.color = hasAllergies(allergies) ? '#ef4444' : '#10b981';
+        }
         if (document.getElementById('pvcPreviewId')) document.getElementById('pvcPreviewId').textContent = `DOB: ${_printRiderData.dob || '---'} | ID: ${rider.riderId}`;
 
         // Generate live QR code in preview
@@ -2402,7 +2437,7 @@ let hasExpired = false;
                         </div>
                         <div>
                             <div class="info-label">Genotype</div>
-                            <div class="info-value">---</div>
+                            <div class="info-value">${d.gt || '---'}</div>
                         </div>
                         <div>
                             <div class="info-label">Phone</div>
@@ -2417,7 +2452,7 @@ let hasExpired = false;
                             <div class="info-value" style="font-size:22px;">${d.expiryDate || '---'}</div>
                         </div>
                     </div>
-                    ${d.allergies && d.allergies.toLowerCase() !== 'none' && d.allergies.trim() !== '' ? 
+                    ${hasAllergies(d.allergies) ? 
                         `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies.toUpperCase()}</div></div>` : 
                         `<div class="allergy-bar" style="background: rgba(16, 185, 129, 0.12); border-left: 4px solid #10b981;"><div class="allergy-text" style="color: #10b981;">&#x2713; ALLERGIES: NONE (NIL)</div></div>`
                     }
@@ -2679,7 +2714,7 @@ let hasExpired = false;
                     </div>
                     <div>
                         <div class="info-label">Genotype</div>
-                        <div class="info-value">---</div>
+                        <div class="info-value">${d.gt || '---'}</div>
                     </div>
                     <div>
                         <div class="info-label">Phone</div>
@@ -2694,7 +2729,7 @@ let hasExpired = false;
                         <div class="info-value" style="font-size:14px;">${d.expiryDate || '---'}</div>
                     </div>
                 </div>
-                ${d.allergies && d.allergies.toLowerCase() !== 'none' && d.allergies.trim() !== '' ? 
+                ${hasAllergies(d.allergies) ? 
                     `<div class="allergy-bar"><div class="allergy-text">&#x26A0; ALLERGIES: ${d.allergies.toUpperCase()}</div></div>` : 
                     `<div class="allergy-bar" style="background: rgba(16, 185, 129, 0.12); border-left: 3px solid #10b981;"><div class="allergy-text" style="color: #10b981;">&#x2713; ALLERGIES: NONE (NIL)</div></div>`
                 }
