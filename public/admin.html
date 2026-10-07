@@ -862,12 +862,13 @@
             else bind();
         })();
 
-        function logout() {
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (_) {}
             localStorage.removeItem('adminToken');
             adminToken = null;
-            document.getElementById('dashboardContent').style.display = 'none';
-            document.getElementById('loginOverlay').style.display = 'flex';
-            document.getElementById('adminPassword').value = '';
+            window.location.href = '/admin-login.html';
         }
 
         function showDashboard() {

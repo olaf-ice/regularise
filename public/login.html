@@ -27,6 +27,18 @@
     <link rel="stylesheet" href="css/style.css">
     <link href="/css/fonts.css" rel="stylesheet">
     <script src="js/theme.js"></script>
+    <script>
+        // Redirect immediately if admin role requested
+        (function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('role') === 'admin') {
+                    const authParam = params.get('auth') ? `?auth=${encodeURIComponent(params.get('auth'))}` : '';
+                    window.location.replace('/admin-login.html' + authParam);
+                }
+            } catch (_) {}
+        })();
+    </script>
 
     <!-- Prevent Copy & Right Click -->
     <style>
@@ -161,7 +173,14 @@
         </section>
 
         <footer style="text-align: center; padding: 2.5rem 0; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--glass-border); position: relative; z-index: 2;">
-            &copy; 2026 MyVault Verification Ecosystem. All rights reserved.
+            <div style="margin-bottom: 0.75rem;">
+                &copy; 2026 MyVault Verification Ecosystem. All rights reserved.
+            </div>
+            <div style="font-size: 0.8rem; display: flex; justify-content: center; align-items: center; gap: 1rem;">
+                <a href="agent-login.html" style="color: var(--text-muted); text-decoration: none;">Agent Portal</a>
+                <span>&bull;</span>
+                <a href="admin-login.html" style="color: var(--text-muted); text-decoration: none;">Admin Portal</a>
+            </div>
         </footer>
     </div>
 

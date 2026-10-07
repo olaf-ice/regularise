@@ -381,15 +381,38 @@ const PUBLIC_DIR = IS_PRODUCTION && fs.existsSync(path.join(__dirname, '../dist/
 app.get(['/admin', '/admin.html'], (req, res) => {
     const token = extractToken(req, 'admin_token');
     if (!token) {
-        return res.redirect('/login.html?role=admin&auth=required');
+        return res.redirect('/admin-login.html?auth=required');
     }
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err || user.role !== 'admin') {
             clearAuthCookies(res);
-            return res.redirect('/login.html?role=admin&auth=invalid');
+            return res.redirect('/admin-login.html?auth=invalid');
         }
         res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
     });
+});
+
+// ── Admin Login Route (Public Portal for Administrators) ────────────────────
+app.get(['/admin-login', '/admin-login.html'], (req, res) => {
+    const token = extractToken(req, 'admin_token');
+    if (token) {
+        try {
+            const user = jwt.verify(token, JWT_SECRET);
+            if (user && user.role === 'admin') {
+                return res.redirect('/admin');
+            }
+        } catch (_) {}
+    }
+    res.sendFile(path.join(PUBLIC_DIR, 'admin-login.html'));
+});
+
+// Route legacy ?role=admin queries directly to dedicated admin portal
+app.get('/login.html', (req, res, next) => {
+    if (req.query.role === 'admin') {
+        const query = req.query.auth ? `?auth=${encodeURIComponent(req.query.auth)}` : '';
+        return res.redirect(`/admin-login.html${query}`);
+    }
+    next();
 });
 
 // ── Server-Side Protected Agent Dashboard Route ─────────────────────────────
