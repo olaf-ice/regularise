@@ -50,7 +50,7 @@ if (!JWT_SECRET) {
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 if (IS_PRODUCTION) {
   if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length !== 64) {
-    console.warn('[SECURITY] Notice: ENCRYPTION_KEY not explicitly configured in environment; utilizing default database encryption key.');
+    console.error('❌ [SECURITY] Fatal: ENCRYPTION_KEY environment variable is missing or invalid in production.');
   }
   if (!process.env.ADMIN_PASSWORD_HASH && (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'adminpass123')) {
     console.warn('[SECURITY] Notice: Default ADMIN_PASSWORD active. Configure custom ADMIN_PASSWORD in Render dashboard for added security.');

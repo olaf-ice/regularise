@@ -5,19 +5,19 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
-const DEFAULT_KEY_HEX = '815125701ab168789636b04b231f30dc6af0c5e72e17d4fbb57f1ce2dcde4d6a';
-
 function getEncryptionKey() {
     const rawKey = process.env.ENCRYPTION_KEY;
-    if (!rawKey) {
-        console.warn('[SECURITY] Warning: ENCRYPTION_KEY environment variable not set. Falling back to default database key.');
-        return Buffer.from(DEFAULT_KEY_HEX, 'hex');
+    if (rawKey && rawKey.length === 64) {
+        return Buffer.from(rawKey, 'hex');
     }
-    if (rawKey.length !== 64) {
-        console.warn('[SECURITY] Warning: Invalid ENCRYPTION_KEY length (expected 64 hex chars). Falling back to default database key.');
-        return Buffer.from(DEFAULT_KEY_HEX, 'hex');
+    
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('FATAL: ENCRYPTION_KEY environment variable is missing or invalid (expected 64 hex characters).');
     }
-    return Buffer.from(rawKey, 'hex');
+    
+    // In local non-production development without .env, derive an uncommitted development fallback key
+    console.warn('[SECURITY] Warning: ENCRYPTION_KEY not set or invalid in .env. Falling back to local development fallback key.');
+    return crypto.createHash('sha256').update('myvault_local_development_fallback_key').digest();
 }
 
 const ENCRYPTION_KEY = getEncryptionKey();

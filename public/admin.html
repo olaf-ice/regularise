@@ -396,7 +396,7 @@
                 <span>MYVAULT ADMIN <span id="adminRequestBadge" class="status-badge status-pending" style="display:none; margin-left: 10px; cursor: pointer; font-size: 0.7rem;" title="Pending Requests">0</span></span>
             </div>
             <div>
-                <a href="intake.html" target="_blank" class="action-btn" style="border-color: var(--primary); color: var(--primary); text-decoration: none; display: inline-block;">📋 Registration Form</a>
+                <button onclick="downloadIntakeFormPDF(event)" class="action-btn" style="border-color: var(--primary); color: var(--primary); font-weight: 700;">📋 Download Registration Form (PDF)</button>
                 <button onclick="printDummyPVC(event)" class="action-btn" style="border-color: var(--amber); color: var(--amber);">📥 Download Dummy PVC</button>
                 <button onclick="logout()" class="action-btn">Log Out</button>
             </div>
@@ -417,6 +417,9 @@
             </a>
             <a href="#freeLinksSection" class="nav-quick-tab">
                 <span>🎁</span> Free Links Manager
+            </a>
+            <a href="#intakeFormSection" class="nav-quick-tab">
+                <span>📄</span> Intake &amp; Google Form PDF
             </a>
         </div>
 
@@ -754,6 +757,100 @@
                         <div id="freeLinksPagination" style="padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); font-size: 0.8rem; color: var(--text-muted);">
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📄 Registration Intake & Google Form PDF Center -->
+        <div id="intakeFormSection" style="margin-bottom: 3.5rem; background: linear-gradient(145deg, rgba(56, 189, 248, 0.04), rgba(20, 24, 33, 0.85)); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 16px; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1.25rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+                        <span style="font-size: 1.5rem;">📄</span>
+                        <h2 style="margin: 0; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--text-light);">Registration Intake &amp; Google Form PDF Center</h2>
+                        <span class="live-status-pill" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">
+                            OFFICIAL TEMPLATE
+                        </span>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">
+                        Generate and download official PDF copies of the Registration Intake Form for physical field onboarding, or manage live Google Form submissions.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
+                    <button onclick="downloadIntakeFormPDF(event)" class="action-btn" style="border-color: #38bdf8; color: #38bdf8; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem;">
+                        📥 Download Intake Form PDF
+                    </button>
+                    <button onclick="printGoogleFormDialog()" class="action-btn" style="border-color: #a78bfa; color: #a78bfa; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem;">
+                        🖨️ Print / Save Google Form
+                    </button>
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdLy1n1Paa9wsRKXv43jUTaP4L2p5ZYKmf8vkZ8h5vvfZ4y-g/viewform" target="_blank" rel="noopener noreferrer" class="action-btn" style="border-color: var(--primary-light); color: var(--primary-light); font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem; text-decoration: none;">
+                        ↗️ Open Live Google Form
+                    </a>
+                </div>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+                <div class="metric-card" style="text-align: left; background: rgba(56, 189, 248, 0.05); border-color: rgba(56, 189, 248, 0.25); padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.5rem;">📋</span>
+                        <h4 style="margin: 0; font-size: 1rem; color: #38bdf8;">Standardized A4 Printable PDF</h4>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5;">
+                        Official printable hardcopy form formatted with MyVault emblem, NDPA 2023 compliance disclosure, medical directive fields, and biometric signature lines.
+                    </p>
+                    <button onclick="downloadIntakeFormPDF(event)" class="btn btn-primary" style="width: 100%; font-size: 0.85rem; padding: 0.65rem 1rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                        <span>📥 Download Official PDF (A4)</span>
+                    </button>
+                </div>
+
+                <div class="metric-card" style="text-align: left; background: rgba(167, 139, 250, 0.05); border-color: rgba(167, 139, 250, 0.25); padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.5rem;">🌐</span>
+                        <h4 style="margin: 0; font-size: 1rem; color: #a78bfa;">Direct Google Form Print / PDF</h4>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5;">
+                        Launch the live Google Form directly in print preview mode to save an exact replica via browser PDF export (Ctrl+P / Save as PDF).
+                    </p>
+                    <button onclick="printGoogleFormDialog()" class="btn btn-secondary" style="width: 100%; font-size: 0.85rem; padding: 0.65rem 1rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                        <span>🖨️ Launch Google Form Print</span>
+                    </button>
+                </div>
+
+                <div class="metric-card" style="text-align: left; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.25); padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 1.5rem;">🔗</span>
+                        <h4 style="margin: 0; font-size: 1rem; color: #34d399;">Public Registration Embed Link</h4>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.5;">
+                        Public intake portal URL configured on your domain: <code>https://myvault.com.ng/intake.html</code>. Shareable with applicants and field aggregators.
+                    </p>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="copyIntakeLink(this)" class="action-btn" style="flex: 1; border-color: #34d399; color: #34d399; padding: 0.65rem; margin: 0;">
+                            📋 Copy Link
+                        </button>
+                        <a href="intake.html" target="_blank" class="action-btn" style="flex: 1; text-align: center; border-color: var(--primary-light); color: var(--primary-light); padding: 0.65rem; text-decoration: none; margin: 0;">
+                            👁️ View Portal
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embedded Live Form Preview Container -->
+            <div style="border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(0,0,0,0.3); overflow: hidden;">
+                <div style="padding: 1rem 1.25rem; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.1rem;">📑</span>
+                        <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-light);">Live Google Form Preview</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">(Embedded from docs.google.com)</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="reloadIntakeIframe()" class="action-btn" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; margin: 0;">🔄 Refresh Frame</button>
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdLy1n1Paa9wsRKXv43jUTaP4L2p5ZYKmf8vkZ8h5vvfZ4y-g/viewform" target="_blank" rel="noopener noreferrer" class="action-btn" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; margin: 0; text-decoration: none; border-color: var(--primary-light); color: var(--primary-light);">Full Screen ↗</a>
+                    </div>
+                </div>
+                <div style="padding: 1rem; display: flex; justify-content: center; background: rgba(0,0,0,0.2);">
+                    <iframe id="adminIntakeIframe" src="https://docs.google.com/forms/d/e/1FAIpQLSdLy1n1Paa9wsRKXv43jUTaP4L2p5ZYKmf8vkZ8h5vvfZ4y-g/viewform?embedded=true" style="width: 100%; max-width: 900px; height: 650px; border: none; border-radius: 8px; background: #ffffff;" loading="lazy">Loading Google Form…</iframe>
                 </div>
             </div>
         </div>
@@ -1886,6 +1983,246 @@
         }
 
         if (btn) btn.innerHTML = origText;
+    }
+
+    // ── Google Form & Physical Intake PDF Generation ───────────────────────────
+    function reloadIntakeIframe() {
+        const frame = document.getElementById('adminIntakeIframe');
+        if (frame) {
+            frame.src = 'https://docs.google.com/forms/d/e/1FAIpQLSdLy1n1Paa9wsRKXv43jUTaP4L2p5ZYKmf8vkZ8h5vvfZ4y-g/viewform?embedded=true&t=' + Date.now();
+        }
+    }
+
+    function printGoogleFormDialog() {
+        const w = window.open('https://docs.google.com/forms/d/e/1FAIpQLSdLy1n1Paa9wsRKXv43jUTaP4L2p5ZYKmf8vkZ8h5vvfZ4y-g/viewform', '_blank');
+        if (w) {
+            alert('Google Form opened in a new tab. To save as PDF, press Ctrl+P (or Cmd+P on Mac) and choose "Save as PDF" under Destination.');
+        }
+    }
+
+    function copyIntakeLink(btn) {
+        const url = window.location.origin + '/intake.html';
+        navigator.clipboard.writeText(url).then(() => {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ Copied!';
+            setTimeout(() => { btn.innerHTML = orig; }, 2000);
+        }).catch(() => {
+            prompt('Copy registration link:', url);
+        });
+    }
+
+    async function downloadIntakeFormPDF(event) {
+        let btn = null;
+        let origText = '';
+        if (event && event.currentTarget) {
+            btn = event.currentTarget;
+            origText = btn.innerHTML;
+            btn.innerHTML = '⏳ Generating PDF...';
+            btn.disabled = true;
+        }
+
+        if (!window.html2canvas || !window.jspdf) {
+            alert('PDF generator libraries are still loading. Please try again in a moment.');
+            if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+            return;
+        }
+
+        try {
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            container.style.width = '794px'; // Standard A4 width in 96 DPI
+            container.style.background = '#ffffff';
+            container.style.color = '#0f172a';
+            container.style.fontFamily = "'Inter', Arial, sans-serif";
+            container.style.padding = '36px 42px';
+            container.style.boxSizing = 'border-box';
+            container.style.zIndex = '-9999';
+
+            container.innerHTML = `
+            <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.35; font-size: 11px;">
+                <!-- Official Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #0f766e; padding-bottom: 12px; margin-bottom: 14px;">
+                    <div>
+                        <div style="font-size: 20px; font-weight: 800; color: #0f766e; letter-spacing: 0.04em;">MYVAULT VERIFICATION ECOSYSTEM</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #334155; margin-top: 2px;">OFFICIAL RIDER / OPERATOR REGISTRATION INTAKE FORM</div>
+                        <div style="font-size: 9px; color: #64748b;">Statutory NDPA 2023 Compliant Emergency Database Registry &bull; Federal Republic of Nigeria</div>
+                    </div>
+                    <div style="text-align: right; border-left: 2px solid #e2e8f0; padding-left: 12px;">
+                        <div style="font-size: 9px; font-weight: 700; color: #64748b;">DOCUMENT NO.</div>
+                        <div style="font-size: 12px; font-weight: 800; color: #0f172a; letter-spacing: 0.05em;">MV-REG-FORM-2026</div>
+                        <div style="font-size: 9px; color: #64748b;">Google Sync: ACTIVE</div>
+                    </div>
+                </div>
+
+                <!-- Form Notice -->
+                <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 10px; margin-bottom: 12px; font-size: 9.5px; color: #334155;">
+                    <strong>Instructions:</strong> Please fill out all required fields in BLOCK CAPITALS. This data is ingested into the MyVault emergency surveillance system to ensure your medical and operational identity is securely recoverable during critical roadside incidents.
+                </div>
+
+                <!-- SECTION 1: PERSONAL PARTICULARS -->
+                <div style="margin-bottom: 12px;">
+                    <div style="background: #0f766e; color: #ffffff; padding: 4px 8px; font-weight: 700; font-size: 10px; border-radius: 2px; margin-bottom: 6px;">
+                        1. PERSONAL &amp; BIOMETRIC PARTICULARS
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <tr>
+                            <td style="width: 50%; padding: 4px 0;"><strong>Full Legal Name:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="width: 25%; padding: 4px 6px;"><strong>Gender:</strong> [ &nbsp; ] M &nbsp;&nbsp; [ &nbsp; ] F</td>
+                            <td style="width: 25%; padding: 4px 0;"><strong>Date of Birth:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px 0;"><strong>Primary Phone Number:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td colspan="2" style="padding: 4px 0 4px 6px;"><strong>Alternate Phone Number:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px 0;"><strong>Email Address:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td colspan="2" style="padding: 4px 0 4px 6px;"><strong>National Identity Number (NIN):</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding: 4px 0;"><strong>Residential Street Address:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="padding: 4px 0 4px 6px;"><strong>State / LGA of Residence:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- SECTION 2: OPERATIONAL & VEHICLE DETAILS -->
+                <div style="margin-bottom: 12px;">
+                    <div style="background: #0f766e; color: #ffffff; padding: 4px 8px; font-weight: 700; font-size: 10px; border-radius: 2px; margin-bottom: 6px;">
+                        2. VEHICLE &amp; OPERATIONAL IDENTIFICATION
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <tr>
+                            <td style="width: 33%; padding: 4px 0;"><strong>Vehicle Type:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;">Motorcycle / Tricycle</div></td>
+                            <td style="width: 33%; padding: 4px 6px;"><strong>Vehicle Make &amp; Model:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="width: 34%; padding: 4px 0;"><strong>Vehicle Color:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px 0;"><strong>Official Plate Number:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="padding: 4px 6px;"><strong>Chassis / Engine Number:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="padding: 4px 0;"><strong>Designated Dispatch Hub / Route:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- SECTION 3: CLINICAL & EMERGENCY DIRECTIVE -->
+                <div style="margin-bottom: 12px;">
+                    <div style="background: #0f766e; color: #ffffff; padding: 4px 8px; font-weight: 700; font-size: 10px; border-radius: 2px; margin-bottom: 6px;">
+                        3. CLINICAL EMERGENCY MEDICAL PROFILE (FIRST RESPONDER DIRECTIVE)
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <tr>
+                            <td style="width: 25%; padding: 4px 0;"><strong>Blood Group:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="width: 25%; padding: 4px 6px;"><strong>Genotype:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="width: 50%; padding: 4px 0;"><strong>Known Allergies / Medical Conditions:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="padding: 4px 0;"><strong>Preferred Hospital / Medical Facility:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- SECTION 4: NEXT-OF-KIN & GUARANTOR -->
+                <div style="margin-bottom: 12px;">
+                    <div style="background: #0f766e; color: #ffffff; padding: 4px 8px; font-weight: 700; font-size: 10px; border-radius: 2px; margin-bottom: 6px;">
+                        4. NEXT-OF-KIN &amp; PRIMARY EMERGENCY CONTACT
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <tr>
+                            <td style="width: 40%; padding: 4px 0;"><strong>Next-of-Kin Name:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="width: 25%; padding: 4px 6px;"><strong>Relationship:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                            <td style="width: 35%; padding: 4px 0;"><strong>Emergency Contact Phone:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="padding: 4px 0;"><strong>Contact Residential Address:</strong> <div style="border-bottom: 1px solid #94a3b8; height: 18px; margin-top: 2px;"></div></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- SECTION 5: STATUTORY NDPA 2023 CONSENT & SIGN-OFF -->
+                <div style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px 10px; margin-bottom: 14px; background: #fafafa;">
+                    <div style="font-weight: 700; font-size: 9.5px; color: #0f172a; margin-bottom: 4px;">STATUTORY NDPA 2023 PRIVACY &amp; DATA ATTESTATION</div>
+                    <p style="font-size: 8.5px; color: #475569; margin: 0 0 8px 0; line-height: 1.35;">
+                        I hereby attest that the information provided is accurate and complete. I authorize MyVault Ecosystem to securely encrypt, process, and synchronize my medical and biometric records with authorized emergency dispatchers and licensed clinical personnel solely for identification and life preservation under the Nigeria Data Protection Act (NDPA 2023).
+                    </p>
+                    <table style="width: 100%; font-size: 9.5px; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 45%; vertical-align: bottom;">
+                                <div><strong>Applicant Signature:</strong> _______________________</div>
+                                <div style="margin-top: 4px;"><strong>Date:</strong> _________________________________</div>
+                            </td>
+                            <td style="width: 10%; text-align: center; vertical-align: middle;">
+                                <div style="border: 1px dashed #94a3b8; width: 60px; height: 60px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #94a3b8; text-align: center;">
+                                    AFFIX<br>PASSPORT
+                                </div>
+                            </td>
+                            <td style="width: 45%; text-align: right; vertical-align: bottom;">
+                                <div><strong>Authorized Agent Stamp &amp; Signature:</strong> _______________________</div>
+                                <div style="margin-top: 4px;"><strong>Verification Date:</strong> _________________________________</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Footer & Online Portal QR Indicator -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #cbd5e1; padding-top: 8px; font-size: 8.5px; color: #64748b;">
+                    <div>Web Portal: <strong>https://myvault.com.ng/intake.html</strong> &bull; Emergency Hotline: <strong>0800-MYVAULT</strong></div>
+                    <div>Form Rev: 2026.1 &bull; Powered by MyVault Secure Systems</div>
+                </div>
+            </div>
+            `;
+
+            document.body.appendChild(container);
+
+            await new Promise(r => setTimeout(r, 200));
+
+            const canvas = await window.html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png', 1.0);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            // A4 dimensions: 210mm x 297mm
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            if (imgHeight <= pageHeight) {
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, '', 'FAST');
+            } else {
+                let heightLeft = imgHeight;
+                let position = 0;
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+                heightLeft -= pageHeight;
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+                    heightLeft -= pageHeight;
+                }
+            }
+
+            pdf.save('MyVault_Registration_Intake_Form.pdf');
+
+            document.body.removeChild(container);
+        } catch (err) {
+            console.error('Intake Form PDF generation error:', err);
+            alert('Failed to generate Intake PDF. Please use the Print / Save Google Form option.');
+        } finally {
+            if (btn) {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
     }
 
         // Poll for notifications & live emergency feeds
