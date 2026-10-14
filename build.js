@@ -6,28 +6,26 @@ const JavaScriptObfuscator = require('javascript-obfuscator');
 const srcDir = path.join(__dirname, 'public');
 const distDir = path.join(__dirname, 'dist/public');
 
-// Military-Grade JavaScript Obfuscation Profile for Maximum IP & Anti-Reverse Engineering Protection
+// Optimized High-Speed Production Obfuscation Profile (Memory-Safe for Render Cloud Containers)
 const OBFUSCATION_OPTIONS = {
     compact: true,
-    controlFlowFlattening: true,
-    controlFlowFlatteningThreshold: 0.75,
-    deadCodeInjection: true,
-    deadCodeInjectionThreshold: 0.35,
+    controlFlowFlattening: false, // Disabled on monolithic HTML templates to prevent 5-minute CPU stalls on cloud builds
+    deadCodeInjection: false,     // Prevents memory exhaustion on 512MB RAM instances
     debugProtection: true,
     debugProtectionInterval: 3000,
     disableConsoleOutput: true,
     identifierNamesGenerator: 'hexadecimal',
     log: false,
-    numbersToExpressions: true,
+    numbersToExpressions: false,
     renameGlobals: false, // Preserves globally referenced HTML onclick handlers
-    selfDefending: true,
+    selfDefending: false,
     simplify: true,
     splitStrings: true,
-    splitStringsChunkLength: 5,
+    splitStringsChunkLength: 8,
     stringArray: true,
     stringArrayEncoding: ['base64'],
-    stringArrayThreshold: 0.85,
-    stringArrayWrappersCount: 2,
+    stringArrayThreshold: 0.8,
+    stringArrayWrappersCount: 1,
     stringArrayWrappersChainedCalls: true,
     transformObjectKeys: true,
     unicodeEscapeSequence: false
