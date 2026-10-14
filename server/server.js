@@ -194,7 +194,7 @@ app.use(cors({
         }
     },
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Vault-Client'],
     credentials: true,
     maxAge: 86400
 }));
@@ -223,7 +223,7 @@ const SCRIPT_USER_AGENT_PATTERN = /(curl|wget|python|aiohttp|httpx|httpie|go-htt
 
 app.use((req, res, next) => {
     // 1. Webhook exemption: Paystack webhooks use server-to-server POST with HMAC signature
-    if (req.path.startsWith('/api/webhook/')) {
+    if (req.path.startsWith('/api/webhook/') || req.path === '/api/payment/webhook') {
         return next();
     }
 
