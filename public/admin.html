@@ -406,6 +406,9 @@
             <a href="#clinicalAuditSection" class="nav-quick-tab active">
                 <span>🚨</span> Clinical Audit &amp; Emergency Command
             </a>
+            <a href="#hospitalsSection" class="nav-quick-tab">
+                <span>🏥</span> Verified Hospitals
+            </a>
             <a href="#operatorsSection" class="nav-quick-tab">
                 <span>👥</span> Registered Operators &amp; Citizens
             </a>
@@ -424,7 +427,7 @@
         </div>
 
         
-        <!-- 🏥 Verified Hospitals & Healthcare Directory (NHS Standards) -->
+        <!-- 🏥 Verified Hospitals & Healthcare Directory -->
         <div id="hospitalsSection" style="margin-bottom: 3.5rem; background: linear-gradient(145deg, rgba(16, 185, 129, 0.04), rgba(20, 24, 33, 0.85)); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 16px; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1.25rem;">
                 <div>
@@ -432,7 +435,7 @@
                         <span style="font-size: 1.5rem;">🏥</span>
                         <h2 style="margin: 0; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--text-light);">Verified Hospitals &amp; Trauma Directory</h2>
                         <span class="live-status-pill" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35);">
-                            NHS / FMOH ACCREDITED
+                            FMOH / NHIA ACCREDITED
                         </span>
                     </div>
                     <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">
@@ -2871,7 +2874,7 @@
     </div>
 
 
-    <!-- Add / Edit Verified Hospital Modal (NHS Standards) -->
+    <!-- Add / Edit Verified Hospital Modal -->
     <div id="hospitalModal" class="modal-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 680px; max-height: 90vh; overflow-y: auto; background: #141821; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 16px; padding: 1.75rem;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1rem;">
@@ -2880,7 +2883,7 @@
                         <span>🏥</span> Add Verified Hospital to Registry
                     </h3>
                     <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.25rem 0 0 0;">
-                        Accredited facility entry adhering to NHS / FMOH emergency healthcare standards.
+                        Accredited facility entry adhering to statutory emergency healthcare standards.
                     </p>
                 </div>
                 <button type="button" onclick="closeHospitalModal()" class="action-btn" style="border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 0.2rem;">&times;</button>
@@ -2895,8 +2898,8 @@
                         <input type="text" id="hospName" required placeholder="e.g. University College Hospital (UCH) Ibadan" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">ODS / Trust Code</label>
-                        <input type="text" id="hospOdsCode" placeholder="e.g. ODS-NG-UCH01" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Facility Registry / Accreditation Code</label>
+                        <input type="text" id="hospOdsCode" placeholder="e.g. FAC-NG-UCH01" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
                     </div>
                 </div>
 

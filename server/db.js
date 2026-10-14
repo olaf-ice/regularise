@@ -138,7 +138,7 @@ try {
                 hospitalId: 'HOSP-UCH-01',
                 name: 'University College Hospital (UCH) Ibadan',
                 type: 'Teaching Hospital',
-                odsCode: 'ODS-NG-UCH01',
+                odsCode: 'FAC-NG-UCH01',
                 state: 'Oyo',
                 city: 'Ibadan',
                 address: 'Queen Elizabeth II Road, Mokola, Ibadan, Oyo State',
@@ -160,7 +160,7 @@ try {
                 hospitalId: 'HOSP-LUTH-02',
                 name: 'Lagos University Teaching Hospital (LUTH)',
                 type: 'Teaching Hospital',
-                odsCode: 'ODS-NG-LUTH02',
+                odsCode: 'FAC-NG-LUTH02',
                 state: 'Lagos',
                 city: 'Idi-Araba, Surulere',
                 address: 'Ishaga Road, Idi-Araba, Surulere, Lagos State',
@@ -182,7 +182,7 @@ try {
                 hospitalId: 'HOSP-NHA-03',
                 name: 'National Hospital Abuja',
                 type: 'Federal Medical Centre',
-                odsCode: 'ODS-NG-NHA03',
+                odsCode: 'FAC-NG-NHA03',
                 state: 'FCT Abuja',
                 city: 'Central Business District',
                 address: 'Plot 132, Central Business District (CBD), Garki, Abuja',
@@ -204,7 +204,7 @@ try {
                 hospitalId: 'HOSP-FMCE-04',
                 name: 'Federal Medical Centre (FMC) Ebute Metta',
                 type: 'Federal Medical Centre',
-                odsCode: 'ODS-NG-FMCE04',
+                odsCode: 'FAC-NG-FMCE04',
                 state: 'Lagos',
                 city: 'Ebute Metta',
                 address: 'Railway Compound, Ebute Metta, Lagos State',
@@ -226,7 +226,7 @@ try {
                 hospitalId: 'HOSP-AKTH-05',
                 name: 'Aminu Kano Teaching Hospital (AKTH)',
                 type: 'Teaching Hospital',
-                odsCode: 'ODS-NG-AKTH05',
+                odsCode: 'FAC-NG-AKTH05',
                 state: 'Kano',
                 city: 'Kano',
                 address: 'Zaria Road, Tarauni, Kano State',
@@ -248,7 +248,7 @@ try {
                 hospitalId: 'HOSP-UPTH-06',
                 name: 'University of Port Harcourt Teaching Hospital (UPTH)',
                 type: 'Teaching Hospital',
-                odsCode: 'ODS-NG-UPTH06',
+                odsCode: 'FAC-NG-UPTH06',
                 state: 'Rivers',
                 city: 'Port Harcourt',
                 address: 'East-West Road, Port Harcourt, Rivers State',
@@ -270,7 +270,7 @@ try {
                 hospitalId: 'HOSP-RED-07',
                 name: 'Reddington Hospital Victoria Island',
                 type: 'Accredited Private Hospital',
-                odsCode: 'ODS-NG-RED07',
+                odsCode: 'FAC-NG-RED07',
                 state: 'Lagos',
                 city: 'Victoria Island',
                 address: '12 Idowu Martins St, Victoria Island, Lagos',
@@ -292,7 +292,7 @@ try {
                 hospitalId: 'HOSP-CED-08',
                 name: 'Cedarcrest Hospital Abuja',
                 type: 'Trauma Center',
-                odsCode: 'ODS-NG-CED08',
+                odsCode: 'FAC-NG-CED08',
                 state: 'FCT Abuja',
                 city: 'Apo',
                 address: 'Plot 118, Apo Resettlement Zone E, Gudu, Abuja',
@@ -725,7 +725,7 @@ const dbHelpers = {
         return row ? row.count : 0;
     },
     
-    // ── Verified Hospitals (NHS Standards) Helper Methods ──────────────────────
+    // ── Verified Hospitals Helper Methods ──────────────────────
     insertHospital: (h) => {
         const now = new Date().toISOString();
         const hospitalId = h.hospitalId || ('HOSP-' + crypto.randomBytes(3).toString('hex').toUpperCase());

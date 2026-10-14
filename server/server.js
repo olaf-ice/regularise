@@ -989,7 +989,7 @@ app.delete('/api/admin/agent/:id', authenticateAdminToken, async (req, res) => {
 });
 
 // ---------------------------------------------------------
-// VERIFIED HOSPITALS & HEALTHCARE DIRECTORY (NHS STANDARDS)
+// VERIFIED HOSPITALS & HEALTHCARE DIRECTORY
 // ---------------------------------------------------------
 
 // GET /api/admin/hospitals - List and search hospitals for admin

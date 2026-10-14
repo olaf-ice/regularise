@@ -1228,7 +1228,7 @@
             list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 1rem;">Searching for nearby help... <span class="spinner" style="display:inline-block; width:12px; height:12px; vertical-align:middle; margin-left:5px; border-width:2px;"></span></div>';
 
             try {
-                // First: Query official NHS/FMOH accredited hospitals from our verified directory
+                // First: Query official accredited hospitals from our verified directory
                 let verifiedHospitals = [];
                 try {
                     const vRes = await fetch(`/api/hospitals/verified?lat=${lat}&lng=${lng}&radius=80`);
@@ -1292,7 +1292,7 @@
 
                 let html = '';
 
-                // Render NHS / FMOH Verified Hospitals first
+                // Render Verified Hospitals first
                 if (verifiedHospitals && verifiedHospitals.length > 0) {
                     verifiedHospitals.slice(0, 3).forEach(h => {
                         const distStr = h.distKm ? `${h.distKm} km away` : 'Nearby';
@@ -1306,7 +1306,7 @@
                                     <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                         <div class="help-name" style="color: white; font-weight: 800;">${h.name}</div>
                                         <span class="help-status" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-size: 0.62rem; padding: 0.15rem 0.45rem;">
-                                            🛡️ NHS ACCREDITED
+                                            🛡️ VERIFIED FACILITY
                                         </span>
                                     </div>
                                     <div class="help-meta" style="margin-top: 0.2rem;">
@@ -1369,7 +1369,7 @@
                                     <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                         <div class="help-name" style="color: white; font-weight: 800;">${h.name}</div>
                                         <span class="help-status" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-size: 0.62rem; padding: 0.15rem 0.45rem;">
-                                            🛡️ NHS ACCREDITED
+                                            🛡️ VERIFIED FACILITY
                                         </span>
                                     </div>
                                     <div class="help-meta" style="margin-top: 0.2rem;">
@@ -1864,7 +1864,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="text" id="bgFacility" class="bg-form-input" placeholder="e.g. UCH Ibadan - ER Trauma Center" list="verifiedHospitalsDatalist" required autocomplete="off">
                     <datalist id="verifiedHospitalsDatalist"></datalist>
                     <div id="facilityVerifiedBadge" style="display:none; font-size: 0.72rem; color: #34d399; margin-top: 5px; font-weight: 700;">
-                        🛡️ Accredited Healthcare Facility (NHS / FMOH Registry)
+                        🛡️ Accredited Healthcare Facility (FMOH / NHIA Registry)
                     </div>
                 </div>
 
