@@ -840,6 +840,18 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // Global HTML sanitizer for DOM protection against XSS
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        window.escapeHTML = escapeHTML;
+
         let sessionData = null;
         const currentUrl = window.location.href;
         let isUnlocked = false;
@@ -877,7 +889,7 @@
                     </div>
                 `;
             } else if (scanDetails.status === 'physical') {
-                const tagLabel = scanDetails.tagLabel || 'Physical PVC ID Card';
+                const tagLabel = escapeHTML(scanDetails.tagLabel || 'Physical PVC ID Card');
                 bannerEl.innerHTML = `
                     <div style="background: rgba(59, 130, 246, 0.1); border: 1.5px solid #3b82f6; border-radius: 1rem; padding: 1rem 1.1rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 0.65rem;">

@@ -1030,6 +1030,18 @@
     </div>
 
     <script>
+        // Global HTML sanitizer for DOM protection against XSS
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        window.escapeHTML = escapeHTML;
+
         // Ensure all API calls carry official client attestation and admin authorization
         (function() {
             const origFetch = window.fetch;
@@ -1234,15 +1246,6 @@
                 const vType = r.vehicleType ? r.vehicleType.toUpperCase() : 'MOTORCYCLE';
                 const pNum = r.plateNumber || 'N/A';
 
-                const toggleAction = r.status === 'Suspended' 
-                    ? `<button class="action-btn activate" onclick="toggleStatus('${r.riderId}', 'Active')">Activate</button>`
-                    : `<button class="action-btn suspend" onclick="toggleStatus('${r.riderId}', 'Suspended')">Suspend</button>`;
-
-                let requestPaymentBtn = '';
-                if (r.status === 'Pending') {
-                    requestPaymentBtn = `<button class="action-btn" style="background:#3b82f6; color:#fff;" onclick="requestPayment('${r.riderId}')">Request Payment</button>`;
-                }
-
                 const safeId = escapeHTML(r.riderId);
                 const safeName = escapeHTML(r.name);
                 const safeVType = escapeHTML(vType);
@@ -1250,6 +1253,15 @@
                 const safePhone = escapeHTML(r.phone);
                 const safeDate = escapeHTML(r.registrationDate || r.createdAt || 'N/A');
                 const safeStatus = escapeHTML(r.status);
+
+                const toggleAction = r.status === 'Suspended' 
+                    ? `<button class="action-btn activate" onclick="toggleStatus('${safeId}', 'Active')">Activate</button>`
+                    : `<button class="action-btn suspend" onclick="toggleStatus('${safeId}', 'Suspended')">Suspend</button>`;
+
+                let requestPaymentBtn = '';
+                if (r.status === 'Pending') {
+                    requestPaymentBtn = `<button class="action-btn" style="background:#3b82f6; color:#fff;" onclick="requestPayment('${safeId}')">Request Payment</button>`;
+                }
 
                 tr.innerHTML = `
                     <td><strong>${safeId}</strong></td>

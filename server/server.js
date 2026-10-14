@@ -200,7 +200,7 @@ app.use(cors({
             callback(null, false);
         }
     },
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Vault-Client'],
     credentials: true,
     maxAge: 86400
@@ -466,7 +466,7 @@ function authenticateToken(req, res, next) {
     const token = extractToken(req, 'auth_token');
     if (!token) return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
         if (err) {
             console.warn('[AUTH] Token verification failed:', err.message);
             return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
@@ -491,10 +491,13 @@ function authenticateAdminToken(req, res, next) {
     const token = extractToken(req, 'admin_token');
     if (!token) return res.status(401).json({ success: false, message: 'Admin access denied. No token provided.' });
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
         if (err || user.role !== 'admin') {
             console.warn('[AUTH] Admin role authorization rejected');
             return res.status(403).json({ success: false, message: 'Invalid or expired admin token.' });
+        }
+        if (user.tokenVersion && user.tokenVersion !== adminTokenVersion) {
+            return res.status(401).json({ success: false, message: 'Admin session invalidated or logged in elsewhere.' });
         }
         req.user = user;
         next();
@@ -505,7 +508,7 @@ function authenticateAgentToken(req, res, next) {
     const token = extractToken(req, 'auth_token');
     if (!token) return res.status(401).json({ success: false, message: 'Agent access denied. No token provided.' });
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
         if (err || user.role !== 'agent') return res.status(403).json({ success: false, message: 'Invalid or expired agent token.' });
         
         const dbAgent = dbHelpers.getAgentById(user.agentId);
@@ -519,8 +522,17 @@ function authenticateAgentToken(req, res, next) {
     });
 }
 
-// Global Logout Endpoint (Clears HttpOnly tokens)
+// Global Logout Endpoint (Clears HttpOnly tokens and revokes active token version)
 app.post('/api/auth/logout', (req, res) => {
+    const adminToken = extractToken(req, 'admin_token');
+    if (adminToken) {
+        try {
+            const user = jwt.verify(adminToken, JWT_SECRET, { algorithms: ['HS256'] });
+            if (user && user.role === 'admin') {
+                adminTokenVersion++;
+            }
+        } catch (_) {}
+    }
     clearAuthCookies(res);
     res.json({ success: true, message: 'Logged out successfully' });
 });
@@ -555,8 +567,8 @@ app.get(['/admin', '/admin.html'], (req, res) => {
     if (!token) {
         return res.redirect('/admin-login.html?auth=required');
     }
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err || user.role !== 'admin') {
+    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
+        if (err || user.role !== 'admin' || (user.tokenVersion && user.tokenVersion !== adminTokenVersion)) {
             clearAuthCookies(res);
             return res.redirect('/admin-login.html?auth=invalid');
         }
@@ -569,8 +581,8 @@ app.get(['/admin-login', '/admin-login.html'], (req, res) => {
     const token = extractToken(req, 'admin_token');
     if (token) {
         try {
-            const user = jwt.verify(token, JWT_SECRET);
-            if (user && user.role === 'admin') {
+            const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+            if (user && user.role === 'admin' && (!user.tokenVersion || user.tokenVersion === adminTokenVersion)) {
                 return res.redirect('/admin');
             }
         } catch (_) {}
@@ -593,7 +605,7 @@ app.get(['/agent-dashboard', '/agent-dashboard.html'], (req, res) => {
     if (!token) {
         return res.redirect('/agent-login.html?auth=required');
     }
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
         if (err || user.role !== 'agent') {
             clearAuthCookies(res);
             return res.redirect('/agent-login.html?auth=invalid');
@@ -2058,7 +2070,7 @@ app.get('/api/verify/:query', verifyLimiter, (req, res) => {
     const token = extractToken(req, 'auth_token');
     if (token) {
         try {
-            const user = jwt.verify(token, JWT_SECRET);
+            const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
             if (user) {
                 if (user.role === 'admin') {
                     isAdmin = true;
@@ -2127,7 +2139,7 @@ app.post('/api/verify/:query/unlock', authLimiter, async (req, res) => {
     let isAuthorized = false;
     if (token) {
         try {
-            const user = jwt.verify(token, JWT_SECRET);
+            const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
             if (user && (user.riderId === rider.riderId || user.role === 'admin' || user.role === 'agent')) {
                 isAuthorized = true;
             }
@@ -2426,13 +2438,14 @@ app.post('/api/register', registrationLimiter, [
             isFree: isFreeRegistration,
             reference 
         };
+        newRider.tokenVersion = 1;
         dbHelpers.insertRider(newRider);
 
         if (isFreeRegistration && freeToken) {
             dbHelpers.useFreeLink(freeToken, riderId, clientIp);
         }
 
-        const token = jwt.sign({ riderId }, JWT_SECRET, { expiresIn: '24h' });
+        const token = jwt.sign({ riderId, tokenVersion: 1 }, JWT_SECRET, { expiresIn: '24h' });
 
         res.json({
             success: true, riderId, reference, token, isFree: isFreeRegistration,
