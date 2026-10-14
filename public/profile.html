@@ -1008,9 +1008,11 @@
                         return;
                     }
                 }
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
                 const res = await fetch(`/api/verify/${currentRiderId}/unlock`, { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify({ pin: pin || '' })
                 });
                 if (!res.ok) {
@@ -1398,12 +1400,14 @@
                         });
                     }
                     
-                    if (localStorage.getItem('riderToken') && !isEmergencyView) {
-                        document.getElementById('ownerActions').style.display = 'flex';
+                    if ((localStorage.getItem('riderToken') || data.isAdmin) && !isEmergencyView) {
+                        if (localStorage.getItem('riderToken')) {
+                            document.getElementById('ownerActions').style.display = 'flex';
+                        }
                         if (document.getElementById('backToSearchBtn')) {
                             document.getElementById('backToSearchBtn').style.display = 'none';
                         }
-                        // Auto-unlock full emergency details for owner
+                        // Auto-unlock full emergency details for owner or authenticated admin
                         unlockLevel2();
                     }
                     
