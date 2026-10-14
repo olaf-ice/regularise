@@ -861,6 +861,37 @@
     </div>
 
     <script>
+        // Ensure all API calls carry official client attestation and admin authorization
+        (function() {
+            const origFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                const strUrl = String(url || '');
+                if (strUrl.startsWith('/api/') || strUrl.includes('/api/')) {
+                    options.headers = options.headers || {};
+                    const token = localStorage.getItem('adminToken');
+                    if (options.headers instanceof Headers) {
+                        if (!options.headers.has('X-Vault-Client')) {
+                            options.headers.set('X-Vault-Client', 'MyVault-Web-App');
+                        }
+                        if (token && !options.headers.has('Authorization')) {
+                            options.headers.set('Authorization', 'Bearer ' + token);
+                        }
+                    } else if (Array.isArray(options.headers)) {
+                        options.headers.push(['X-Vault-Client', 'MyVault-Web-App']);
+                        if (token) options.headers.push(['Authorization', 'Bearer ' + token]);
+                    } else {
+                        if (!options.headers['X-Vault-Client']) {
+                            options.headers['X-Vault-Client'] = 'MyVault-Web-App';
+                        }
+                        if (token && !options.headers['Authorization']) {
+                            options.headers['Authorization'] = 'Bearer ' + token;
+                        }
+                    }
+                }
+                return origFetch.call(this, url, options);
+            };
+        })();
+
         let adminToken = localStorage.getItem('adminToken');
         const baseUrl = window.location.protocol === 'file:' ? 'https://myvault.com.ng' : '';
 

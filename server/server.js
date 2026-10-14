@@ -54,8 +54,15 @@ if (IS_PRODUCTION) {
     console.error('❌ [SECURITY] Fatal: ENCRYPTION_KEY environment variable is missing or invalid in production.');
   }
   if (!process.env.ADMIN_PASSWORD_HASH && (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'adminpass123')) {
-    console.warn('[SECURITY] Notice: Default ADMIN_PASSWORD active. Configure custom ADMIN_PASSWORD in Render dashboard for added security.');
+    console.error('❌ [SECURITY FATAL] Insecure default or missing ADMIN_PASSWORD in production. Configure a custom ADMIN_PASSWORD.');
   }
+}
+
+// ── Phone Masking & Privacy Helper ──────────────────────────────────────────
+function maskPhoneNumber(p) {
+    if (!p || p.length < 6) return '---';
+    const s = String(p).trim();
+    return s.slice(0, 4) + ' *** ' + s.slice(-4);
 }
 
 // ── QR Security & Anti-Screenshot Tokens ────────────────────────────────────
@@ -261,12 +268,14 @@ app.use((req, res, next) => {
             '/api/rider/login',
             '/api/rider/reset-pin',
             '/api/rider/verify-otp',
-            '/api/rider/forgot-pin'
+            '/api/rider/forgot-pin',
+            '/api/rider/change-pin'
         ];
         const isEmergencyBreakglass = req.path.startsWith('/api/emergency/') && 
             (req.path.endsWith('/unlock') || req.path.endsWith('/breakglass'));
+        const isProfileUnlock = req.path.startsWith('/api/verify/') && req.path.endsWith('/unlock');
 
-        if (sensitiveBrowserEndpoints.includes(req.path) || isEmergencyBreakglass) {
+        if (sensitiveBrowserEndpoints.includes(req.path) || isEmergencyBreakglass || isProfileUnlock) {
             const origin = req.headers['origin'] || '';
             const referer = req.headers['referer'] || '';
             const clientHeader = req.headers['x-vault-client'];
@@ -396,6 +405,13 @@ const paymentVerifyLimiter = rateLimit({
     max: 15,
     keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Payment verification limit reached. Please wait.' }
+});
+
+const verifyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30, // max 30 verification lookups per 15 mins per IP (prevents scraping/enumeration)
+    keyGenerator: (req) => getClientIp(req),
+    message: { success: false, message: 'Too many verification lookups from this network. Please wait 15 minutes.' }
 });
 
 // Apply general rate limiter to all API routes
@@ -713,12 +729,15 @@ app.post('/api/admin/login', adminAuthLimiter, async (req, res) => {
     const configuredPass = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
     const configuredPassHash = process.env.ADMIN_PASSWORD_HASH;
 
-    if (!configuredPass && !configuredPassHash) {
-        if (IS_PRODUCTION) {
-            console.error('[SECURITY FATAL] Admin password is unconfigured in production.');
-            return res.status(500).json({ success: false, message: 'Admin authentication is unconfigured in production.' });
+    if (IS_PRODUCTION) {
+        if ((!configuredPass && !configuredPassHash) || configuredPass === 'adminpass123') {
+            console.error('[SECURITY FATAL] Insecure default or unconfigured ADMIN_PASSWORD in production. Access denied.');
+            return res.status(500).json({ success: false, message: 'Admin authentication requires a secure, non-default ADMIN_PASSWORD configured in production.' });
         }
-        console.warn('[SECURITY] ADMIN_PASSWORD env var is not set - using default local dev credentials.');
+    } else {
+        if (!configuredPass && !configuredPassHash) {
+            console.warn('[SECURITY] ADMIN_PASSWORD env var is not set - using default local dev credentials.');
+        }
     }
 
     // Constant-time username matching
@@ -731,12 +750,16 @@ app.post('/api/admin/login', adminAuthLimiter, async (req, res) => {
     if (configuredPassHash) {
         isPassMatch = await bcrypt.compare(inputPass, configuredPassHash);
     } else if (configuredPass) {
-        // Compare with bcrypt hash or constant-time comparison
-        const passMaxLen = Math.max(inputPass.length, configuredPass.length, 32);
-        const passBuf1 = Buffer.from(inputPass.padEnd(passMaxLen, ' '));
-        const passBuf2 = Buffer.from(configuredPass.padEnd(passMaxLen, ' '));
-        isPassMatch = crypto.timingSafeEqual(passBuf1, passBuf2);
-    } else {
+        if (IS_PRODUCTION && configuredPass === 'adminpass123') {
+            isPassMatch = false;
+        } else {
+            // Compare with constant-time comparison
+            const passMaxLen = Math.max(inputPass.length, configuredPass.length, 32);
+            const passBuf1 = Buffer.from(inputPass.padEnd(passMaxLen, ' '));
+            const passBuf2 = Buffer.from(configuredPass.padEnd(passMaxLen, ' '));
+            isPassMatch = crypto.timingSafeEqual(passBuf1, passBuf2);
+        }
+    } else if (!IS_PRODUCTION) {
         isPassMatch = (inputPass === 'adminpass123');
     }
 
@@ -1860,33 +1883,49 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
     }
 });
 
-app.get('/api/verify/:query', (req, res) => {
-    const query = req.params.query.toLowerCase();
+app.get('/api/verify/:query', verifyLimiter, (req, res) => {
+    const query = String(req.params.query || '').toLowerCase().trim();
     const rider = dbHelpers.findRiderByQuery(query);
     if (!rider) {
         return res.json({ success: false, message: 'Rider not found' });
     }
 
+    // Check if caller is authenticated owner or admin
+    let isOwnerOrAdmin = false;
     let isAdmin = false;
-    const authHeader = req.headers['authorization'];
-    if (authHeader) {
-        const token = authHeader.split(' ')[1];
+    const token = extractToken(req, 'auth_token');
+    if (token) {
         try {
             const user = jwt.verify(token, JWT_SECRET);
-            if (user && user.role === 'admin') isAdmin = true;
+            if (user) {
+                if (user.role === 'admin') {
+                    isAdmin = true;
+                    isOwnerOrAdmin = true;
+                } else if (user.role === 'agent' || user.riderId === rider.riderId) {
+                    isOwnerOrAdmin = true;
+                }
+            }
         } catch (e) {}
     }
 
-    if (isAdmin) {
+    if (isOwnerOrAdmin) {
         const safeRider = { ...rider, cvv: generateCardCvv(rider.riderId) };
         delete safeRider.pin;
-        return res.json({ success: true, rider: safeRider, isLevel1: false, isAdmin: true, paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY });
+        return res.json({ 
+            success: true, 
+            rider: safeRider, 
+            isLevel1: false, 
+            isAdmin, 
+            isOwner: !isAdmin, 
+            paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY 
+        });
     }
 
-    // Strip sensitive data for Level 1 access (Public scan)
+    // Strip sensitive data for Level 1 access (Public scan / Unauthenticated lookup)
     const level1Rider = {
         name: rider.name,
-        phone: rider.phone,
+        phone: maskPhoneNumber(rider.phone),
+        maskedPhone: maskPhoneNumber(rider.phone),
         riderId: rider.riderId,
         cvv: generateCardCvv(rider.riderId),
         userType: rider.userType || 'driver',
@@ -1899,12 +1938,12 @@ app.get('/api/verify/:query', (req, res) => {
         emergencyContact: rider.emergencyContact,
         paymentRequested: rider.paymentRequested,
         allergies: (rider.medical && rider.medical.allergies) || rider.allergies || rider.riderAllergies || 'None',
-        dob: rider.dob || (rider.medical && rider.medical.dateOfBirth) || '',
+        dob: '',
         medical: { 
             bloodGroup: (rider.medical && rider.medical.bloodGroup) || '---',
             genotype: (rider.medical && rider.medical.genotype) || '---',
             allergies: (rider.medical && rider.medical.allergies) || rider.allergies || rider.riderAllergies || 'None',
-            dateOfBirth: (rider.medical && rider.medical.dateOfBirth) || rider.dob || '',
+            dateOfBirth: '',
             refusesBloodTransfusion: rider.medical ? !!rider.medical.refusesBloodTransfusion : false
         },
         // Only include passport photo, hide all other documents and expiry dates

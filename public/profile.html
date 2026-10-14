@@ -860,6 +860,37 @@
     </div>
 
     <script>
+        // Ensure all API calls carry official client attestation and auth credentials
+        (function() {
+            const origFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                const strUrl = String(url || '');
+                if (strUrl.startsWith('/api/') || strUrl.includes('/api/')) {
+                    options.headers = options.headers || {};
+                    const token = localStorage.getItem('riderToken') || localStorage.getItem('adminToken');
+                    if (options.headers instanceof Headers) {
+                        if (!options.headers.has('X-Vault-Client')) {
+                            options.headers.set('X-Vault-Client', 'MyVault-Web-App');
+                        }
+                        if (token && !options.headers.has('Authorization')) {
+                            options.headers.set('Authorization', 'Bearer ' + token);
+                        }
+                    } else if (Array.isArray(options.headers)) {
+                        options.headers.push(['X-Vault-Client', 'MyVault-Web-App']);
+                        if (token) options.headers.push(['Authorization', 'Bearer ' + token]);
+                    } else {
+                        if (!options.headers['X-Vault-Client']) {
+                            options.headers['X-Vault-Client'] = 'MyVault-Web-App';
+                        }
+                        if (token && !options.headers['Authorization']) {
+                            options.headers['Authorization'] = 'Bearer ' + token;
+                        }
+                    }
+                }
+                return origFetch.call(this, url, options);
+            };
+        })();
+
         // Security Features Initialization
         function initSecurityFeatures() {
             // Populate Watermark
@@ -967,14 +998,34 @@
             unlockBtn.innerHTML = '🔄';
 
             try {
-                const res = await fetch(`/api/verify/${currentRiderId}/unlock`, { method: 'POST' });
+                let token = localStorage.getItem('riderToken') || localStorage.getItem('adminToken');
+                let pin = null;
+                if (!token) {
+                    pin = prompt("Enter 4-Digit Security PIN to unlock full profile:");
+                    if (!pin) {
+                        isUnlocked = false;
+                        resetUnlock();
+                        return;
+                    }
+                }
+                const res = await fetch(`/api/verify/${currentRiderId}/unlock`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: pin || '' })
+                });
                 if (!res.ok) {
-                    throw new Error('Server returned ' + res.status + ' ' + res.statusText);
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.message || 'Server returned ' + res.status + ' ' + res.statusText);
                 }
                 const data = await res.json();
                 if (data.success) {
                     const rider = data.rider;
                     window.globalRiderData = rider; // Update global data for full profile edit
+
+                    // Reveal unmasked phone number
+                    if (rider.phone && document.getElementById('riderPhone')) {
+                        document.getElementById('riderPhone').textContent = rider.phone;
+                    }
 
                     // Populate hidden data
                     if (rider.medical) {
@@ -1059,6 +1110,7 @@
                 }
             } catch (err) {
                 console.error(err);
+                isUnlocked = false;
                 alert("Failed to unlock profile: " + (err.message || err));
                 resetUnlock();
             }
@@ -1391,8 +1443,8 @@
                         }
                     }
 
-                    // Show bookmark tip with direct profile link
-                    const profileUrl = `${window.location.origin}/profile.html?q=${encodeURIComponent(rider.phone)}`;
+                    // Show bookmark tip with direct profile link (using secure rider ID)
+                    const profileUrl = `${window.location.origin}/profile.html?q=${encodeURIComponent(rider.riderId || query)}`;
                     document.getElementById('bookmarkTip').style.display = 'block';
                     const link = document.getElementById('profilePermalink');
                     link.href = profileUrl;
