@@ -995,9 +995,45 @@
         }
 
         // --- CLINICAL EMERGENCY BREAK-GLASS LOGIC ---
-        function openBreakGlassModal() {
+        async function openBreakGlassModal() {
             const modal = document.getElementById('breakGlassModal');
             if (modal) modal.style.display = 'flex';
+
+            const datalist = document.getElementById('verifiedHospitalsDatalist');
+            if (datalist && datalist.children.length === 0) {
+                try {
+                    const res = await fetch('/api/hospitals/verified');
+                    const data = await res.json();
+                    if (data && data.success && Array.isArray(data.hospitals)) {
+                        datalist.innerHTML = data.hospitals.map(h => 
+                            `<option value="${h.name}">${h.name} (${h.state}) — ${h.traumaLevel || 'Accredited Facility'}</option>`
+                        ).join('');
+                    }
+                } catch (e) {
+                    console.warn('Could not load hospitals datalist:', e);
+                }
+            }
+
+            const facInput = document.getElementById('bgFacility');
+            if (facInput && !facInput.dataset.listenerBound) {
+                facInput.dataset.listenerBound = 'true';
+                facInput.addEventListener('input', () => {
+                    const badge = document.getElementById('facilityVerifiedBadge');
+                    if (!badge) return;
+                    const val = facInput.value.toLowerCase().trim();
+                    const dl = document.getElementById('verifiedHospitalsDatalist');
+                    let isMatch = false;
+                    if (dl && val.length > 2) {
+                        for (let opt of dl.options) {
+                            if (opt.value.toLowerCase().includes(val) || val.includes(opt.value.toLowerCase())) {
+                                isMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                    badge.style.display = isMatch ? 'block' : 'none';
+                });
+            }
         }
 
         function closeBreakGlassModal() {
@@ -1192,6 +1228,18 @@
             list.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 1rem;">Searching for nearby help... <span class="spinner" style="display:inline-block; width:12px; height:12px; vertical-align:middle; margin-left:5px; border-width:2px;"></span></div>';
 
             try {
+                // First: Query official NHS/FMOH accredited hospitals from our verified directory
+                let verifiedHospitals = [];
+                try {
+                    const vRes = await fetch(`/api/hospitals/verified?lat=${lat}&lng=${lng}&radius=80`);
+                    const vData = await vRes.json();
+                    if (vData && vData.success && Array.isArray(vData.hospitals)) {
+                        verifiedHospitals = vData.hospitals;
+                    }
+                } catch (e) {
+                    console.warn('Verified hospitals fetch notice:', e);
+                }
+
                 // Overpass API Query: 5km radius for hospitals and police stations
                 const radius = 5000;
                 const query = `[out:json];(node["amenity"="hospital"](around:${radius},${lat},${lng});node["amenity"="clinic"](around:${radius},${lat},${lng});node["amenity"="police"](around:${radius},${lat},${lng}););out 10;`;
@@ -1243,6 +1291,41 @@
                 facilities = facilities.slice(0, 4);
 
                 let html = '';
+
+                // Render NHS / FMOH Verified Hospitals first
+                if (verifiedHospitals && verifiedHospitals.length > 0) {
+                    verifiedHospitals.slice(0, 3).forEach(h => {
+                        const distStr = h.distKm ? `${h.distKm} km away` : 'Nearby';
+                        const timeEst = h.distKm ? Math.max(1, Math.round(h.distKm * 2.5)) : 10;
+                        const caps = Array.isArray(h.capabilities) ? h.capabilities.slice(0, 3).join(' • ') : '';
+
+                        html += `
+                            <div class="help-card hospital" style="border: 1px solid rgba(16, 185, 129, 0.4); background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(20, 24, 33, 0.6));">
+                                <div class="help-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🏥</div>
+                                <div class="help-info">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                                        <div class="help-name" style="color: white; font-weight: 800;">${h.name}</div>
+                                        <span class="help-status" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-size: 0.62rem; padding: 0.15rem 0.45rem;">
+                                            🛡️ NHS ACCREDITED
+                                        </span>
+                                    </div>
+                                    <div class="help-meta" style="margin-top: 0.2rem;">
+                                        <span class="help-dist" style="color: #34d399;">${distStr}</span>
+                                        <span>• ~${timeEst} min drive</span>
+                                        <span style="color: #fbbf24;">• ${h.traumaLevel || 'Level 1 Trauma'}</span>
+                                    </div>
+                                    ${caps ? `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.2rem;">${caps}</div>` : ''}
+                                    <div class="help-actions" style="margin-top: 0.6rem;">
+                                        ${h.phone ? `<a href="tel:${h.phone}" class="btn-help call" style="border-color: #34d399; color: #34d399; font-weight: 800;">📞 ER: ${h.phone}</a>` : ''}
+                                        ${h.ambulanceLine && h.ambulanceLine !== h.phone ? `<a href="tel:${h.ambulanceLine}" class="btn-help call" style="border-color: #fbbf24; color: #fbbf24; font-weight: 800;">🚑 AMBULANCE</a>` : ''}
+                                        <a href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${h.latitude || lat},${h.longitude || lng}" target="_blank" class="btn-help nav" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">🗺️ NAVIGATE</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
                 facilities.forEach(f => {
                     const icon = f.type === 'hospital' ? '🏥' : '🚓';
                     const callText = 'CALL';
@@ -1271,8 +1354,43 @@
                 });
                 list.innerHTML = html;
             } catch(e) {
-                console.error(e);
-                list.innerHTML = '<div style="font-size:0.75rem; color:var(--red); text-align:center; padding: 1rem;">Error fetching nearby facilities.</div>';
+                console.warn('Overpass network fallback notice:', e);
+                if (verifiedHospitals && verifiedHospitals.length > 0) {
+                    let vHtml = '';
+                    verifiedHospitals.slice(0, 4).forEach(h => {
+                        const distStr = h.distKm ? `${h.distKm} km away` : 'Nearby';
+                        const timeEst = h.distKm ? Math.max(1, Math.round(h.distKm * 2.5)) : 10;
+                        const caps = Array.isArray(h.capabilities) ? h.capabilities.slice(0, 3).join(' • ') : '';
+
+                        vHtml += `
+                            <div class="help-card hospital" style="border: 1px solid rgba(16, 185, 129, 0.4); background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(20, 24, 33, 0.6));">
+                                <div class="help-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🏥</div>
+                                <div class="help-info">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                                        <div class="help-name" style="color: white; font-weight: 800;">${h.name}</div>
+                                        <span class="help-status" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-size: 0.62rem; padding: 0.15rem 0.45rem;">
+                                            🛡️ NHS ACCREDITED
+                                        </span>
+                                    </div>
+                                    <div class="help-meta" style="margin-top: 0.2rem;">
+                                        <span class="help-dist" style="color: #34d399;">${distStr}</span>
+                                        <span>• ~${timeEst} min drive</span>
+                                        <span style="color: #fbbf24;">• ${h.traumaLevel || 'Level 1 Trauma'}</span>
+                                    </div>
+                                    ${caps ? `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.2rem;">${caps}</div>` : ''}
+                                    <div class="help-actions" style="margin-top: 0.6rem;">
+                                        ${h.phone ? `<a href="tel:${h.phone}" class="btn-help call" style="border-color: #34d399; color: #34d399; font-weight: 800;">📞 ER: ${h.phone}</a>` : ''}
+                                        ${h.ambulanceLine && h.ambulanceLine !== h.phone ? `<a href="tel:${h.ambulanceLine}" class="btn-help call" style="border-color: #fbbf24; color: #fbbf24; font-weight: 800;">🚑 AMBULANCE</a>` : ''}
+                                        <a href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${h.latitude || lat},${h.longitude || lng}" target="_blank" class="btn-help nav" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">🗺️ NAVIGATE</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    list.innerHTML = vHtml;
+                } else {
+                    list.innerHTML = '<div style="font-size:0.75rem; color:var(--amber); text-align:center; padding: 1rem;">No immediate trauma centers found in range. Call national emergency 112 / 122.</div>';
+                }
             }
         }
 
@@ -1743,7 +1861,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
                         Medical Facility / Hospital *
                     </label>
-                    <input type="text" id="bgFacility" class="bg-form-input" placeholder="e.g. UCH Ibadan - ER Trauma Center" required>
+                    <input type="text" id="bgFacility" class="bg-form-input" placeholder="e.g. UCH Ibadan - ER Trauma Center" list="verifiedHospitalsDatalist" required autocomplete="off">
+                    <datalist id="verifiedHospitalsDatalist"></datalist>
+                    <div id="facilityVerifiedBadge" style="display:none; font-size: 0.72rem; color: #34d399; margin-top: 5px; font-weight: 700;">
+                        🛡️ Accredited Healthcare Facility (NHS / FMOH Registry)
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 0.85rem;">

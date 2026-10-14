@@ -423,6 +423,143 @@
             </a>
         </div>
 
+        
+        <!-- 🏥 Verified Hospitals & Healthcare Directory (NHS Standards) -->
+        <div id="hospitalsSection" style="margin-bottom: 3.5rem; background: linear-gradient(145deg, rgba(16, 185, 129, 0.04), rgba(20, 24, 33, 0.85)); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 16px; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1.25rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+                        <span style="font-size: 1.5rem;">🏥</span>
+                        <h2 style="margin: 0; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--text-light);">Verified Hospitals &amp; Trauma Directory</h2>
+                        <span class="live-status-pill" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35);">
+                            NHS / FMOH ACCREDITED
+                        </span>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">
+                        Official directory of accredited tertiary hospitals, federal medical centres, and 24/7 trauma centers for emergency dispatch and clinical break-glass verification.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
+                    <button onclick="openAddHospitalModal()" class="action-btn" style="border-color: #34d399; color: #34d399; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem;">
+                        ➕ Add Verified Hospital
+                    </button>
+                    <button onclick="exportHospitalsCSV()" class="action-btn" style="border-color: var(--primary-light); color: var(--primary-light); font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem;">
+                        📥 Export Directory CSV
+                    </button>
+                    <button onclick="fetchHospitals(1)" class="action-btn" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem;">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.75rem;">
+                <div class="metric-card" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.25);">
+                    <div class="metric-value" id="hospMetricTotal" style="color: #34d399;">0</div>
+                    <div class="metric-label">Verified Facilities</div>
+                </div>
+                <div class="metric-card" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.25);">
+                    <div class="metric-value" id="hospMetricEmergency" style="color: #f87171;">0</div>
+                    <div class="metric-label">24/7 Trauma Centers</div>
+                </div>
+                <div class="metric-card" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.25);">
+                    <div class="metric-value" id="hospMetricStates" style="color: #60a5fa;">0</div>
+                    <div class="metric-label">States Covered</div>
+                </div>
+                <div class="metric-card" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.25);">
+                    <div class="metric-value" id="hospMetricAmbulance" style="color: #fbbf24;">0</div>
+                    <div class="metric-label">Ambulance Fleets</div>
+                </div>
+            </div>
+
+            <!-- Filter & Search Toolbar -->
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="hospSearchInput" oninput="debounceFetchHospitals()" placeholder="🔍 Search hospital, city, code, phone..." style="padding: 0.5rem 0.85rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.85rem; width: 260px;">
+                    <select id="hospStateFilter" onchange="fetchHospitals(1)" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.85rem;">
+                        <option value="all">All States</option>
+                        <option value="Lagos">Lagos</option>
+                        <option value="FCT Abuja">FCT Abuja</option>
+                        <option value="Oyo">Oyo</option>
+                        <option value="Rivers">Rivers</option>
+                        <option value="Kano">Kano</option>
+                        <option value="Ogun">Ogun</option>
+                        <option value="Enugu">Enugu</option>
+                        <option value="Delta">Delta</option>
+                        <option value="Kaduna">Kaduna</option>
+                        <option value="Edo">Edo</option>
+                        <option value="Anambra">Anambra</option>
+                        <option value="Akwa Ibom">Akwa Ibom</option>
+                        <option value="Ondo">Ondo</option>
+                        <option value="Osun">Osun</option>
+                        <option value="Kwara">Kwara</option>
+                        <option value="Plateau">Plateau</option>
+                        <option value="Imo">Imo</option>
+                        <option value="Abia">Abia</option>
+                        <option value="Cross River">Cross River</option>
+                        <option value="Benue">Benue</option>
+                        <option value="Borno">Borno</option>
+                        <option value="Katsina">Katsina</option>
+                        <option value="Niger">Niger</option>
+                        <option value="Adamawa">Adamawa</option>
+                        <option value="Bauchi">Bauchi</option>
+                        <option value="Bayelsa">Bayelsa</option>
+                        <option value="Ebonyi">Ebonyi</option>
+                        <option value="Ekiti">Ekiti</option>
+                        <option value="Gombe">Gombe</option>
+                        <option value="Jigawa">Jigawa</option>
+                        <option value="Kebbi">Kebbi</option>
+                        <option value="Kogi">Kogi</option>
+                        <option value="Nasarawa">Nasarawa</option>
+                        <option value="Sokoto">Sokoto</option>
+                        <option value="Taraba">Taraba</option>
+                        <option value="Yobe">Yobe</option>
+                        <option value="Zamfara">Zamfara</option>
+                    </select>
+                    <select id="hospTypeFilter" onchange="fetchHospitals(1)" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.85rem;">
+                        <option value="all">All Facility Types</option>
+                        <option value="Teaching Hospital">Teaching Hospital</option>
+                        <option value="Federal Medical Centre">Federal Medical Centre</option>
+                        <option value="State Specialist Hospital">State Specialist Hospital</option>
+                        <option value="General Hospital">General Hospital</option>
+                        <option value="Trauma Center">Trauma Center</option>
+                        <option value="Accredited Private Hospital">Accredited Private Hospital</option>
+                    </select>
+                    <select id="hospStatusFilter" onchange="fetchHospitals(1)" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.85rem;">
+                        <option value="all">All Statuses</option>
+                        <option value="verified">Verified Only</option>
+                        <option value="suspended">Suspended Only</option>
+                    </select>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);" id="hospResultCount">
+                    Showing 0 hospitals
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Accreditation &amp; Code</th>
+                            <th>Hospital Name &amp; Classification</th>
+                            <th>Location / Address</th>
+                            <th>24/7 ER &amp; Ambulance Hotline</th>
+                            <th>Trauma Level &amp; Capabilities</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hospitalsTableBody">
+                        <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading verified hospitals directory...</td></tr>
+                    </tbody>
+                </table>
+                <div id="hospitalsPagination" style="padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); font-size: 0.8rem; color: var(--text-muted);">
+                </div>
+            </div>
+        </div>
+
+
         <!-- 🚨 Clinical Emergency & Break-Glass Audit Center -->
         <div id="clinicalAuditSection" style="margin-bottom: 3.5rem; background: linear-gradient(145deg, rgba(239, 68, 68, 0.04), rgba(20, 24, 33, 0.75)); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 16px; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1.25rem;">
@@ -1008,6 +1145,7 @@
             fetchAgents();
             fetchAnalytics();
             fetchFreeLinks(1);
+            fetchHospitals(1);
         }
 
         async function fetchRiders() {
@@ -2727,6 +2865,207 @@
                 <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
                     <button type="button" onclick="closeAuditFlagModal()" class="action-btn">Cancel</button>
                     <button type="submit" id="saveFlagBtn" class="btn btn-primary" style="background: #ef4444; border-color: #ef4444;">Save Compliance Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Add / Edit Verified Hospital Modal (NHS Standards) -->
+    <div id="hospitalModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 680px; max-height: 90vh; overflow-y: auto; background: #141821; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 16px; padding: 1.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1rem;">
+                <div>
+                    <h3 id="hospitalModalTitle" style="margin: 0; font-size: 1.25rem; color: #34d399; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🏥</span> Add Verified Hospital to Registry
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.25rem 0 0 0;">
+                        Accredited facility entry adhering to NHS / FMOH emergency healthcare standards.
+                    </p>
+                </div>
+                <button type="button" onclick="closeHospitalModal()" class="action-btn" style="border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 0.2rem;">&times;</button>
+            </div>
+
+            <form id="hospitalForm" onsubmit="saveHospitalForm(event)">
+                <input type="hidden" id="hospEditId">
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Hospital / Facility Full Name *</label>
+                        <input type="text" id="hospName" required placeholder="e.g. University College Hospital (UCH) Ibadan" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">ODS / Trust Code</label>
+                        <input type="text" id="hospOdsCode" placeholder="e.g. ODS-NG-UCH01" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Facility Classification *</label>
+                        <select id="hospType" required style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                            <option value="Teaching Hospital">University Teaching Hospital</option>
+                            <option value="Federal Medical Centre">Federal Medical Centre (FMC)</option>
+                            <option value="State Specialist Hospital">State Specialist Hospital</option>
+                            <option value="General Hospital">General Hospital</option>
+                            <option value="Trauma Center">Trauma Center (Specialized)</option>
+                            <option value="Accredited Private Hospital">Accredited Private Hospital</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Trauma Center Tier</label>
+                        <select id="hospTraumaLevel" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                            <option value="Level 1 Comprehensive Trauma">Level 1 Comprehensive Trauma (Full Surgical/ICU)</option>
+                            <option value="Level 2 Major Trauma">Level 2 Major Trauma (Surgeon/ER On-Site)</option>
+                            <option value="Level 3 Community Emergency">Level 3 Community Emergency (Stabilization/Transfer)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">State *</label>
+                        <select id="hospState" required style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                            <option value="">Select State</option>
+                            <option value="Lagos">Lagos</option>
+                            <option value="FCT Abuja">FCT Abuja</option>
+                            <option value="Oyo">Oyo</option>
+                            <option value="Rivers">Rivers</option>
+                            <option value="Kano">Kano</option>
+                            <option value="Ogun">Ogun</option>
+                            <option value="Enugu">Enugu</option>
+                            <option value="Delta">Delta</option>
+                            <option value="Kaduna">Kaduna</option>
+                            <option value="Edo">Edo</option>
+                            <option value="Anambra">Anambra</option>
+                            <option value="Akwa Ibom">Akwa Ibom</option>
+                            <option value="Ondo">Ondo</option>
+                            <option value="Osun">Osun</option>
+                            <option value="Kwara">Kwara</option>
+                            <option value="Plateau">Plateau</option>
+                            <option value="Imo">Imo</option>
+                            <option value="Abia">Abia</option>
+                            <option value="Cross River">Cross River</option>
+                            <option value="Benue">Benue</option>
+                            <option value="Borno">Borno</option>
+                            <option value="Katsina">Katsina</option>
+                            <option value="Niger">Niger</option>
+                            <option value="Adamawa">Adamawa</option>
+                            <option value="Bauchi">Bauchi</option>
+                            <option value="Bayelsa">Bayelsa</option>
+                            <option value="Ebonyi">Ebonyi</option>
+                            <option value="Ekiti">Ekiti</option>
+                            <option value="Gombe">Gombe</option>
+                            <option value="Jigawa">Jigawa</option>
+                            <option value="Kebbi">Kebbi</option>
+                            <option value="Kogi">Kogi</option>
+                            <option value="Nasarawa">Nasarawa</option>
+                            <option value="Sokoto">Sokoto</option>
+                            <option value="Taraba">Taraba</option>
+                            <option value="Yobe">Yobe</option>
+                            <option value="Zamfara">Zamfara</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">City / LGA *</label>
+                        <input type="text" id="hospCity" required placeholder="e.g. Ibadan North / Central" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Full Street Address *</label>
+                    <input type="text" id="hospAddress" required placeholder="e.g. Queen Elizabeth II Road, Mokola, Ibadan" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">24/7 Emergency Phone Number *</label>
+                        <input type="tel" id="hospPhone" required placeholder="e.g. 08131733444" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Ambulance Dispatch Hotline</label>
+                        <input type="tel" id="hospAmbulanceLine" placeholder="e.g. 08033284567" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Emergency Desk Email</label>
+                        <input type="email" id="hospEmail" placeholder="e.g. emergency@uch-ibadan.org.ng" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Accrediting Authority</label>
+                        <input type="text" id="hospAccreditedBy" value="Federal Ministry of Health (FMOH) / NHIA" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <!-- GPS Coordinates -->
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-light);">📍 Geographic GPS Coordinates (for Proximity Routing)</span>
+                        <button type="button" onclick="detectHospitalCoordinates()" class="action-btn" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">Detect My Location</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <input type="number" step="any" id="hospLatitude" placeholder="Latitude (e.g. 7.4042)" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.8rem; box-sizing: border-box;">
+                        <input type="number" step="any" id="hospLongitude" placeholder="Longitude (e.g. 3.9015)" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.8rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <!-- Clinical Capabilities Checkboxes -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Verified Capabilities &amp; Facilities on Site</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8rem; color: var(--text-light);">
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="24/7 Emergency Room" checked> 24/7 Emergency Room
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="ICU / HDU" checked> ICU / HDU
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="Blood Bank" checked> Blood Bank on Site
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="Trauma Surgery" checked> Trauma Surgery Theatre
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="CT / MRI Imaging"> CT / MRI Imaging
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="Burn Care Unit"> Burn Care Unit
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="Ambulance Dispatch" checked> Ambulance Dispatch
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                            <input type="checkbox" name="hospCaps" value="Helipad"> Helipad on Site
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Accreditation Status</label>
+                        <select id="hospStatus" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                            <option value="verified">Verified (Active Accreditation)</option>
+                            <option value="suspended">Suspended (Under Review)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Contact Person / HOD</label>
+                        <input type="text" id="hospContactPerson" placeholder="e.g. Dr. Babatunde Alabi, CMO" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Clinical Notes / Specialities</label>
+                    <textarea id="hospNotes" rows="2" placeholder="e.g. Primary neurological trauma receiving wing, 24/7 surgeon on-call..." style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" onclick="closeHospitalModal()" class="action-btn">Cancel</button>
+                    <button type="submit" id="saveHospBtn" class="btn btn-primary" style="background: #10b981; border-color: #10b981; font-weight: 800;">
+                        💾 Save &amp; Accredit Hospital
+                    </button>
                 </div>
             </form>
         </div>

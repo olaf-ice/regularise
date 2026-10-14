@@ -988,6 +988,124 @@ app.delete('/api/admin/agent/:id', authenticateAdminToken, async (req, res) => {
     }
 });
 
+// ---------------------------------------------------------
+// VERIFIED HOSPITALS & HEALTHCARE DIRECTORY (NHS STANDARDS)
+// ---------------------------------------------------------
+
+// GET /api/admin/hospitals - List and search hospitals for admin
+app.get('/api/admin/hospitals', authenticateAdminToken, (req, res) => {
+    try {
+        const { search, state, type, status, page, limit } = req.query;
+        const result = dbHelpers.getHospitals({
+            search,
+            state,
+            type,
+            status,
+            page: parseInt(page, 10) || 1,
+            limit: parseInt(limit, 10) || 50
+        });
+        const stats = dbHelpers.getHospitalsStats();
+        res.json({
+            success: true,
+            hospitals: result.hospitals,
+            pagination: result.pagination,
+            stats
+        });
+    } catch (err) {
+        console.error('Error fetching admin hospitals:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch verified hospitals' });
+    }
+});
+
+// POST /api/admin/hospitals - Add a verified hospital
+app.post('/api/admin/hospitals', authenticateAdminToken, (req, res) => {
+    try {
+        const { name, state, phone, address, type } = req.body;
+        if (!name || !name.trim()) {
+            return res.status(400).json({ success: false, message: 'Hospital Name is required' });
+        }
+        if (!state || !state.trim()) {
+            return res.status(400).json({ success: false, message: 'State is required' });
+        }
+        if (!phone || !phone.trim()) {
+            return res.status(400).json({ success: false, message: '24/7 Emergency Phone Number is required' });
+        }
+
+        const hospital = dbHelpers.insertHospital(req.body);
+        console.log(`[HOSPITAL] Added verified hospital "${hospital.name}" (${hospital.hospitalId}) in ${hospital.state}`);
+        res.json({
+            success: true,
+            hospital,
+            message: `Hospital "${hospital.name}" successfully accredited and registered in directory.`
+        });
+    } catch (err) {
+        console.error('Error creating hospital:', err);
+        res.status(500).json({ success: false, message: err.message || 'Failed to register hospital' });
+    }
+});
+
+// PUT /api/admin/hospitals/:id - Update hospital details or status
+app.put('/api/admin/hospitals/:id', authenticateAdminToken, (req, res) => {
+    try {
+        const id = req.params.id;
+        const updated = dbHelpers.updateHospital(id, req.body);
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'Hospital not found' });
+        }
+        res.json({
+            success: true,
+            hospital: updated,
+            message: 'Hospital record updated successfully.'
+        });
+    } catch (err) {
+        console.error('Error updating hospital:', err);
+        res.status(500).json({ success: false, message: 'Failed to update hospital record' });
+    }
+});
+
+// DELETE /api/admin/hospitals/:id - Remove hospital from directory
+app.delete('/api/admin/hospitals/:id', authenticateAdminToken, (req, res) => {
+    try {
+        const id = req.params.id;
+        const result = dbHelpers.deleteHospital(id);
+        if (!result.deleted) {
+            return res.status(404).json({ success: false, message: 'Hospital not found' });
+        }
+        res.json({ success: true, message: 'Hospital removed from directory.' });
+    } catch (err) {
+        console.error('Error deleting hospital:', err);
+        res.status(500).json({ success: false, message: 'Failed to delete hospital' });
+    }
+});
+
+// GET /api/hospitals/verified - Public SOS & autocomplete endpoint
+app.get('/api/hospitals/verified', (req, res) => {
+    try {
+        const { search, state, type, lat, lng, radius } = req.query;
+
+        if (lat && lng) {
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+            const radiusKm = parseFloat(radius) || 60;
+            const nearby = dbHelpers.getNearbyHospitals(latitude, longitude, radiusKm, 10);
+            return res.json({ success: true, hospitals: nearby });
+        }
+
+        const result = dbHelpers.getHospitals({
+            search,
+            state,
+            type,
+            status: 'verified',
+            limit: 25
+        });
+
+        res.json({ success: true, hospitals: result.hospitals });
+    } catch (err) {
+        console.error('Error in public verified hospitals lookup:', err);
+        res.status(500).json({ success: false, message: 'Failed to lookup hospitals' });
+    }
+});
+
 // Admin Free Registration Links Endpoints
 app.post('/api/admin/free-links/generate', authenticateAdminToken, (req, res) => {
     try {
