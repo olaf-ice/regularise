@@ -254,6 +254,35 @@
         .flag-status-flagged { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5); }
         .flag-status-resolved { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
 
+        .facility-badge-verified {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.72rem;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+        .facility-badge-suspended {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.72rem;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+
         .audit-tab-btn {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--glass-border);
@@ -2833,6 +2862,500 @@
         function refreshEmergencyData() {
             fetchActiveEmergencySessions();
             fetchAdminAuditLogs();
+            if (typeof fetchHospitals === 'function') {
+                fetchHospitals(currentHospPage || 1);
+            }
+        }
+
+        // ── Verified Hospitals & Healthcare Facilities Directory Management ──────
+        let currentHospitals = [];
+        let currentHospPage = 1;
+        let hospDebounceTimer = null;
+
+        function setHospText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function debounceFetchHospitals() {
+            clearTimeout(hospDebounceTimer);
+            hospDebounceTimer = setTimeout(() => {
+                fetchHospitals(1);
+            }, 300);
+        }
+
+        async function fetchHospitals(page = 1) {
+            const token = adminToken || localStorage.getItem('adminToken');
+            if (!token) return;
+            currentHospPage = page;
+
+            const search = document.getElementById('hospSearchInput')?.value?.trim() || '';
+            const state = document.getElementById('hospStateFilter')?.value || 'all';
+            const type = document.getElementById('hospTypeFilter')?.value || 'all';
+            const status = document.getElementById('hospStatusFilter')?.value || 'all';
+
+            const tbody = document.getElementById('hospitalsTableBody');
+            if (tbody && (!currentHospitals || currentHospitals.length === 0)) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    <div class="spinner" style="display:inline-block; width:18px; height:18px; border-width:2px; vertical-align:middle; margin-right:8px;"></div>
+                    Loading accredited healthcare facilities...
+                </td></tr>`;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    page: page.toString(),
+                    limit: '20'
+                });
+                if (search) params.append('search', search);
+                if (state !== 'all') params.append('state', state);
+                if (type !== 'all') params.append('type', type);
+                if (status !== 'all') params.append('status', status);
+
+                const res = await fetch(`${baseUrl}/api/admin/hospitals?${params.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    console.error('Failed to load hospitals:', data.message);
+                    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #f87171;">Failed to load facilities: ${escapeHTML(data.message || 'Server error')}</td></tr>`;
+                    return;
+                }
+
+                currentHospitals = data.hospitals || [];
+
+                // Update Directory Surveillance Metrics
+                if (data.stats) {
+                    setHospText('hospMetricTotal', (data.stats.total || 0).toLocaleString());
+                    setHospText('hospMetricEmergency', (data.stats.emergency247 || 0).toLocaleString());
+                    setHospText('hospMetricStates', (data.stats.statesCount || 0).toLocaleString());
+                    setHospText('hospMetricAmbulance', (data.stats.ambulanceCount || 0).toLocaleString());
+                }
+
+                renderHospitalsTable(currentHospitals);
+                renderHospitalsPagination(data.pagination);
+
+                const countEl = document.getElementById('hospResultCount');
+                if (countEl && data.pagination) {
+                    countEl.textContent = `Showing ${currentHospitals.length} of ${data.pagination.total} accredited facilities`;
+                }
+            } catch (err) {
+                console.error('Error fetching hospitals:', err);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #f87171;">Network error loading hospitals directory.</td></tr>`;
+            }
+        }
+
+        function renderHospitalsTable(hospitals) {
+            const tbody = document.getElementById('hospitalsTableBody');
+            if (!tbody) return;
+
+            if (!hospitals || hospitals.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">🏥</div>
+                    <div style="font-weight: 700; color: white; margin-bottom: 0.25rem;">No Accredited Facilities Found</div>
+                    <div style="font-size: 0.8rem;">Try adjusting search terms or add a new verified hospital above.</div>
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = hospitals.map(h => {
+                const isVerified = (h.status === 'verified');
+                const statusBadge = isVerified
+                    ? `<span class="facility-badge-verified">🛡️ VERIFIED FACILITY</span>`
+                    : `<span class="facility-badge-suspended">⚠️ SUSPENDED</span>`;
+
+                const traumaBadge = h.traumaLevel ? `
+                    <div style="margin-bottom: 0.35rem;">
+                        <span style="display:inline-block; font-size:0.72rem; padding:0.18rem 0.5rem; border-radius:4px; font-weight:700; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.35);">
+                            ${escapeHTML(h.traumaLevel)}
+                        </span>
+                    </div>
+                ` : '';
+
+                const caps = Array.isArray(h.capabilities) ? h.capabilities : [];
+                const capsChips = caps.slice(0, 4).map(c => 
+                    `<span style="display:inline-block; font-size:0.68rem; padding:0.12rem 0.4rem; border-radius:4px; background:rgba(255,255,255,0.06); color:var(--text-light); margin:1px;">${escapeHTML(c)}</span>`
+                ).join('');
+                const moreCaps = caps.length > 4 ? `<span style="font-size:0.68rem; color:var(--text-muted); margin-left:2px;">+${caps.length - 4} more</span>` : '';
+
+                const mapQuery = encodeURIComponent(`${h.name}, ${h.city || ''}, ${h.state || ''}, Nigeria`);
+                const mapUrl = (h.latitude && h.longitude)
+                    ? `https://www.google.com/maps/search/?api=1&query=${h.latitude},${h.longitude}`
+                    : `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+                const safeName = escapeHTML(h.name).replace(/'/g, "\\'");
+
+                return `
+                    <tr>
+                        <td style="white-space: nowrap;">
+                            <div style="font-family: monospace; font-size: 0.88rem; font-weight: 800; color: #34d399;">
+                                ${escapeHTML(h.odsCode || h.hospitalId)}
+                            </div>
+                            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">
+                                ${escapeHTML(h.accreditedBy || 'FMOH / NHIA Accredited')}
+                            </div>
+                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;">
+                                Ref: ${escapeHTML(h.hospitalId)}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: white; font-size: 0.92rem; line-height: 1.35;">
+                                ${escapeHTML(h.name)}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.35rem; flex-wrap: wrap;">
+                                <span style="font-size: 0.75rem; color: #60a5fa; font-weight: 600;">
+                                    ${escapeHTML(h.type || 'General Hospital')}
+                                </span>
+                                ${h.isEmergency247 ? `<span style="font-size: 0.68rem; padding: 0.1rem 0.4rem; border-radius: 4px; background: rgba(239,68,68,0.2); color: #f87171; font-weight: 800;">24/7 ER</span>` : ''}
+                            </div>
+                            ${h.contactPerson ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px;">HOD: ${escapeHTML(h.contactPerson)}</div>` : ''}
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: #cbd5e1; font-size: 0.84rem;">
+                                ${escapeHTML(h.city ? `${h.city}, ${h.state}` : h.state)}
+                            </div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); max-width: 220px; line-height: 1.3; margin-top: 3px;">
+                                ${escapeHTML(h.address || '—')}
+                            </div>
+                            <a href="${mapUrl}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: var(--primary-light); margin-top: 4px; text-decoration: none; font-weight: 600;">
+                                📍 View on Google Maps
+                            </a>
+                        </td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                <a href="tel:${escapeHTML(h.phone)}" style="color: #34d399; font-weight: 700; font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                    📞 ${escapeHTML(h.phone)}
+                                </a>
+                                ${h.ambulanceLine ? `
+                                    <a href="tel:${escapeHTML(h.ambulanceLine)}" style="color: #fbbf24; font-weight: 700; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                        🚑 ${escapeHTML(h.ambulanceLine)}
+                                    </a>
+                                ` : ''}
+                                ${h.email ? `<div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHTML(h.email)}</div>` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            ${traumaBadge}
+                            <div style="line-height: 1.4;">
+                                ${capsChips} ${moreCaps}
+                            </div>
+                        </td>
+                        <td>
+                            ${statusBadge}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                <button onclick="openEditHospitalModal(${h.id})" class="action-btn" style="font-size: 0.75rem; padding: 0.3rem 0.55rem;" title="Edit Facility Details">
+                                    ✏️ Edit
+                                </button>
+                                <button onclick="toggleHospitalStatus(${h.id}, '${escapeHTML(h.status)}')" class="action-btn" style="font-size: 0.75rem; padding: 0.3rem 0.55rem; color: ${isVerified ? '#f87171' : '#34d399'};" title="${isVerified ? 'Suspend Facility' : 'Re-verify Facility'}">
+                                    ${isVerified ? '⏸️ Suspend' : '✅ Verify'}
+                                </button>
+                                <button onclick="deleteHospital(${h.id}, '${safeName}')" class="action-btn" style="font-size: 0.75rem; padding: 0.3rem 0.55rem; color: #f87171;" title="Remove from Directory">
+                                    🗑️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderHospitalsPagination(pagination) {
+            const container = document.getElementById('hospitalsPagination');
+            if (!container) return;
+            if (!pagination || pagination.totalPages <= 1) {
+                container.innerHTML = pagination ? `<span>Page 1 of 1 (${pagination.total} accredited facilities)</span>` : '';
+                return;
+            }
+
+            const { page, totalPages, total } = pagination;
+            container.innerHTML = `
+                <div>Page <strong>${page}</strong> of <strong>${totalPages}</strong> (${total} accredited facilities)</div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="action-btn" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;" onclick="fetchHospitals(${page - 1})" ${page <= 1 ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''}>
+                        &larr; Prev
+                    </button>
+                    <button class="action-btn" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;" onclick="fetchHospitals(${page + 1})" ${page >= totalPages ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''}>
+                        Next &rarr;
+                    </button>
+                </div>
+            `;
+        }
+
+        function openAddHospitalModal() {
+            const form = document.getElementById('hospitalForm');
+            if (form) form.reset();
+            document.getElementById('hospEditId').value = '';
+            document.getElementById('hospitalModalTitle').innerHTML = '<span>🏥</span> Add Verified Hospital to Registry';
+            document.getElementById('hospAccreditedBy').value = 'Federal Ministry of Health (FMOH) / NHIA';
+            document.getElementById('hospStatus').value = 'verified';
+
+            // Check default capabilities
+            const defaultCaps = ['24/7 Emergency Room', 'ICU / HDU', 'Blood Bank', 'Trauma Surgery', 'Ambulance Dispatch'];
+            document.querySelectorAll('input[name="hospCaps"]').forEach(cb => {
+                cb.checked = defaultCaps.includes(cb.value);
+            });
+
+            document.getElementById('hospitalModal').style.display = 'flex';
+        }
+
+        function openEditHospitalModal(id) {
+            const h = currentHospitals.find(item => item.id === id);
+            if (!h) {
+                alert('Facility record not found. Please refresh the directory.');
+                return;
+            }
+
+            document.getElementById('hospEditId').value = h.id;
+            document.getElementById('hospitalModalTitle').innerHTML = `<span>✏️</span> Edit Facility: ${escapeHTML(h.name)}`;
+            document.getElementById('hospName').value = h.name || '';
+            document.getElementById('hospOdsCode').value = h.odsCode || '';
+            document.getElementById('hospType').value = h.type || 'Teaching Hospital';
+            document.getElementById('hospTraumaLevel').value = h.traumaLevel || 'Level 1 Comprehensive Trauma';
+            document.getElementById('hospState').value = h.state || '';
+            document.getElementById('hospCity').value = h.city || '';
+            document.getElementById('hospAddress').value = h.address || '';
+            document.getElementById('hospPhone').value = h.phone || '';
+            document.getElementById('hospAmbulanceLine').value = h.ambulanceLine || '';
+            document.getElementById('hospEmail').value = h.email || '';
+            document.getElementById('hospAccreditedBy').value = h.accreditedBy || 'Federal Ministry of Health (FMOH) / NHIA';
+            document.getElementById('hospLatitude').value = (h.latitude !== null && h.latitude !== undefined) ? h.latitude : '';
+            document.getElementById('hospLongitude').value = (h.longitude !== null && h.longitude !== undefined) ? h.longitude : '';
+            document.getElementById('hospStatus').value = h.status || 'verified';
+            document.getElementById('hospContactPerson').value = h.contactPerson || '';
+            document.getElementById('hospNotes').value = h.notes || '';
+
+            const caps = Array.isArray(h.capabilities) ? h.capabilities : [];
+            document.querySelectorAll('input[name="hospCaps"]').forEach(cb => {
+                cb.checked = caps.includes(cb.value);
+            });
+
+            document.getElementById('hospitalModal').style.display = 'flex';
+        }
+
+        function closeHospitalModal() {
+            document.getElementById('hospitalModal').style.display = 'none';
+        }
+
+        async function saveHospitalForm(event) {
+            event.preventDefault();
+            const token = adminToken || localStorage.getItem('adminToken');
+            if (!token) return;
+
+            const editId = document.getElementById('hospEditId').value;
+            const name = document.getElementById('hospName').value.trim();
+            const odsCode = document.getElementById('hospOdsCode').value.trim();
+            const type = document.getElementById('hospType').value;
+            const traumaLevel = document.getElementById('hospTraumaLevel').value;
+            const state = document.getElementById('hospState').value;
+            const city = document.getElementById('hospCity').value.trim();
+            const address = document.getElementById('hospAddress').value.trim();
+            const phone = document.getElementById('hospPhone').value.trim();
+            const ambulanceLine = document.getElementById('hospAmbulanceLine').value.trim();
+            const email = document.getElementById('hospEmail').value.trim();
+            const accreditedBy = document.getElementById('hospAccreditedBy').value.trim();
+            const latStr = document.getElementById('hospLatitude').value.trim();
+            const lngStr = document.getElementById('hospLongitude').value.trim();
+            const status = document.getElementById('hospStatus').value;
+            const contactPerson = document.getElementById('hospContactPerson').value.trim();
+            const notes = document.getElementById('hospNotes').value.trim();
+
+            const capabilities = [];
+            document.querySelectorAll('input[name="hospCaps"]:checked').forEach(cb => {
+                capabilities.push(cb.value);
+            });
+
+            const latitude = latStr ? parseFloat(latStr) : null;
+            const longitude = lngStr ? parseFloat(lngStr) : null;
+
+            const payload = {
+                name,
+                odsCode,
+                type,
+                traumaLevel,
+                state,
+                city,
+                address,
+                phone,
+                ambulanceLine,
+                email,
+                accreditedBy,
+                latitude,
+                longitude,
+                capabilities,
+                isEmergency247: capabilities.includes('24/7 Emergency Room'),
+                status,
+                contactPerson,
+                notes
+            };
+
+            const saveBtn = document.getElementById('saveHospBtn');
+            const origText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = 'Saving Facility...';
+
+            try {
+                let url = `${baseUrl}/api/admin/hospitals`;
+                let method = 'POST';
+
+                if (editId) {
+                    url = `${baseUrl}/api/admin/hospitals/${editId}`;
+                    method = 'PUT';
+                }
+
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert(data.message || 'Hospital successfully saved!');
+                    closeHospitalModal();
+                    fetchHospitals(currentHospPage);
+                } else {
+                    alert('Error saving hospital: ' + (data.message || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Error saving hospital:', err);
+                alert('Network error while saving hospital record.');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = origText;
+            }
+        }
+
+        async function toggleHospitalStatus(id, currentStatus) {
+            const token = adminToken || localStorage.getItem('adminToken');
+            if (!token) return;
+            const newStatus = (currentStatus === 'verified') ? 'suspended' : 'verified';
+            const actionVerb = (newStatus === 'verified') ? 're-verify and activate' : 'suspend';
+            if (!confirm(`Are you sure you want to ${actionVerb} this facility?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${baseUrl}/api/admin/hospitals/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchHospitals(currentHospPage);
+                } else {
+                    alert('Failed to update status: ' + (data.message || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Error toggling hospital status:', err);
+                alert('Network error updating hospital status.');
+            }
+        }
+
+        async function deleteHospital(id, name) {
+            const token = adminToken || localStorage.getItem('adminToken');
+            if (!token) return;
+            if (!confirm(`Are you sure you want to completely remove "${name}" from the verified hospitals directory?\n\nThis cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${baseUrl}/api/admin/hospitals/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    fetchHospitals(currentHospPage);
+                } else {
+                    alert('Failed to delete hospital: ' + (data.message || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Error deleting hospital:', err);
+                alert('Network error deleting hospital.');
+            }
+        }
+
+        function detectHospitalCoordinates() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('hospLatitude').value = pos.coords.latitude.toFixed(6);
+                    document.getElementById('hospLongitude').value = pos.coords.longitude.toFixed(6);
+                },
+                (err) => {
+                    alert('Unable to retrieve location: ' + err.message);
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        }
+
+        function exportHospitalsCSV() {
+            if (!currentHospitals || currentHospitals.length === 0) {
+                alert('No hospitals available to export in current view.');
+                return;
+            }
+
+            const headers = [
+                'Hospital ID',
+                'Facility Name',
+                'Classification',
+                'Accreditation / Code',
+                'State',
+                'City / LGA',
+                'Street Address',
+                '24/7 ER Phone',
+                'Ambulance Hotline',
+                'Emergency Email',
+                'Trauma Level',
+                'Capabilities',
+                'Accrediting Body',
+                'Status'
+            ];
+
+            const rows = currentHospitals.map(h => {
+                const caps = Array.isArray(h.capabilities) ? h.capabilities.join('; ') : '';
+                return [
+                    `"${h.hospitalId || ''}"`,
+                    `"${(h.name || '').replace(/"/g, '""')}"`,
+                    `"${(h.type || '').replace(/"/g, '""')}"`,
+                    `"${(h.odsCode || '').replace(/"/g, '""')}"`,
+                    `"${(h.state || '').replace(/"/g, '""')}"`,
+                    `"${(h.city || '').replace(/"/g, '""')}"`,
+                    `"${(h.address || '').replace(/"/g, '""')}"`,
+                    `"${h.phone || ''}"`,
+                    `"${h.ambulanceLine || ''}"`,
+                    `"${h.email || ''}"`,
+                    `"${(h.traumaLevel || '').replace(/"/g, '""')}"`,
+                    `"${caps.replace(/"/g, '""')}"`,
+                    `"${(h.accreditedBy || '').replace(/"/g, '""')}"`,
+                    `"${h.status || 'verified'}"`
+                ].join(',');
+            });
+
+            const csvContent = [headers.join(','), ...rows].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const dateStr = new Date().toISOString().split('T')[0];
+            a.download = `MyVault_Verified_Hospitals_Directory_${dateStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
 </script>
