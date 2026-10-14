@@ -614,15 +614,34 @@ app.get(['/agent-dashboard', '/agent-dashboard.html'], (req, res) => {
     });
 });
 
-// Intercept direct static access to sensitive templates before express.static
+// Intercept direct static access to sensitive templates and source maps
 app.use((req, res, next) => {
     if (req.path === '/admin.html' || req.path === '/agent-dashboard.html') {
         return res.status(403).send('Forbidden: Direct access prohibited.');
     }
+    if (req.path.endsWith('.map')) {
+        return res.status(404).send('Not Found');
+    }
     next();
 });
 
-app.use(express.static(PUBLIC_DIR, { extensions: ['html'], dotfiles: 'deny' }));
+app.use(express.static(PUBLIC_DIR, { 
+    extensions: ['html'], 
+    dotfiles: 'deny',
+    setHeaders: (res, filePath) => {
+        // Block source map probing
+        if (filePath.endsWith('.map')) {
+            res.status(404).end();
+            return;
+        }
+        // Prevent client-side disk caching of HTML application templates
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
+}));
 
 // Hardened uploads serving: Prevent script execution and XSS
 const secureUploadHeaders = (req, res, next) => {

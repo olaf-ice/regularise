@@ -6,6 +6,33 @@ const JavaScriptObfuscator = require('javascript-obfuscator');
 const srcDir = path.join(__dirname, 'public');
 const distDir = path.join(__dirname, 'dist/public');
 
+// Military-Grade JavaScript Obfuscation Profile for Maximum IP & Anti-Reverse Engineering Protection
+const OBFUSCATION_OPTIONS = {
+    compact: true,
+    controlFlowFlattening: true,
+    controlFlowFlatteningThreshold: 0.75,
+    deadCodeInjection: true,
+    deadCodeInjectionThreshold: 0.35,
+    debugProtection: true,
+    debugProtectionInterval: 3000,
+    disableConsoleOutput: true,
+    identifierNamesGenerator: 'hexadecimal',
+    log: false,
+    numbersToExpressions: true,
+    renameGlobals: false, // Preserves globally referenced HTML onclick handlers
+    selfDefending: true,
+    simplify: true,
+    splitStrings: true,
+    splitStringsChunkLength: 5,
+    stringArray: true,
+    stringArrayEncoding: ['base64'],
+    stringArrayThreshold: 0.85,
+    stringArrayWrappersCount: 2,
+    stringArrayWrappersChainedCalls: true,
+    transformObjectKeys: true,
+    unicodeEscapeSequence: false
+};
+
 async function build() {
     try {
         console.log('Cleaning dist directory...');
@@ -14,7 +41,7 @@ async function build() {
         console.log('Copying public files to dist/public...');
         await fs.copy(srcDir, distDir);
 
-        console.log('Obfuscating HTML inline scripts...');
+        console.log('Obfuscating HTML inline scripts with anti-reverse engineering protection...');
         const files = await fs.readdir(distDir);
         for (const file of files) {
             if (file.endsWith('.html')) {
@@ -30,24 +57,7 @@ async function build() {
                         const originalCode = $(element).html();
                         if (originalCode && originalCode.trim().length > 0) {
                             try {
-                                const obfuscationResult = JavaScriptObfuscator.obfuscate(originalCode, {
-                                    compact: true,
-                                    controlFlowFlattening: false,
-                                    deadCodeInjection: false,
-                                    debugProtection: false,
-                                    disableConsoleOutput: false,
-                                    identifierNamesGenerator: 'hexadecimal',
-                                    log: false,
-                                    numbersToExpressions: false,
-                                    renameGlobals: false,
-                                    selfDefending: false,
-                                    simplify: true,
-                                    splitStrings: false,
-                                    stringArray: true,
-                                    stringArrayEncoding: ['base64'],
-                                    stringArrayThreshold: 0.8,
-                                    unicodeEscapeSequence: false
-                                });
+                                const obfuscationResult = JavaScriptObfuscator.obfuscate(originalCode, OBFUSCATION_OPTIONS);
                                 $(element).html(obfuscationResult.getObfuscatedCode());
                                 modified = true;
                             } catch (e) {
@@ -59,11 +69,46 @@ async function build() {
 
                 if (modified) {
                     await fs.writeFile(filePath, $.html());
-                    console.log(`Obfuscated scripts in ${file}`);
+                    console.log(`Protected & Obfuscated inline scripts in ${file}`);
                 }
             }
         }
-        console.log('Build completed successfully.');
+
+        // Obfuscate custom standalone JS files (skipping third-party vendor minified libs)
+        const jsDir = path.join(distDir, 'js');
+        if (await fs.pathExists(jsDir)) {
+            const jsFiles = await fs.readdir(jsDir);
+            for (const jsFile of jsFiles) {
+                if (jsFile.endsWith('.js') && !jsFile.endsWith('.min.js')) {
+                    const jsPath = path.join(jsDir, jsFile);
+                    const originalJs = await fs.readFile(jsPath, 'utf8');
+                    try {
+                        const obfuscatedJs = JavaScriptObfuscator.obfuscate(originalJs, OBFUSCATION_OPTIONS);
+                        await fs.writeFile(jsPath, obfuscatedJs.getObfuscatedCode());
+                        console.log(`Protected & Obfuscated standalone script: js/${jsFile}`);
+                    } catch (e) {
+                        console.error(`Failed to obfuscate standalone script js/${jsFile}:`, e.message);
+                    }
+                }
+            }
+        }
+
+        // Remove any residual source maps from production dist
+        const cleanMaps = async (dir) => {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    await cleanMaps(fullPath);
+                } else if (entry.name.endsWith('.map')) {
+                    await fs.remove(fullPath);
+                    console.log(`Removed source-map: ${entry.name}`);
+                }
+            }
+        };
+        await cleanMaps(distDir);
+
+        console.log('Build completed successfully. All client assets armored.');
     } catch (err) {
         console.error('Build failed:', err);
         process.exit(1);

@@ -9,6 +9,76 @@ window.escapeHTML = function(str) {
         .replace(/'/g, '&#039;');
 };
 
+// ── Client-Side Anti-Reverse Engineering & Anti-Inspection Shield ───────────
+(function() {
+    'use strict';
+
+    // 1. Disable Context Menu (Right Click) across the application
+    document.addEventListener('contextmenu', function(e) {
+        // Permit right-click on input fields for standard typing/copy/paste
+        const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') {
+            return true;
+        }
+        e.preventDefault();
+        return false;
+    }, false);
+
+    // 2. Intercept DevTools & Source View Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        // F12 (DevTools)
+        if (e.keyCode === 123) {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+Shift+I / Cmd+Option+I (Inspect)
+        // Ctrl+Shift+J / Cmd+Option+J (Console)
+        // Ctrl+Shift+C / Cmd+Option+C (Element Selector)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+U / Cmd+U (View Page Source)
+        if ((e.ctrlKey || e.metaKey) && (e.keyCode === 85 || e.keyCode === 117)) {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+S / Cmd+S (Save Page HTML)
+        if ((e.ctrlKey || e.metaKey) && (e.keyCode === 83 || e.keyCode === 115)) {
+            e.preventDefault();
+            return false;
+        }
+    }, false);
+
+    // 3. DevTools Open Detection & Console Stripping
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalhost) {
+        // Periodic console protection to wipe exposed data
+        setInterval(function() {
+            try {
+                if (window.console && window.console.clear) {
+                    console.clear();
+                }
+            } catch (_) {}
+        }, 3000);
+
+        // Anti-Debugger Loop: Traps manual debugger attachment
+        setInterval(function() {
+            (function() {
+                try {
+                    const before = performance.now();
+                    (function() {}['constructor']('debugger')());
+                    const after = performance.now();
+                    if (after - before > 100) {
+                        // Execution was paused by a debugger
+                        console.clear();
+                    }
+                } catch (_) {}
+            })();
+        }, 3500);
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. NDPR Privacy Banner Logic
     const bannerHTML = `
