@@ -97,7 +97,7 @@ db.exec(`
     latitude REAL,
     longitude REAL,
     status TEXT DEFAULT 'verified',
-    accreditedBy TEXT DEFAULT 'Federal Ministry of Health (FMOH) / NHIA',
+    accreditedBy TEXT DEFAULT 'MyVault Emergency Network',
     contactPerson TEXT,
     notes TEXT,
     createdAt TEXT NOT NULL,
@@ -152,9 +152,9 @@ try {
                 latitude: 7.4042,
                 longitude: 3.9015,
                 status: 'verified',
-                accreditedBy: 'Federal Ministry of Health (FMOH)',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'Emergency Medicine Directorate',
-                notes: 'Flagship tertiary hospital with designated national emergency resuscitation trauma wing.'
+                notes: 'Tertiary referral hospital with designated emergency resuscitation trauma wing.'
             },
             {
                 hospitalId: 'HOSP-LUTH-02',
@@ -174,7 +174,7 @@ try {
                 latitude: 6.5186,
                 longitude: 3.3564,
                 status: 'verified',
-                accreditedBy: 'FMOH / HEFAMAA Lagos',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'Accident & Emergency Directorate',
                 notes: 'Primary tertiary emergency center for Lagos mainland and metropolis.'
             },
@@ -196,9 +196,9 @@ try {
                 latitude: 9.0433,
                 longitude: 7.4641,
                 status: 'verified',
-                accreditedBy: 'Federal Ministry of Health (FMOH)',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'National Trauma Center HOD',
-                notes: 'Federal capital territory flagship Level 1 Trauma Center with dedicated helicopter landing pad.'
+                notes: 'Federal capital territory Level 1 Trauma Center with dedicated helicopter landing pad.'
             },
             {
                 hospitalId: 'HOSP-FMCE-04',
@@ -218,9 +218,9 @@ try {
                 latitude: 6.4895,
                 longitude: 3.3765,
                 status: 'verified',
-                accreditedBy: 'Federal Ministry of Health (FMOH)',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'Clinical Services Desk',
-                notes: 'Modernized federal facility with active digital health and trauma response team.'
+                notes: 'Modernized federal facility with active emergency and trauma response team.'
             },
             {
                 hospitalId: 'HOSP-AKTH-05',
@@ -240,7 +240,7 @@ try {
                 latitude: 11.9614,
                 longitude: 8.5391,
                 status: 'verified',
-                accreditedBy: 'FMOH / Kano State Ministry of Health',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'Emergency Admissions Office',
                 notes: 'Major trauma receiving center for Northern Nigeria.'
             },
@@ -262,14 +262,14 @@ try {
                 latitude: 4.9012,
                 longitude: 6.9248,
                 status: 'verified',
-                accreditedBy: 'FMOH / Rivers State Ministry of Health',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'Accident Center Registrar',
-                notes: 'Flagship South-South regional trauma resuscitation and surgical center.'
+                notes: 'Regional trauma resuscitation and surgical center for Rivers State.'
             },
             {
                 hospitalId: 'HOSP-RED-07',
                 name: 'Reddington Hospital Victoria Island',
-                type: 'Accredited Private Hospital',
+                type: 'Specialist Private Hospital',
                 odsCode: 'FAC-NG-RED07',
                 state: 'Lagos',
                 city: 'Victoria Island',
@@ -284,9 +284,9 @@ try {
                 latitude: 6.4326,
                 longitude: 3.4259,
                 status: 'verified',
-                accreditedBy: 'HEFAMAA Accredited Tertiary',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'Private Emergency Admissions',
-                notes: 'Accredited multi-specialist private trauma and emergency center.'
+                notes: 'Specialist private trauma and emergency center.'
             },
             {
                 hospitalId: 'HOSP-CED-08',
@@ -306,7 +306,7 @@ try {
                 latitude: 9.0084,
                 longitude: 7.4912,
                 status: 'verified',
-                accreditedBy: 'FMOH / NHIA Accredited',
+                accreditedBy: 'MyVault Emergency Network',
                 contactPerson: 'Orthopedic & Trauma Lead',
                 notes: 'Specialized orthopedic, surgical, and emergency trauma center in Abuja.'
             }
@@ -328,8 +328,11 @@ try {
                 now, now
             );
         }
-        console.log(`[DB] Successfully seeded ${seedHospitals.length} accredited flagship hospitals.`);
+        console.log(`[DB] Successfully seeded ${seedHospitals.length} verified flagship hospitals.`);
     }
+
+    // Dynamic data cleanup: Ensure no stale ministry/authority affiliations in existing DB records
+    db.prepare(`UPDATE verified_hospitals SET accreditedBy = 'MyVault Emergency Network' WHERE accreditedBy LIKE '%FMOH%' OR accreditedBy LIKE '%NHIA%' OR accreditedBy LIKE '%HEFAMAA%' OR accreditedBy LIKE '%Ministry%'`).run();
 } catch (e) {
     console.warn('Note on verified_hospitals seeding:', e.message);
 }
@@ -743,7 +746,7 @@ const dbHelpers = {
             h.traumaLevel || 'Level 1 Comprehensive Trauma', capabilities,
             (h.latitude !== undefined && h.latitude !== '' && !isNaN(h.latitude)) ? parseFloat(h.latitude) : null,
             (h.longitude !== undefined && h.longitude !== '' && !isNaN(h.longitude)) ? parseFloat(h.longitude) : null,
-            h.status || 'verified', h.accreditedBy || 'Federal Ministry of Health (FMOH)',
+            h.status || 'verified', h.accreditedBy || 'MyVault Emergency Network',
             h.contactPerson || '', h.notes || '', now, now
         );
         return { id: result.lastInsertRowid, hospitalId, ...h };

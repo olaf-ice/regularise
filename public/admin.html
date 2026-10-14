@@ -464,11 +464,11 @@
                         <span style="font-size: 1.5rem;">🏥</span>
                         <h2 style="margin: 0; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--text-light);">Verified Hospitals &amp; Trauma Directory</h2>
                         <span class="live-status-pill" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35);">
-                            FMOH / NHIA ACCREDITED
+                            MYVAULT EMERGENCY DIRECTORY
                         </span>
                     </div>
                     <p style="color: var(--text-muted); margin: 0; font-size: 0.88rem;">
-                        Official directory of accredited tertiary hospitals, federal medical centres, and 24/7 trauma centers for emergency dispatch and clinical break-glass verification.
+                        Verified directory of tertiary hospitals, federal medical centres, and 24/7 trauma centers for emergency dispatch and clinical break-glass routing.
                     </p>
                 </div>
                 <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
@@ -555,7 +555,7 @@
                         <option value="State Specialist Hospital">State Specialist Hospital</option>
                         <option value="General Hospital">General Hospital</option>
                         <option value="Trauma Center">Trauma Center</option>
-                        <option value="Accredited Private Hospital">Accredited Private Hospital</option>
+                        <option value="Specialist Private Hospital">Specialist Private Hospital</option>
                     </select>
                     <select id="hospStatusFilter" onchange="fetchHospitals(1)" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-size: 0.85rem;">
                         <option value="all">All Statuses</option>
@@ -573,7 +573,7 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>Accreditation &amp; Code</th>
+                            <th>Facility Code &amp; Verification</th>
                             <th>Hospital Name &amp; Classification</th>
                             <th>Location / Address</th>
                             <th>24/7 ER &amp; Ambulance Hotline</th>
@@ -2993,7 +2993,7 @@
                                 ${escapeHTML(h.odsCode || h.hospitalId)}
                             </div>
                             <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">
-                                ${escapeHTML(h.accreditedBy || 'FMOH / NHIA Accredited')}
+                                ${escapeHTML(h.accreditedBy || 'MyVault Emergency Network')}
                             </div>
                             <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;">
                                 Ref: ${escapeHTML(h.hospitalId)}
@@ -3089,7 +3089,7 @@
             if (form) form.reset();
             document.getElementById('hospEditId').value = '';
             document.getElementById('hospitalModalTitle').innerHTML = '<span>🏥</span> Add Verified Hospital to Registry';
-            document.getElementById('hospAccreditedBy').value = 'Federal Ministry of Health (FMOH) / NHIA';
+            document.getElementById('hospAccreditedBy').value = 'MyVault Emergency Network';
             document.getElementById('hospStatus').value = 'verified';
 
             // Check default capabilities
@@ -3120,7 +3120,7 @@
             document.getElementById('hospPhone').value = h.phone || '';
             document.getElementById('hospAmbulanceLine').value = h.ambulanceLine || '';
             document.getElementById('hospEmail').value = h.email || '';
-            document.getElementById('hospAccreditedBy').value = h.accreditedBy || 'Federal Ministry of Health (FMOH) / NHIA';
+            document.getElementById('hospAccreditedBy').value = h.accreditedBy || 'MyVault Emergency Network';
             document.getElementById('hospLatitude').value = (h.latitude !== null && h.latitude !== undefined) ? h.latitude : '';
             document.getElementById('hospLongitude').value = (h.longitude !== null && h.longitude !== undefined) ? h.longitude : '';
             document.getElementById('hospStatus').value = h.status || 'verified';
@@ -3406,7 +3406,7 @@
                         <span>🏥</span> Add Verified Hospital to Registry
                     </h3>
                     <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.25rem 0 0 0;">
-                        Accredited facility entry adhering to statutory emergency healthcare standards.
+                        Verified healthcare facility entry for MyVault emergency response routing and clinical break-glass.
                     </p>
                 </div>
                 <button type="button" onclick="closeHospitalModal()" class="action-btn" style="border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 0.2rem;">&times;</button>
@@ -3421,7 +3421,7 @@
                         <input type="text" id="hospName" required placeholder="e.g. University College Hospital (UCH) Ibadan" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Facility Registry / Accreditation Code</label>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Facility Code / Identifier</label>
                         <input type="text" id="hospOdsCode" placeholder="e.g. FAC-NG-UCH01" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
                     </div>
                 </div>
@@ -3435,7 +3435,7 @@
                             <option value="State Specialist Hospital">State Specialist Hospital</option>
                             <option value="General Hospital">General Hospital</option>
                             <option value="Trauma Center">Trauma Center (Specialized)</option>
-                            <option value="Accredited Private Hospital">Accredited Private Hospital</option>
+                            <option value="Specialist Private Hospital">Specialist Private Hospital</option>
                         </select>
                     </div>
                     <div>
@@ -3520,8 +3520,8 @@
                         <input type="email" id="hospEmail" placeholder="e.g. emergency@uch-ibadan.org.ng" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Accrediting Authority</label>
-                        <input type="text" id="hospAccreditedBy" value="Federal Ministry of Health (FMOH) / NHIA" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Verification Source / Status</label>
+                        <input type="text" id="hospAccreditedBy" value="MyVault Emergency Network" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
                     </div>
                 </div>
 
@@ -3570,9 +3570,9 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Accreditation Status</label>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Verification Status</label>
                         <select id="hospStatus" style="width: 100%; padding: 0.7rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; font-size: 0.85rem; box-sizing: border-box;">
-                            <option value="verified">Verified (Active Accreditation)</option>
+                            <option value="verified">Verified (Active in Directory)</option>
                             <option value="suspended">Suspended (Under Review)</option>
                         </select>
                     </div>
@@ -3590,7 +3590,7 @@
                 <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
                     <button type="button" onclick="closeHospitalModal()" class="action-btn">Cancel</button>
                     <button type="submit" id="saveHospBtn" class="btn btn-primary" style="background: #10b981; border-color: #10b981; font-weight: 800;">
-                        💾 Save &amp; Accredit Hospital
+                        💾 Save Verified Hospital
                     </button>
                 </div>
             </form>

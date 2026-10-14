@@ -1036,7 +1036,7 @@ app.post('/api/admin/hospitals', authenticateAdminToken, (req, res) => {
         res.json({
             success: true,
             hospital,
-            message: `Hospital "${hospital.name}" successfully accredited and registered in directory.`
+            message: `Hospital "${hospital.name}" successfully registered in verified directory.`
         });
     } catch (err) {
         console.error('Error creating hospital:', err);
