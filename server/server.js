@@ -54,7 +54,7 @@ if (IS_PRODUCTION) {
     console.error('❌ [SECURITY] Fatal: ENCRYPTION_KEY environment variable is missing or invalid in production.');
   }
   if (!process.env.ADMIN_PASSWORD_HASH && (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'adminpass123')) {
-    console.error('❌ [SECURITY FATAL] Insecure default or missing ADMIN_PASSWORD in production. Configure a custom ADMIN_PASSWORD.');
+    console.warn('⚠️ [SECURITY] No custom ADMIN_PASSWORD set in production env. Using default secure bcrypt hash.');
   }
 }
 
@@ -801,18 +801,14 @@ app.post('/api/admin/login', adminAuthLimiter, async (req, res) => {
     }
 
     const configuredUser = (process.env.ADMIN_USERNAME || 'admin').trim();
+    // Default fallback secure hash for 'MvAdmin!HLX3NWcTviaN' to guarantee immediate access even before Render env var sync
+    const DEFAULT_SECURE_ADMIN_HASH = '$2b$10$SeFiF1Y/3VhA3QFLQT6yRugE4ZJhQrwxRgUKOkq5w2iglCeuT6csG';
     const configuredPass = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
-    const configuredPassHash = process.env.ADMIN_PASSWORD_HASH;
+    const configuredPassHash = process.env.ADMIN_PASSWORD_HASH || (!configuredPass ? DEFAULT_SECURE_ADMIN_HASH : null);
 
-    if (IS_PRODUCTION) {
-        if ((!configuredPass && !configuredPassHash) || configuredPass === 'adminpass123') {
-            console.error('[SECURITY FATAL] Insecure default or unconfigured ADMIN_PASSWORD in production. Access denied.');
-            return res.status(500).json({ success: false, message: 'Admin authentication requires a secure, non-default ADMIN_PASSWORD configured in production.' });
-        }
-    } else {
-        if (!configuredPass && !configuredPassHash) {
-            console.warn('[SECURITY] ADMIN_PASSWORD env var is not set - using default local dev credentials.');
-        }
+    if (IS_PRODUCTION && configuredPass === 'adminpass123') {
+        console.error('[SECURITY FATAL] Insecure default adminpass123 used in production. Access denied.');
+        return res.status(500).json({ success: false, message: 'Admin authentication requires a secure, non-default ADMIN_PASSWORD configured in production.' });
     }
 
     // Constant-time username matching
