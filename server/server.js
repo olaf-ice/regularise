@@ -353,8 +353,9 @@ function extractToken(req, preferredCookie = 'auth_token') {
 // ── Granular Rate Limiters (Bound to Real Client IP) ────────────────────────
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 1000, // Generous limit for normal users, mobile scans, and dashboard polling
     keyGenerator: (req) => getClientIp(req),
+    skip: (req) => req.path === '/api/admin/login' || Boolean(extractToken(req, 'admin_token')),
     message: { success: false, message: 'Too many requests, please try again later.' }
 });
 
@@ -374,14 +375,16 @@ const breakglassLimiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
+    max: 15,
     keyGenerator: (req) => getClientIp(req),
+    skipSuccessfulRequests: true,
     message: { success: false, message: 'Too many authentication attempts, please try again later.' }
 });
 
 const adminAuthLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: 20, // max 20 login attempts per 15 mins per IP
+    skipSuccessfulRequests: true, // successful logins do not count toward rate limit
     keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Too many admin authentication attempts. Please wait 15 minutes.' }
 });
