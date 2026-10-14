@@ -1032,13 +1032,19 @@
                 facility: document.getElementById('bgFacility').value.trim(),
                 role: document.getElementById('bgRole').value,
                 reason: document.getElementById('bgReason').value.trim(),
-                accessorPhone: document.getElementById('bgAccessorPhone').value.trim()
+                accessorPhone: document.getElementById('bgAccessorPhone').value.trim(),
+                breakglassToken: (sessionData && sessionData.breakglassToken) || '',
+                interactionTime: (sessionData && sessionData.interactionTime) || '',
+                hp_check: document.getElementById('bgHpCheck') ? document.getElementById('bgHpCheck').value : ''
             };
 
             try {
                 const res = await fetch('/api/emergency/' + pathMatch[1] + '/unlock', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Vault-Client': 'MyVault-Web-App'
+                    },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
@@ -1725,6 +1731,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </p>
 
             <form onsubmit="handleBreakGlassSubmit(event)">
+                <input type="text" id="bgHpCheck" name="hp_check" style="display:none !important; opacity:0; position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
                 <div style="margin-bottom: 0.85rem;">
                     <label style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
                         Clinician Full Name *

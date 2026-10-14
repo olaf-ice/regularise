@@ -235,7 +235,10 @@
                 try {
                     const res = await fetch('/api/rider/login', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Vault-Client': 'MyVault-Web-App'
+                        },
                         body: JSON.stringify({ loginId: phone, pin })
                     });
                     const data = await res.json();
@@ -290,7 +293,11 @@
 
             try {
                 const res = await fetch('/api/rider/forgot-pin', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Vault-Client': 'MyVault-Web-App'
+                    },
                     body: JSON.stringify({ loginId: phone })
                 });
                 const data = await res.json();
@@ -315,7 +322,11 @@
 
             try {
                 const res = await fetch('/api/rider/verify-otp', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Vault-Client': 'MyVault-Web-App'
+                    },
                     body: JSON.stringify({ loginId: phone, otp })
                 });
                 const data = await res.json();
@@ -342,7 +353,11 @@
 
             try {
                 const res = await fetch('/api/rider/reset-pin', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Vault-Client': 'MyVault-Web-App'
+                    },
                     body: JSON.stringify({ loginId: phone, otp, newPin })
                 });
                 const data = await res.json();

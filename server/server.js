@@ -37,6 +37,7 @@ function purgeExpiredSessions() {
 setInterval(purgeExpiredSessions, 30 * 60 * 1000);
 
 const app = express();
+app.set('trust proxy', 1); // Trust first-hop reverse proxy (Render load balancer) for real client IP extraction
 app.disable('x-powered-by');
 
 // Load critical secrets from environment variables. If missing, the app will abort on startup.
@@ -206,6 +207,97 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 
+// ── Real Client IP Extraction Helper ─────────────────────────────────────────
+function getClientIp(req) {
+    const xff = req.headers['x-forwarded-for'];
+    if (xff) {
+        return xff.split(',')[0].trim();
+    }
+    return req.ip || req.socket?.remoteAddress || '';
+}
+
+// ── Anti-Automation & Direct Script Blocker ("Anti-Bot / Anti-CLI Shield") ──
+// Strictly blocks command-line tools (curl, wget, python, etc.), headless scrapers,
+// automated Linux/CLI scripts, and unauthorized raw API mutations.
+const SCRIPT_USER_AGENT_PATTERN = /(curl|wget|python|aiohttp|httpx|httpie|go-http-client|libwww-perl|node-fetch|axios|urllib|postmanruntime|insomnia|scrapy|phantomjs|headlesschrome|zgrab|censys|shodan|nmap|nikto|sqlmap|masscan|powershell)/i;
+
+app.use((req, res, next) => {
+    // 1. Webhook exemption: Paystack webhooks use server-to-server POST with HMAC signature
+    if (req.path.startsWith('/api/webhook/')) {
+        return next();
+    }
+
+    const ua = (req.headers['user-agent'] || '').trim();
+    const clientIp = getClientIp(req);
+
+    // 2. Block known automated command-line and scripting tools across all routes
+    if (SCRIPT_USER_AGENT_PATTERN.test(ua)) {
+        console.warn(`[SECURITY SHIELD] Blocked automated CLI tool: UA="${ua}" IP=${clientIp} Path=${req.path}`);
+        return res.status(403).json({
+            success: false,
+            code: 'AUTOMATED_CLIENT_BLOCKED',
+            message: 'Access Denied: Direct command-line and automated script execution is strictly prohibited.'
+        });
+    }
+
+    // 3. For state-modifying API endpoints (POST, PUT, DELETE, PATCH):
+    const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method);
+    const isApiRoute = req.path.startsWith('/api/');
+
+    if (isApiRoute && isMutation) {
+        // Enforce valid browser-like User-Agent (minimum 15 characters, reject empty/short/generic)
+        if (!ua || ua.length < 15) {
+            console.warn(`[SECURITY SHIELD] Blocked mutation with missing/short UA: "${ua}" IP=${clientIp} Path=${req.path}`);
+            return res.status(403).json({
+                success: false,
+                code: 'INVALID_CLIENT_ENVIRONMENT',
+                message: 'Access Denied: Incompatible client environment.'
+            });
+        }
+
+        // Sensitive public mutation endpoints requiring browser origin and client application attestation
+        const sensitiveBrowserEndpoints = [
+            '/api/register',
+            '/api/rider/login',
+            '/api/rider/reset-pin',
+            '/api/rider/verify-otp',
+            '/api/rider/forgot-pin'
+        ];
+        const isEmergencyBreakglass = req.path.startsWith('/api/emergency/') && 
+            (req.path.endsWith('/unlock') || req.path.endsWith('/breakglass'));
+
+        if (sensitiveBrowserEndpoints.includes(req.path) || isEmergencyBreakglass) {
+            const origin = req.headers['origin'] || '';
+            const referer = req.headers['referer'] || '';
+            const clientHeader = req.headers['x-vault-client'];
+
+            // Must originate from an authorized domain (or localhost in dev)
+            const isOriginValid = allowedOrigins.some(ao => origin.startsWith(ao) || referer.startsWith(ao));
+            
+            if (!isOriginValid && IS_PRODUCTION) {
+                console.warn(`[SECURITY SHIELD] Blocked untrusted Origin/Referer: origin="${origin}" referer="${referer}" IP=${clientIp} Path=${req.path}`);
+                return res.status(403).json({
+                    success: false,
+                    code: 'UNTRUSTED_ORIGIN',
+                    message: 'Access Denied: Cross-origin or non-browser submission prohibited.'
+                });
+            }
+
+            // Client application attestation header check
+            if (clientHeader !== 'MyVault-Web-App') {
+                console.warn(`[SECURITY SHIELD] Missing or invalid X-Vault-Client header: IP=${clientIp} Path=${req.path}`);
+                return res.status(403).json({
+                    success: false,
+                    code: 'MISSING_CLIENT_SIGNATURE',
+                    message: 'Access Denied: Request must originate from the official MyVault application.'
+                });
+            }
+        }
+    }
+
+    next();
+});
+
 // ── Cookie Helpers (Keep tokens out of insecure browser localStorage) ───────
 function getCookie(req, name) {
     if (!req.headers.cookie) return null;
@@ -249,40 +341,60 @@ function extractToken(req, preferredCookie = 'auth_token') {
     return getCookie(req, preferredCookie) || getCookie(req, 'auth_token') || getCookie(req, 'admin_token');
 }
 
-// ── Granular Rate Limiters ──────────────────────────────────────────────────
+// ── Granular Rate Limiters (Bound to Real Client IP) ────────────────────────
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
+    keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Too many requests, please try again later.' }
+});
+
+const registrationLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour window
+    max: 5, // max 5 registrations per hour per real IP
+    keyGenerator: (req) => getClientIp(req),
+    message: { success: false, message: 'Registration limit reached for this network. Please wait an hour.' }
+});
+
+const breakglassLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5, // max 5 emergency clinical unlock requests per 15 mins per IP
+    keyGenerator: (req) => getClientIp(req),
+    message: { success: false, message: 'Too many emergency unlock attempts. Please wait 15 minutes.' }
 });
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
+    keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Too many authentication attempts, please try again later.' }
 });
 
 const adminAuthLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
+    keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Too many admin authentication attempts. Please wait 15 minutes.' }
 });
 
 const otpRequestLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 3,
+    keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Too many OTP requests. Please wait 15 minutes.' }
 });
 
 const otpVerifyLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
+    keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Too many OTP verification attempts. Please wait 15 minutes.' }
 });
 
 const paymentVerifyLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 15,
+    keyGenerator: (req) => getClientIp(req),
     message: { success: false, message: 'Payment verification limit reached. Please wait.' }
 });
 
@@ -925,7 +1037,7 @@ app.post('/api/admin/emergency-sessions/terminate/:sessionId', authenticateAdmin
 
         // Record statutory administrative override into access_logs
         if (session.riderId) {
-            dbHelpers.logAccess(session.riderId, req.ip, req.headers['user-agent'], 'National Command Center', {
+            dbHelpers.logAccess(session.riderId, getClientIp(req), req.headers['user-agent'], 'National Command Center', {
                 accessType: 'admin_killswitch',
                 accessorName: req.body.adminName || 'MyVault National Admin',
                 facility: 'National Command Center (Surveillance)',
@@ -1309,7 +1421,7 @@ app.get('/scan/:riderId', async (req, res) => {
         emergencySessions.set(numericId, session);
 
         // Audit Trail: Log QR scan event
-        const clientIp = req.ip || req.headers['x-forwarded-for'] || '';
+        const clientIp = getClientIp(req);
         const userAgent = req.get('user-agent') || '';
         dbHelpers.logAccess(riderId, clientIp, userAgent, '', {
             accessType: scanDetails.scanType || 'public_scan',
@@ -1426,6 +1538,14 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             documents: (fullRider.documents && fullRider.documents.passportPhoto) ? { passportPhoto: fullRider.documents.passportPhoto } : {}
         };
 
+        // Ephemeral Cryptographic Interaction Token for Break-Glass Access
+        const interactionTime = Date.now();
+        const breakglassToken = crypto.createHmac('sha256', JWT_SECRET)
+            .update(`breakglass:${session.sessionId}:${session.riderId}:${interactionTime}`)
+            .digest('hex');
+        session.breakglassToken = breakglassToken;
+        session.breakglassTime = interactionTime;
+
         const level1Session = { 
             sessionId: session.sessionId,
             numericId: session.numericId,
@@ -1433,7 +1553,9 @@ app.get('/api/emergency/:sessionId', (req, res) => {
             rider: level1Rider,
             isClinicallyUnlocked: !!session.isClinicallyUnlocked,
             clinicalAccessDetails: session.clinicalAccessDetails || null,
-            scanDetails: session.scanDetails || { scanType: 'standard', status: 'live', isLive: true, message: 'Standard Scan', cvv: generateCardCvv(session.riderId) }
+            scanDetails: session.scanDetails || { scanType: 'standard', status: 'live', isLive: true, message: 'Standard Scan', cvv: generateCardCvv(session.riderId) },
+            breakglassToken,
+            interactionTime
         };
         
         res.json({ success: true, session: level1Session, isLevel1: true });
@@ -1445,9 +1567,9 @@ app.get('/api/emergency/:sessionId', (req, res) => {
 
 // ── CLINICAL EMERGENCY ACCESS / BREAK-GLASS (🔵 LEVEL 2 AUTHORISED CLINICAL DATA) ─────
 // Protocol for ER doctors, triage nurses, and paramedics treating patients unable to communicate.
-// Required: Clinician Name, Facility/Hospital, Role, Emergency Justification.
+// Required: Clinician Name, Medical Facility, Role, Emergency Justification.
 // Automatically records immutable audit trail and notifies next of kin.
-app.post(['/api/emergency/:sessionId/unlock', '/api/emergency/:sessionId/breakglass'], apiLimiter, async (req, res) => {
+app.post(['/api/emergency/:sessionId/unlock', '/api/emergency/:sessionId/breakglass'], breakglassLimiter, async (req, res) => {
     try {
         const key = req.params.sessionId;
         let session = emergencySessions.get(key);
@@ -1457,7 +1579,45 @@ app.post(['/api/emergency/:sessionId/unlock', '/api/emergency/:sessionId/breakgl
             return res.status(404).json({ success: false, message: 'Emergency session not found or expired' });
         }
 
-        const { accessorName, facility, role, reason, accessorPhone } = req.body || {};
+        const { accessorName, facility, role, reason, accessorPhone, breakglassToken, interactionTime, hp_check } = req.body || {};
+
+        // 1. Anti-Bot Honeypot Trap
+        if (hp_check) {
+            console.warn(`[SECURITY] Bot honeypot triggered on break-glass from IP ${getClientIp(req)}`);
+            return res.status(403).json({ success: false, message: 'Access denied: automated verification failed.' });
+        }
+
+        // 2. Cryptographic Break-Glass Interaction Token Attestation
+        if (!breakglassToken || !interactionTime) {
+            console.warn(`[SECURITY] Direct break-glass call without interaction token from IP ${getClientIp(req)}`);
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Security Policy: Direct script execution blocked. Emergency interaction token required.' 
+            });
+        }
+
+        const elapsedMs = Date.now() - parseInt(interactionTime, 10);
+        if (isNaN(elapsedMs) || elapsedMs < 0 || elapsedMs > 15 * 60 * 1000) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Emergency interaction token expired. Please refresh the emergency profile.' 
+            });
+        }
+
+        const expectedToken = crypto.createHmac('sha256', JWT_SECRET)
+            .update(`breakglass:${session.sessionId}:${session.riderId}:${interactionTime}`)
+            .digest('hex');
+
+        if (breakglassToken !== expectedToken || session.breakglassToken !== breakglassToken) {
+            console.warn(`[SECURITY] Invalid break-glass token mismatch from IP ${getClientIp(req)}`);
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Unauthorized emergency access: cryptographic attestation failed.' 
+            });
+        }
+
+        // Invalidate token immediately to prevent replay attacks
+        session.breakglassToken = null;
 
         if (!accessorName || !facility || !reason) {
             return res.status(400).json({ 
@@ -1478,7 +1638,7 @@ app.post(['/api/emergency/:sessionId/unlock', '/api/emergency/:sessionId/breakgl
             accessorPhone: accessorPhone ? String(accessorPhone).trim() : null
         };
 
-        const clientIp = req.ip || req.headers['x-forwarded-for'] || '';
+        const clientIp = getClientIp(req);
         const userAgent = req.get('user-agent') || '';
 
         // 1. Immutable Audit Logging
@@ -1801,7 +1961,7 @@ app.post('/api/verify/:query/unlock', authLimiter, async (req, res) => {
         };
     }
     safeRiderData.allergies = (safeRiderData.medical && safeRiderData.medical.allergies) || rider.allergies || rider.riderAllergies || 'None';
-    dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Level 2 Authenticated Unlock');
+    dbHelpers.logAccess(rider.riderId, getClientIp(req), req.headers['user-agent'] || '', 'Level 2 Authenticated Unlock');
     res.json({ success: true, rider: safeRiderData });
 });
 
@@ -1928,7 +2088,7 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
             dbHelpers.updateRider(rider.riderId, rider);
 
             // Log login
-            dbHelpers.logAccess(rider.riderId, req.ip, req.headers['user-agent'] || '', 'Owner Login');
+            dbHelpers.logAccess(rider.riderId, getClientIp(req), req.headers['user-agent'] || '', 'Owner Login');
 
             const token = jwt.sign({ riderId: rider.riderId, tokenVersion: rider.tokenVersion }, JWT_SECRET, { expiresIn: '24h' });
             setAuthCookie(res, 'auth_token', token, 24 * 60 * 60 * 1000);
@@ -1967,7 +2127,7 @@ app.post('/api/waitlist', apiLimiter, [
 });
 
 // 2. Register
-app.post('/api/register', authLimiter, [
+app.post('/api/register', registrationLimiter, [
     body('name').trim().notEmpty().withMessage('Name is required').escape(),
     body('phone').trim().isNumeric().withMessage('Phone must be numeric').isLength({ min: 10, max: 15 }).withMessage('Invalid phone length'),
     body('pin').isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be exactly 4 digits'),
@@ -1979,8 +2139,29 @@ app.post('/api/register', authLimiter, [
     }
 
     try {
+        const { name, phone, altPhone, address, dob, nationality, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr, userType, freeToken, hp_check, website_hp } = req.body;
 
-        const { name, phone, altPhone, address, dob, nationality, plateNumber, pin, vehicleType, bloodType, allergies, emergencyContactName, emergencyContactPhone, emergencyContactsStr, userType, freeToken } = req.body;
+        // 1. Anti-Bot Honeypot Trap
+        if (hp_check || website_hp) {
+            console.warn(`[SECURITY] Registration honeypot triggered from IP ${getClientIp(req)}`);
+            return res.status(403).json({ success: false, message: 'Registration verification error.' });
+        }
+
+        // 2. Anti-Probe & Dummy Account Shield
+        const cleanName = String(name || '').trim();
+        const cleanPhone = String(phone || '').trim();
+
+        const isTestName = /^(test|zztest|qa\s*probe|probe|dummy|sample|fake|tester|t\d*)\b/i.test(cleanName);
+        const isTestPhone = /^(080000000\d{2}|080991122\d{2}|080770000\d{2}|08099990001|08099330011|08011111111|08022222222)$/.test(cleanPhone);
+
+        if (isTestName || isTestPhone) {
+            console.warn(`[SECURITY] Blocked probe registration: Name="${cleanName}" Phone="${cleanPhone}" IP=${getClientIp(req)}`);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid registration details. Please provide authentic identification details.' 
+            });
+        }
+
         let emergencyContacts = [];
         try { if (emergencyContactsStr) emergencyContacts = JSON.parse(emergencyContactsStr); } catch(e) {}
         if (emergencyContacts.length === 0 && emergencyContactName) {
@@ -1991,7 +2172,7 @@ app.post('/api/register', authLimiter, [
             return res.status(400).json({ success: false, message: 'Phone number already registered' });
         }
 
-        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        const clientIp = getClientIp(req);
         let isFreeRegistration = false;
 
         if (freeToken) {
@@ -2295,7 +2476,7 @@ app.post('/api/riders/:id/emergency-link', authenticateToken, (req, res) => {
 app.get('/api/emergency/onetime/:linkId', (req, res) => {
     const link = dbHelpers.consumeEmergencyLink(req.params.linkId);
     if (link) {
-        dbHelpers.logAccess(link.riderId, req.ip, req.headers['user-agent'] || '', 'One-Time Emergency Link');
+        dbHelpers.logAccess(link.riderId, getClientIp(req), req.headers['user-agent'] || '', 'One-Time Emergency Link');
         
         const sessionId = generateSessionId();
         const numericId = sessionId.split('-')[2];

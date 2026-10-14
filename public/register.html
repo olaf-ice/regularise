@@ -99,6 +99,7 @@
                 <div id="freeTokenBanner" style="display: none; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; text-align: center;"></div>
 
                 <form id="registrationForm">
+                    <input type="text" name="hp_check" style="display:none !important; opacity:0; position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
                     <div class="input-group">
                         <label for="fullName">Full Name</label>
                         <input type="text" id="fullName" name="name" placeholder="John Doe" required>
@@ -258,7 +259,10 @@
             try {
                 const response = await fetch('/api/register', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Vault-Client': 'MyVault-Web-App'
+                    },
                     body: JSON.stringify(data)
                 });
 
