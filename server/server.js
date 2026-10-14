@@ -223,6 +223,47 @@ function getClientIp(req) {
     return req.ip || req.socket?.remoteAddress || '';
 }
 
+// ── Ironclad Sensitive File & Environment Shield ────────────────────────────
+// Completely denies HTTP/HTTPS requests probing .env, dotfiles, internal configs, databases, or source code
+const SENSITIVE_FILE_PATTERN = /(\.env|\.git|\.sqlite|\.db|package\.json|package-lock\.json|riders\.json|\.backup|\.bak|\.pem|\.key|\.cert|dockerfile|server\.js|build\.js)/i;
+
+app.use((req, res, next) => {
+    let rawPath = '';
+    let origUrl = '';
+    try {
+        rawPath = decodeURIComponent(req.path || req.url || '').toLowerCase();
+        origUrl = decodeURIComponent(req.originalUrl || '').toLowerCase();
+    } catch {
+        rawPath = (req.path || req.url || '').toLowerCase();
+        origUrl = (req.originalUrl || '').toLowerCase();
+    }
+
+    const pathOnly = rawPath.split('?')[0];
+    const origPathOnly = origUrl.split('?')[0];
+
+    // 1. Immediately block any request attempting to query .env or sensitive config
+    if (SENSITIVE_FILE_PATTERN.test(pathOnly) || SENSITIVE_FILE_PATTERN.test(origPathOnly)) {
+        console.warn(`[SECURITY ALERT] Blocked probe for sensitive configuration file: "${req.originalUrl}" IP=${getClientIp(req)}`);
+        return res.status(403).json({
+            success: false,
+            code: 'FORBIDDEN_FILE_ACCESS',
+            message: 'Access Denied: Requested configuration resource is strictly confidential.'
+        });
+    }
+
+    // 2. Reject directory traversal attempts (../, ..\, %2e%2e)
+    if (/\.\.[\/\\]/.test(pathOnly) || /\.\.[\/\\]/.test(origPathOnly) || req.url.includes('..')) {
+        console.warn(`[SECURITY ALERT] Blocked directory traversal attempt: "${req.url}" IP=${getClientIp(req)}`);
+        return res.status(403).json({
+            success: false,
+            code: 'TRAVERSAL_DETECTED',
+            message: 'Access Denied: Path traversal detected.'
+        });
+    }
+
+    next();
+});
+
 // ── Anti-Automation & Direct Script Blocker ("Anti-Bot / Anti-CLI Shield") ──
 // Strictly blocks command-line tools (curl, wget, python, etc.), headless scrapers,
 // automated Linux/CLI scripts, and unauthorized raw API mutations.
@@ -569,7 +610,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'], dotfiles: 'deny' }));
 
 // Hardened uploads serving: Prevent script execution and XSS
 const secureUploadHeaders = (req, res, next) => {
@@ -578,8 +619,8 @@ const secureUploadHeaders = (req, res, next) => {
     res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
     next();
 };
-app.use('/uploads', secureUploadHeaders, express.static(UPLOADS_DIR));
-app.use('/uploads', secureUploadHeaders, express.static(path.join(__dirname, '../public/uploads')));
+app.use('/uploads', secureUploadHeaders, express.static(UPLOADS_DIR, { dotfiles: 'deny' }));
+app.use('/uploads', secureUploadHeaders, express.static(path.join(__dirname, '../public/uploads'), { dotfiles: 'deny' }));
 
 // ── Hardened Storage Configuration (Whitelisted Extensions & UUID Filenames) ─
 const ALLOWED_MIME_EXT_MAP = {
