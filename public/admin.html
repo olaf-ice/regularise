@@ -331,6 +331,103 @@
             border-color: var(--primary-light);
         }
 
+        /* Hospital Proposal Generator & Preview Styles */
+        #hospitalProposalModal {
+            z-index: 99999;
+        }
+        #hospitalProposalModal .modal-content {
+            background: #0b1120;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85);
+            max-width: 980px;
+            max-height: 94vh;
+            overflow-y: auto;
+            border-radius: 18px;
+            padding: 1.5rem 1.75rem;
+        }
+        #hospitalProposalModal,
+        .proposal-sheet,
+        .proposal-sheet * {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+        .proposal-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.65rem 1.25rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+        .proposal-tab-btn:hover {
+            color: #fbbf24;
+        }
+        .proposal-tab-btn.active {
+            color: #fbbf24;
+            border-bottom-color: #fbbf24;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 6px 6px 0 0;
+        }
+        .proposal-sheet {
+            background: #ffffff;
+            color: #0f172a;
+            padding: 3rem 3.5rem;
+            border-radius: 8px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 0.93rem;
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 820px;
+            box-sizing: border-box;
+            border: 1px solid #e2e8f0;
+        }
+        .proposal-section-title {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 0.35rem;
+            margin: 1.6rem 0 0.85rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .proposal-feature-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #0284c7;
+            padding: 0.85rem 1rem;
+            border-radius: 4px;
+        }
+        .proposal-input-field {
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.35);
+            color: white;
+            font-size: 0.85rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .proposal-input-field:focus {
+            border-color: #fbbf24;
+        }
+        @media (max-width: 768px) {
+            .proposal-sheet {
+                padding: 1.5rem;
+            }
+        }
     </style>
     <script src="js/theme.js"></script>
 
@@ -472,6 +569,9 @@
                     </p>
                 </div>
                 <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
+                    <button onclick="openProposalModal()" class="action-btn" style="border-color: #f59e0b; color: #fbbf24; background: rgba(245, 158, 11, 0.12); font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.95rem;">
+                        📜 Generate Hospital Proposal
+                    </button>
                     <button onclick="openAddHospitalModal()" class="action-btn" style="border-color: #34d399; color: #34d399; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem;">
                         ➕ Add Verified Hospital
                     </button>
@@ -3058,6 +3158,9 @@
                         </td>
                         <td>
                             <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                <button onclick="generateProposalForHospital(${h.id})" class="action-btn" style="font-size: 0.75rem; padding: 0.3rem 0.55rem; color: #fbbf24; border-color: rgba(245, 158, 11, 0.4);" title="Generate Executive Partnership Proposal">
+                                    📜 Proposal
+                                </button>
                                 <button onclick="openEditHospitalModal(${h.id})" class="action-btn" style="font-size: 0.75rem; padding: 0.3rem 0.55rem;" title="Edit Facility Details">
                                     ✏️ Edit
                                 </button>
@@ -3370,6 +3473,595 @@
             URL.revokeObjectURL(url);
         }
 
+        /* ============================================================
+           HOSPITAL PARTNERSHIP PROPOSAL GENERATOR MODULE
+           ============================================================ */
+        function openProposalModal(hospitalId = null) {
+            populateProposalHospitalSelect(hospitalId);
+
+            // Default proposal date to today in formal format
+            const today = new Date();
+            const day = today.getDate();
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const suffix = (day >= 11 && day <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][day % 10] || 'th';
+            const formattedDate = `${day}${suffix} ${months[today.getMonth()]} ${today.getFullYear()}`;
+            
+            const dateInput = document.getElementById('propDate');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = formattedDate;
+            }
+
+            // Default reference code
+            const refInput = document.getElementById('propRefCode');
+            if (refInput && !refInput.value) {
+                const randCode = Math.floor(100 + Math.random() * 900);
+                refInput.value = `MYV-MED-PROP-${today.getFullYear()}-${randCode}`;
+            }
+
+            // If a specific hospital was chosen from table row, fill and generate immediately
+            if (hospitalId) {
+                onProposalSelectChange(hospitalId);
+                generateProposalDocument();
+                switchProposalTab('preview');
+            } else {
+                switchProposalTab('config');
+            }
+
+            const modal = document.getElementById('hospitalProposalModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeProposalModal() {
+            const modal = document.getElementById('hospitalProposalModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function populateProposalHospitalSelect(selectedId = null) {
+            const select = document.getElementById('propSelectHospital');
+            if (!select) return;
+
+            let html = '<option value="custom">✏️ Enter Custom / Unregistered Hospital...</option>';
+            if (Array.isArray(currentHospitals) && currentHospitals.length > 0) {
+                html += '<optgroup label="Registered Accredited Hospitals">';
+                currentHospitals.forEach(h => {
+                    const sel = (selectedId && h.id === selectedId) ? 'selected' : '';
+                    const loc = h.city ? `${h.city}, ${h.state}` : h.state;
+                    html += `<option value="${h.id}" ${sel}>${escapeHTML(h.name)} (${escapeHTML(loc)})</option>`;
+                });
+                html += '</optgroup>';
+            }
+            select.innerHTML = html;
+        }
+
+        function onProposalSelectChange(forceId = null) {
+            const select = document.getElementById('propSelectHospital');
+            const val = forceId !== null ? String(forceId) : (select ? select.value : 'custom');
+
+            if (val === 'custom') {
+                // Keep inputs editable for custom entry
+                return;
+            }
+
+            const targetId = parseInt(val, 10);
+            const h = Array.isArray(currentHospitals) ? currentHospitals.find(item => item.id === targetId) : null;
+            if (!h) return;
+
+            document.getElementById('propHospName').value = h.name || '';
+            document.getElementById('propHospType').value = h.type || 'Teaching Hospital';
+            document.getElementById('propHospState').value = h.state || 'Lagos';
+            document.getElementById('propHospCity').value = h.city || '';
+            document.getElementById('propHospAddress').value = h.address || '';
+            document.getElementById('propHospPhone').value = h.phone || h.ambulanceLine || '';
+            document.getElementById('propHospEmail').value = h.email || '';
+
+            const contact = h.contactPerson ? `Attn: ${h.contactPerson} - ` : '';
+            document.getElementById('propRecipient').value = `${contact}The Chief Medical Director & Head of Clinical Services`;
+
+            const cleanCode = (h.odsCode || h.hospitalId || 'FAC').replace(/[^a-zA-Z0-9]/g, '');
+            const today = new Date();
+            document.getElementById('propRefCode').value = `MYV-MED-${cleanCode}-${today.getFullYear()}`;
+        }
+
+        function switchProposalTab(tabName) {
+            const configTab = document.getElementById('proposalConfigTab');
+            const previewTab = document.getElementById('proposalPreviewTab');
+            const btnConfig = document.getElementById('tabBtnProposalConfig');
+            const btnPreview = document.getElementById('tabBtnProposalPreview');
+
+            if (tabName === 'config') {
+                if (configTab) configTab.style.display = 'block';
+                if (previewTab) previewTab.style.display = 'none';
+                if (btnConfig) btnConfig.classList.add('active');
+                if (btnPreview) btnPreview.classList.remove('active');
+            } else {
+                if (configTab) configTab.style.display = 'none';
+                if (previewTab) previewTab.style.display = 'block';
+                if (btnConfig) btnConfig.classList.remove('active');
+                if (btnPreview) btnPreview.classList.add('active');
+            }
+        }
+
+        function generateProposalForHospital(id) {
+            openProposalModal(id);
+        }
+
+        function generateProposalDocument() {
+            const hospName = (document.getElementById('propHospName').value || '').trim();
+            if (!hospName) {
+                alert('Please enter or select a Hospital Name to generate the proposal.');
+                switchProposalTab('config');
+                document.getElementById('propHospName').focus();
+                return;
+            }
+
+            const hospType = document.getElementById('propHospType').value || 'Tertiary Teaching Hospital';
+            const hospState = document.getElementById('propHospState').value || 'Nigeria';
+            const hospCity = (document.getElementById('propHospCity').value || '').trim();
+            const hospAddress = (document.getElementById('propHospAddress').value || '').trim();
+            const hospPhone = (document.getElementById('propHospPhone').value || '').trim() || '24/7 Emergency Dispatch';
+            const hospEmail = (document.getElementById('propHospEmail').value || '').trim();
+            const recipient = (document.getElementById('propRecipient').value || 'The Chief Medical Director & Head of Clinical Services').trim();
+            const refCode = (document.getElementById('propRefCode').value || `MYV-PROP-${new Date().getFullYear()}-01`).trim();
+            const propDate = (document.getElementById('propDate').value || new Date().toLocaleDateString('en-GB')).trim();
+            const scopeFocus = document.getElementById('propScope').value || 'Comprehensive Emergency Triage & Trauma Break-Glass';
+            const senderName = (document.getElementById('propSenderName').value || 'Dr. Olumide Adeleke').trim();
+            const senderTitle = (document.getElementById('propSenderTitle').value || 'Director of Clinical Partnerships & Triage Operations').trim();
+            const customNotes = (document.getElementById('propCustomNotes').value || '').trim();
+
+            const fullLocation = hospCity ? `${hospCity}, ${hospState}` : hospState;
+
+            const docEl = document.getElementById('proposalDocument');
+            if (!docEl) return;
+
+            docEl.innerHTML = `
+                <!-- Official Letterhead Header -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0284c7; padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <img src="assets/logo.png" alt="MyVault" style="height: 52px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+                        <div>
+                            <div style="font-size: 1.35rem; font-weight: 900; letter-spacing: -0.02em; color: #0284c7; line-height: 1.15;">
+                                MYVAULT EMERGENCY NETWORK
+                            </div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: #475569; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px;">
+                                Emergency Medical Identity &amp; Clinical Triage Infrastructure
+                            </div>
+                            <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
+                                🌐 https://myvault.com.ng &nbsp;&bull;&nbsp; ✉️ clinical@myvault.com.ng &nbsp;&bull;&nbsp; 📞 +234 800-MYVAULT
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right; font-size: 0.8rem; color: #475569;">
+                        <div><strong>REF:</strong> <span style="font-family: monospace; font-size: 0.85rem; font-weight: 700; color: #0284c7;">${escapeHTML(refCode)}</span></div>
+                        <div style="margin-top: 3px;"><strong>DATE:</strong> ${escapeHTML(propDate)}</div>
+                        <div style="margin-top: 6px;">
+                            <span style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.72rem; font-weight: 800; border: 1px solid #bae6fd;">
+                                OFFICIAL CLINICAL MEMORANDUM
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recipient Address Block -->
+                <div style="margin-bottom: 1.75rem; font-size: 0.92rem; line-height: 1.45; color: #1e293b;">
+                    <div><strong>To:</strong></div>
+                    <div style="font-weight: 800; font-size: 1.02rem; color: #0f172a; margin-top: 2px;">
+                        ${escapeHTML(recipient)}
+                    </div>
+                    <div style="font-weight: 700; color: #0284c7;">
+                        ${escapeHTML(hospName)}
+                    </div>
+                    <div style="color: #475569;">
+                        ${hospAddress ? `${escapeHTML(hospAddress)}, ` : ''}${escapeHTML(fullLocation)}, Nigeria
+                    </div>
+                    <div style="font-size: 0.82rem; color: #64748b; margin-top: 3px;">
+                        Facility Classification: <strong>${escapeHTML(hospType)}</strong>
+                        ${hospEmail ? ` &bull; Desk Email: ${escapeHTML(hospEmail)}` : ''}
+                    </div>
+                </div>
+
+                <!-- Formal Subject Line -->
+                <div style="background: #f8fafc; border-left: 5px solid #0284c7; padding: 1rem 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 2rem;">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: #0284c7; text-transform: uppercase; letter-spacing: 0.05em;">
+                        SUBJECT: STRATEGIC CLINICAL INTEGRATION &amp; EMERGENCY DIRECTORY ACCREDITATION
+                    </div>
+                    <div style="font-size: 1.05rem; font-weight: 900; color: #0f172a; margin-top: 0.35rem; line-height: 1.4;">
+                        Deployment of Sub-Second Emergency Identity Resolution, Immediate Clinical Triage Access, and Statutory Next-of-Kin Alerting at ${escapeHTML(hospName)}
+                    </div>
+                </div>
+
+                <!-- Section 1: Executive Context & Nigerian Trauma Reality -->
+                <div class="proposal-section-title">
+                    <span>1. Executive Summary &amp; Clinical Background</span>
+                    <span style="font-size: 0.72rem; font-weight: 600; color: #64748b; text-transform: none;">The Golden Hour Bottleneck</span>
+                </div>
+                <p style="margin-top: 0.5rem; text-align: justify;">
+                    In Nigeria’s acute emergency and trauma units, medical teams routinely confront a critical, life-threatening dilemma: 
+                    <strong>casualties from road traffic accidents (RTAs), cardiovascular collapses, strokes, and acute workplace incidents arrive unconscious, disoriented, or unaccompanied by family.</strong>
+                </p>
+                <p style="text-align: justify;">
+                    During the decisive <strong>'Golden Hour'</strong>, clinicians are forced to operate blind without baseline clinical parameters:
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0;">
+                    <div class="proposal-feature-card">
+                        <strong style="color: #b91c1c; font-size: 0.85rem;">⚠️ Unknown Critical Medical History</strong>
+                        <p style="font-size: 0.82rem; margin: 0.25rem 0 0 0; color: #475569;">
+                            Zero knowledge of patient blood group, genotype (Hb SS/AS), severe drug allergies (e.g. Penicillin, NSAIDs), or chronic comorbidities (e.g. brittle diabetes, hypertension, asthma).
+                        </p>
+                    </div>
+                    <div class="proposal-feature-card" style="border-left-color: #ea580c;">
+                        <strong style="color: #c2410c; font-size: 0.85rem;">⚠️ Unreachable Family &amp; Consent Delay</strong>
+                        <p style="font-size: 0.82rem; margin: 0.25rem 0 0 0; color: #475569;">
+                            Inability to rapidly locate Next-of-Kin (NOK) to authorize urgent surgical interventions, emergency blood transfusions, or coordinate necessary financial deposits.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Section 2: The MyVault Solution -->
+                <div class="proposal-section-title">
+                    <span>2. The MyVault Clinical Solution for ${escapeHTML(hospName)}</span>
+                    <span style="font-size: 0.72rem; font-weight: 600; color: #0284c7; text-transform: none;">Zero Hardware &bull; Zero CapEx</span>
+                </div>
+                <p style="margin-top: 0.5rem; text-align: justify;">
+                    <strong>MyVault Emergency Network</strong> provides an instant, cloud-based clinical triage bridge that transforms emergency casualty processing from blind delay to immediate, informed action:
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; margin: 1rem 0;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start; background: #f8fafc; padding: 0.85rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <div style="background: #0284c7; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0;">1</div>
+                        <div>
+                            <strong style="color: #0f172a; font-size: 0.9rem;">Sub-Second QR / NFC Triage Scan:</strong>
+                            <span style="font-size: 0.85rem; color: #475569;">
+                                Any ER nurse, triage officer, or trauma clinician scans the patient's physical MyVault emergency card, silicone wristband, or vehicle medallion using <strong>any standard smartphone camera or tablet browser</strong>. No special application or proprietary hardware scanner required.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; align-items: flex-start; background: #f8fafc; padding: 0.85rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <div style="background: #0284c7; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0;">2</div>
+                        <div>
+                            <strong style="color: #0f172a; font-size: 0.9rem;">Immediate Critical Clinical Data Reveal:</strong>
+                            <span style="font-size: 0.85rem; color: #475569;">
+                                The portal renders verified <strong>Blood Group, Genotype, Critical Allergies, Ongoing Medications, Chronic Conditions, and Emergency Contacts</strong> within milliseconds, preventing fatal adverse drug reactions and accelerating cross-matching.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; align-items: flex-start; background: #f8fafc; padding: 0.85rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <div style="background: #0284c7; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0;">3</div>
+                        <div>
+                            <strong style="color: #0f172a; font-size: 0.9rem;">Automated Next-of-Kin (NOK) SMS Notification:</strong>
+                            <span style="font-size: 0.85rem; color: #475569;">
+                                The moment a triage scan occurs, MyVault's carrier gateway instantly dispatches an automated SMS to the patient's Next-of-Kin: 
+                                <em>"EMERGENCY ALERT: Your family member has arrived at ${escapeHTML(hospName)} Emergency Wing. Medical teams are attending. Facility phone: ${escapeHTML(hospPhone)}."</em>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; align-items: flex-start; background: #f8fafc; padding: 0.85rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <div style="background: #0284c7; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0;">4</div>
+                        <div>
+                            <strong style="color: #0f172a; font-size: 0.9rem;">15-Minute Statutory Break-Glass Audit Trail:</strong>
+                            <span style="font-size: 0.85rem; color: #475569;">
+                                Emergency access is strictly governed by a cryptographic 15-minute timebox under Section 24 of the Nigeria Data Protection Act (NDPA) 2023. Every triage interaction logs clinician identity, timestamp, and IP address for forensic compliance.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; align-items: flex-start; background: #f8fafc; padding: 0.85rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <div style="background: #0284c7; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.85rem; flex-shrink: 0;">5</div>
+                        <div>
+                            <strong style="color: #0f172a; font-size: 0.9rem;">Accredited 24/7 Verified Emergency Directory Listing:</strong>
+                            <span style="font-size: 0.85rem; color: #475569;">
+                                ${escapeHTML(hospName)} is embedded in MyVault's nationwide directory, providing certified ambulance routes, direct trauma phone lines, and trauma capability tags to first-responder dispatchers.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                ${customNotes ? `
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.85rem 1rem; margin: 1.25rem 0;">
+                        <strong style="color: #1d4ed8; font-size: 0.85rem;">📌 Special Institutional Focus / Clinical Notes:</strong>
+                        <div style="font-size: 0.85rem; color: #1e3a8a; margin-top: 0.25rem;">${escapeHTML(customNotes)}</div>
+                    </div>
+                ` : ''}
+
+                <!-- Section 3: Financial Terms & Zero CapEx -->
+                <div class="proposal-section-title">
+                    <span>3. Commercial Commitment &amp; Zero CapEx Structure</span>
+                    <span style="font-size: 0.72rem; font-weight: 600; color: #16a34a; text-transform: none;">₦0.00 Capital Outlay</span>
+                </div>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 1rem 1.25rem; margin: 1rem 0;">
+                    <div style="font-size: 1.05rem; font-weight: 800; color: #166534; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>✅</span> 100% Zero Capital Expenditure (₦0 CapEx) for ${escapeHTML(hospName)}
+                    </div>
+                    <p style="font-size: 0.85rem; color: #14532d; margin: 0.4rem 0 0 0; line-height: 1.5;">
+                        Under MyVault’s National Public Health &amp; Emergency Preparedness Partnership, there are <strong>zero software licensing charges, zero integration fees, and zero hardware acquisition costs</strong> required from ${escapeHTML(hospName)}. The clinical triage web application is fully hosted, secured, and maintained by MyVault.
+                    </p>
+                </div>
+
+                <!-- Section 4: Implementation Roadmap -->
+                <div class="proposal-section-title">
+                    <span>4. 3-Step Rapid Onboarding Roadmap</span>
+                    <span style="font-size: 0.72rem; font-weight: 600; color: #64748b; text-transform: none;">Fast 48-Hour Activation</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin: 1rem 0; font-size: 0.82rem;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 6px;">
+                        <div style="font-weight: 800; color: #0284c7; margin-bottom: 0.25rem;">PHASE 1: DIRECTORY ACCREDITATION</div>
+                        <div style="color: #475569;">Verification of facility trauma capabilities, emergency desk hotline, and emergency dispatch coordinates.</div>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 6px;">
+                        <div style="font-weight: 800; color: #0284c7; margin-bottom: 0.25rem;">PHASE 2: CLINICAL ORIENTATION</div>
+                        <div style="color: #475569;">Brief 15-minute briefing session (virtual or in-person) for emergency nursing staff and casualty triage officers.</div>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 6px;">
+                        <div style="font-weight: 800; color: #0284c7; margin-bottom: 0.25rem;">PHASE 3: NETWORK ACTIVATION</div>
+                        <div style="color: #475569;">Go-live with immediate Next-of-Kin SMS alerts and verified first-responder inbound trauma routing.</div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Legal & Data Privacy Compliance -->
+                <div class="proposal-section-title">
+                    <span>5. Statutory &amp; Data Privacy Compliance</span>
+                    <span style="font-size: 0.72rem; font-weight: 600; color: #64748b; text-transform: none;">NDPA 2023 &bull; Section 24</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #475569; text-align: justify; margin: 0.5rem 0 1.5rem 0;">
+                    MyVault operates under full compliance with the <strong>Nigeria Data Protection Act (NDPA) 2023</strong> and guidelines of the Nigeria Data Protection Commission (NDPC). Access to emergency clinical summaries is legally supported under statutory Vital Interest provisions (protection of life during acute incapacitation). All transmissions utilize AES-256 GCM encryption at rest and TLS 1.3 in transit.
+                </p>
+
+                <!-- Section 6: Official Sign-off & Execution Endorsement -->
+                <div style="border-top: 2px solid #cbd5e1; padding-top: 1.5rem; margin-top: 2rem;">
+                    <div style="font-size: 0.85rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1.25rem;">
+                        Formal Execution &amp; Endorsement Memorandum
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; font-size: 0.85rem;">
+                        <div>
+                            <div style="color: #64748b; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">For MyVault Emergency Network:</div>
+                            <div style="height: 48px; border-bottom: 1px solid #94a3b8; display: flex; align-items: flex-end; padding-bottom: 4px;">
+                                <span style="font-family: 'Brush Script MT', cursive, sans-serif; font-size: 1.35rem; color: #0284c7;">O. Adeleke</span>
+                            </div>
+                            <div style="font-weight: 800; color: #0f172a; margin-top: 0.4rem;">${escapeHTML(senderName)}</div>
+                            <div style="color: #475569; font-size: 0.8rem;">${escapeHTML(senderTitle)}</div>
+                            <div style="color: #64748b; font-size: 0.75rem; margin-top: 2px;">Date: ${escapeHTML(propDate)}</div>
+                        </div>
+
+                        <div>
+                            <div style="color: #64748b; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Accepted &amp; Acknowledged for ${escapeHTML(hospName)}:</div>
+                            <div style="height: 48px; border-bottom: 1px solid #94a3b8; display: flex; align-items: flex-end; padding-bottom: 4px;">
+                                <span style="color: #94a3b8; font-style: italic; font-size: 0.78rem;">Signature &amp; Official Hospital Stamp</span>
+                            </div>
+                            <div style="font-weight: 800; color: #0f172a; margin-top: 0.4rem;">${escapeHTML(recipient)}</div>
+                            <div style="color: #475569; font-size: 0.8rem;">${escapeHTML(hospName)}</div>
+                            <div style="color: #64748b; font-size: 0.75rem; margin-top: 2px;">Date: ________________________</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 0.72rem; color: #94a3b8;">
+                    MyVault Emergency Response &bull; RC 7329481 &bull; Strictly Confidential Clinical Integration Proposal &bull; Page 1 of 1
+                </div>
+            `;
+
+            switchProposalTab('preview');
+        }
+
+        function printHospitalProposal() {
+            const docEl = document.getElementById('proposalDocument');
+            if (!docEl || !docEl.innerHTML.trim()) {
+                alert('Please generate the proposal preview first.');
+                return;
+            }
+
+            const hospName = document.getElementById('propHospName').value || 'Hospital';
+            const printWindow = window.open('', '_blank', 'width=920,height=850');
+            if (!printWindow) {
+                alert('Pop-up was blocked by browser. Please allow popups or use the "Download PDF" button.');
+                return;
+            }
+
+            printWindow.document.open();
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>MyVault Partnership Proposal - ${escapeHTML(hospName)}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+                    <style>
+                        @page {
+                            size: A4 portrait;
+                            margin: 12mm 15mm 15mm 15mm;
+                        }
+                        * {
+                            box-sizing: border-box;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                            background: #ffffff;
+                            color: #0f172a;
+                            font-size: 10.5pt;
+                            line-height: 1.5;
+                        }
+                        .proposal-sheet {
+                            padding: 0 !important;
+                            box-shadow: none !important;
+                            border: none !important;
+                            width: 100% !important;
+                            max-width: 100% !important;
+                        }
+                        .proposal-section-title {
+                            font-size: 10pt;
+                            font-weight: 800;
+                            color: #0f172a;
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                            border-bottom: 2px solid #0f172a;
+                            padding-bottom: 3px;
+                            margin: 16px 0 8px 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                        }
+                        .proposal-feature-card {
+                            background: #f8fafc;
+                            border: 1px solid #e2e8f0;
+                            border-left: 4px solid #0284c7;
+                            padding: 8px 12px;
+                            border-radius: 4px;
+                        }
+                        a {
+                            color: inherit;
+                            text-decoration: none;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="proposal-sheet">
+                        ${docEl.innerHTML}
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.focus();
+                                window.print();
+                            }, 350);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        async function downloadHospitalProposalPDF() {
+            const docEl = document.getElementById('proposalDocument');
+            if (!docEl || !docEl.innerHTML.trim()) {
+                alert('Please generate the proposal preview first.');
+                return;
+            }
+
+            if (!window.html2canvas || !window.jspdf) {
+                alert('PDF generation libraries are still initializing. Please wait a moment and retry.');
+                return;
+            }
+
+            const btn = document.getElementById('btnDownloadProposalPDF');
+            const origHtml = btn ? btn.innerHTML : '💾 Download PDF';
+            if (btn) {
+                btn.innerHTML = '⏳ Generating PDF...';
+                btn.disabled = true;
+            }
+
+            try {
+                // Ensure images are fully rendered
+                await new Promise(r => setTimeout(r, 200));
+
+                const canvas = await window.html2canvas(docEl, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                if (imgHeight <= pageHeight) {
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, '', 'FAST');
+                } else {
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+                    heightLeft -= pageHeight;
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+                        heightLeft -= pageHeight;
+                    }
+                }
+
+                const hospName = (document.getElementById('propHospName').value || 'Hospital').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const dateStr = new Date().toISOString().split('T')[0];
+                pdf.save(`MyVault_Hospital_Proposal_${hospName}_${dateStr}.pdf`);
+            } catch (err) {
+                console.error('[PROPOSAL PDF ERROR]', err);
+                alert('Failed to generate direct PDF download. Please use "Print / Save as PDF" which produces pristine vector documents.');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = origHtml;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function copyHospitalProposalText() {
+            const hospName = (document.getElementById('propHospName').value || 'Your Facility').trim();
+            const hospType = document.getElementById('propHospType').value || 'Tertiary Medical Centre';
+            const recipient = (document.getElementById('propRecipient').value || 'The Chief Medical Director').trim();
+            const hospPhone = (document.getElementById('propHospPhone').value || '0800-MYVAULT').trim();
+            const senderName = (document.getElementById('propSenderName').value || 'Dr. Olumide Adeleke').trim();
+            const senderTitle = (document.getElementById('propSenderTitle').value || 'Director of Clinical Partnerships').trim();
+
+            const text = 
+`SUBJECT: Strategic Clinical Partnership & Zero-CapEx Emergency Triage Integration - MyVault / ${hospName}
+
+To: ${recipient}
+Facility: ${hospName} (${hospType})
+
+Dear Esteemed Medical Director & Clinical Leadership,
+
+On behalf of MyVault Emergency Network (https://myvault.com.ng), we present this Strategic Clinical Integration Proposal to ${hospName}.
+
+THE NIGERIAN EMERGENCY TRIAGE DILEMMA:
+In acute emergency scenarios (road traffic accidents, strokes, acute collapse), casualties frequently arrive at trauma desks unconscious, disoriented, or unaccompanied. During the vital 'Golden Hour', clinical teams operate without critical parameters: unknown blood group, unknown genotype (Hb SS/AS), severe drug allergies (e.g. penicillin anaphylaxis), and zero reachable Next-of-Kin (NOK) to authorize emergency procedures or admission deposits.
+
+THE MYVAULT CLINICAL SOLUTION (ZERO HARDWARE & ZERO CAPEX):
+MyVault provides an instant cloud-based clinical triage bridge:
+1. Sub-Second QR/NFC Triage Scan: ER nurses scan the patient's MyVault card/wristband using ANY smartphone camera or tablet browser. No software or expensive hardware required.
+2. Immediate Clinical Profile: Sub-second display of verified Blood Group, Genotype, Critical Allergies, Pre-existing Conditions, and primary Next-of-Kin contacts.
+3. Automated Instant NOK SMS Dispatch: Carrier-grade SMS alert is automatically triggered to the patient's Next-of-Kin:
+   "EMERGENCY ALERT: Your family member has arrived at ${hospName} Emergency Wing. Medical teams are attending. Facility phone: ${hospPhone}."
+4. 15-Minute Statutory Break-Glass Session: Full compliance with Section 24 of the Nigeria Data Protection Act (NDPA) 2023 with forensic IP and clinician timestamp audit logging.
+5. 24/7 Verified Trauma Directory Listing: Permanent accreditation in MyVault's nationwide emergency directory for ambulance and first-responder dispatch.
+
+FINANCIAL TERMS: 100% ZERO CAPITAL EXPENDITURE (₦0 CapEx):
+Under MyVault's Public Health & Emergency Preparedness Initiative, there are ₦0 software licensing charges and ₦0 integration fees for ${hospName}.
+
+ONBOARDING TIMELINE:
+- Phase 1: Emergency Directory Listing & Hotline Verification (Immediate)
+- Phase 2: 15-minute clinical briefing for ER triage staff (Virtual / In-person)
+- Phase 3: Live automated Next-of-Kin SMS connectivity
+
+We would welcome a brief 15-minute briefing with your clinical leadership team this week to formalize directory integration.
+
+Sincerely,
+
+${senderName}
+${senderTitle}
+MyVault Emergency Response Network
+Website: https://myvault.com.ng
+Email: clinical@myvault.com.ng`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`✅ Executive proposal text for "${hospName}" has been copied to your clipboard!\n\nYou can now paste it directly into an email to the hospital CMD or clinical board.`);
+            }).catch(err => {
+                console.error('[CLIPBOARD ERROR]', err);
+                alert('Could not copy automatically. Please open Preview and copy the text manually.');
+            });
+        }
+
 </script>
 
     <!-- NDPC Audit Flag & Review Modal -->
@@ -3606,6 +4298,216 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+
+    <!-- ============================================================
+         HOSPITAL PARTNERSHIP PROPOSAL MODAL (INPUT & LIVE PREVIEW)
+         ============================================================ -->
+    <div id="hospitalProposalModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.25rem; color: #fbbf24; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>📜</span> Hospital Partnership &amp; Integration Proposal Generator
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0.25rem 0 0 0;">
+                        Generate formal clinical integration proposals for any Nigerian Teaching Hospital, Federal Medical Centre, or Private Trauma Wing.
+                    </p>
+                </div>
+                <button type="button" onclick="closeProposalModal()" class="action-btn" style="border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 0.2rem;">&times;</button>
+            </div>
+
+            <!-- Modal Tab Navigation -->
+            <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 1.5rem;">
+                <button type="button" id="tabBtnProposalConfig" class="proposal-tab-btn active" onclick="switchProposalTab('config')">
+                    <span>✏️</span> 1. Proposal Configuration &amp; Hospital Input
+                </button>
+                <button type="button" id="tabBtnProposalPreview" class="proposal-tab-btn" onclick="generateProposalDocument()">
+                    <span>👁️</span> 2. Live Document Preview &amp; Export
+                </button>
+            </div>
+
+            <!-- Tab 1: Configuration & Input -->
+            <div id="proposalConfigTab">
+                <!-- Quick Hospital Auto-Fill Selector -->
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-size: 0.82rem; color: #fbbf24; font-weight: 700;">
+                        ⚡ Quick Select from Registered Directory or Input Any Custom Hospital:
+                    </label>
+                    <select id="propSelectHospital" class="proposal-input-field" onchange="onProposalSelectChange()" style="background: rgba(15, 23, 42, 0.8); border-color: rgba(245, 158, 11, 0.5); font-size: 0.9rem; font-weight: 600;">
+                        <option value="custom">✏️ Enter Custom / Unregistered Hospital...</option>
+                    </select>
+                    <p style="margin: 0.35rem 0 0 0; font-size: 0.76rem; color: var(--text-muted);">
+                        Select an existing accredited hospital to automatically populate all fields, or choose "Enter Custom" to type any facility in Nigeria.
+                    </p>
+                </div>
+
+                <!-- Hospital Information Inputs -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Hospital / Healthcare Facility Name *</label>
+                        <input type="text" id="propHospName" class="proposal-input-field" placeholder="e.g. University College Hospital (UCH) Ibadan" required>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Facility Classification</label>
+                        <select id="propHospType" class="proposal-input-field">
+                            <option value="Teaching Hospital">University Teaching Hospital</option>
+                            <option value="Federal Medical Centre">Federal Medical Centre (FMC)</option>
+                            <option value="State Specialist Hospital">State Specialist Hospital</option>
+                            <option value="Specialist Trauma Centre">Specialist Trauma Centre</option>
+                            <option value="General Hospital">General Hospital</option>
+                            <option value="Specialist Private Hospital">Specialist Private Hospital</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">State</label>
+                        <select id="propHospState" class="proposal-input-field">
+                            <option value="Lagos">Lagos</option>
+                            <option value="FCT Abuja">FCT Abuja</option>
+                            <option value="Oyo">Oyo</option>
+                            <option value="Rivers">Rivers</option>
+                            <option value="Kano">Kano</option>
+                            <option value="Ogun">Ogun</option>
+                            <option value="Enugu">Enugu</option>
+                            <option value="Delta">Delta</option>
+                            <option value="Kaduna">Kaduna</option>
+                            <option value="Edo">Edo</option>
+                            <option value="Anambra">Anambra</option>
+                            <option value="Akwa Ibom">Akwa Ibom</option>
+                            <option value="Ondo">Ondo</option>
+                            <option value="Osun">Osun</option>
+                            <option value="Kwara">Kwara</option>
+                            <option value="Plateau">Plateau</option>
+                            <option value="Imo">Imo</option>
+                            <option value="Abia">Abia</option>
+                            <option value="Cross River">Cross River</option>
+                            <option value="Benue">Benue</option>
+                            <option value="Borno">Borno</option>
+                            <option value="Katsina">Katsina</option>
+                            <option value="Niger">Niger</option>
+                            <option value="Adamawa">Adamawa</option>
+                            <option value="Bauchi">Bauchi</option>
+                            <option value="Bayelsa">Bayelsa</option>
+                            <option value="Ebonyi">Ebonyi</option>
+                            <option value="Ekiti">Ekiti</option>
+                            <option value="Gombe">Gombe</option>
+                            <option value="Jigawa">Jigawa</option>
+                            <option value="Kebbi">Kebbi</option>
+                            <option value="Kogi">Kogi</option>
+                            <option value="Nasarawa">Nasarawa</option>
+                            <option value="Sokoto">Sokoto</option>
+                            <option value="Taraba">Taraba</option>
+                            <option value="Yobe">Yobe</option>
+                            <option value="Zamfara">Zamfara</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">City / District / LGA</label>
+                        <input type="text" id="propHospCity" class="proposal-input-field" placeholder="e.g. Ibadan North / Central">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Street Address / Campus</label>
+                    <input type="text" id="propHospAddress" class="proposal-input-field" placeholder="e.g. Queen Elizabeth II Road, Mokola, Ibadan">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Emergency Desk / Dispatch Phone</label>
+                        <input type="tel" id="propHospPhone" class="proposal-input-field" placeholder="e.g. 08131733444">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Official Emergency Email</label>
+                        <input type="email" id="propHospEmail" class="proposal-input-field" placeholder="e.g. emergency@uch-ibadan.org.ng">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Recipient Title / Addressee</label>
+                        <input type="text" id="propRecipient" class="proposal-input-field" value="The Chief Medical Director &amp; Head of Emergency Services">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Proposal Reference Code</label>
+                        <input type="text" id="propRefCode" class="proposal-input-field" placeholder="e.g. MYV-MED-PROP-2026-01">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Proposal Date</label>
+                        <input type="text" id="propDate" class="proposal-input-field" placeholder="e.g. 15th October 2026">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Strategic Integration Scope</label>
+                        <select id="propScope" class="proposal-input-field">
+                            <option value="Comprehensive Emergency Triage &amp; Trauma Break-Glass">Comprehensive Emergency Triage &amp; Trauma Break-Glass</option>
+                            <option value="Trauma Centre Highway Casualty Dispatch &amp; NOK Alerting">Trauma Centre Highway Casualty Dispatch &amp; NOK Alerting</option>
+                            <option value="Private Specialist Hospital Fast-Track Admission Protocol">Private Specialist Hospital Fast-Track Admission Protocol</option>
+                            <option value="Statewide General Hospital Network Integration">Statewide General Hospital Network Integration</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">MyVault Signatory Name</label>
+                        <input type="text" id="propSenderName" class="proposal-input-field" value="Dr. Olumide Adeleke">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">MyVault Signatory Title</label>
+                        <input type="text" id="propSenderTitle" class="proposal-input-field" value="Director of Clinical Partnerships &amp; Operations">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">Institutional Specialization / Custom Focus (Optional)</label>
+                    <textarea id="propCustomNotes" class="proposal-input-field" rows="2" placeholder="e.g. Dedicated neurotrauma intake, regional highway accident triage priority, or 24/7 blood bank integration notes..."></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem;">
+                    <button type="button" onclick="closeProposalModal()" class="action-btn">Cancel</button>
+                    <button type="button" onclick="generateProposalDocument()" class="btn btn-primary" style="background: #f59e0b; border-color: #f59e0b; color: #000; font-weight: 800;">
+                        👁️ Generate &amp; Preview Proposal
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 2: Live Document Preview & Actions -->
+            <div id="proposalPreviewTab" style="display: none;">
+                <!-- Document Action Toolbar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" onclick="switchProposalTab('config')" class="action-btn" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            ✏️ Edit Inputs
+                        </button>
+                        <button type="button" onclick="printHospitalProposal()" class="action-btn" style="border-color: #3b82f6; color: #60a5fa; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            🖨️ Print / Save as PDF
+                        </button>
+                        <button type="button" id="btnDownloadProposalPDF" onclick="downloadHospitalProposalPDF()" class="btn btn-primary" style="background: #10b981; border-color: #10b981; font-weight: 800; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            💾 Download PDF
+                        </button>
+                        <button type="button" onclick="copyHospitalProposalText()" class="action-btn" style="border-color: #f59e0b; color: #fbbf24; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            📋 Copy Text for Email
+                        </button>
+                    </div>
+                    <button type="button" onclick="closeProposalModal()" class="action-btn">✖ Close</button>
+                </div>
+
+                <!-- Printable Document Sheet Container -->
+                <div style="max-height: 70vh; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                    <div id="proposalDocument" class="proposal-sheet">
+                        <!-- Populated dynamically by generateProposalDocument() -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
