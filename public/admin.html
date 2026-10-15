@@ -3606,6 +3606,8 @@
             const scopeFocus = document.getElementById('propScope').value || 'Comprehensive Emergency Triage & Trauma Break-Glass';
             const senderName = (document.getElementById('propSenderName').value || 'Dr. Olumide Adeleke').trim();
             const senderTitle = (document.getElementById('propSenderTitle').value || 'Director of Clinical Partnerships & Triage Operations').trim();
+            const myvaultEmail = (document.getElementById('propMyvaultEmail')?.value || 'myvaultng@gmail.com').trim();
+            const myvaultPhone = (document.getElementById('propMyvaultPhone')?.value || '09079131502').trim();
             const customNotes = (document.getElementById('propCustomNotes').value || '').trim();
 
             const fullLocation = hospCity ? `${hospCity}, ${hospState}` : hospState;
@@ -3626,7 +3628,7 @@
                                 Emergency Medical Identity &amp; Clinical Triage Infrastructure
                             </div>
                             <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
-                                🌐 https://myvault.com.ng &nbsp;&bull;&nbsp; ✉️ clinical@myvault.com.ng &nbsp;&bull;&nbsp; 📞 +234 800-MYVAULT
+                                🌐 https://myvault.com.ng &nbsp;&bull;&nbsp; ✉️ ${escapeHTML(myvaultEmail)} &nbsp;&bull;&nbsp; 📞 ${escapeHTML(myvaultPhone)}
                             </div>
                         </div>
                     </div>
@@ -3821,7 +3823,8 @@
                             </div>
                             <div style="font-weight: 800; color: #0f172a; margin-top: 0.4rem;">${escapeHTML(senderName)}</div>
                             <div style="color: #475569; font-size: 0.8rem;">${escapeHTML(senderTitle)}</div>
-                            <div style="color: #64748b; font-size: 0.75rem; margin-top: 2px;">Date: ${escapeHTML(propDate)}</div>
+                            <div style="color: #64748b; font-size: 0.75rem; margin-top: 2px;">Tel: ${escapeHTML(myvaultPhone)} &bull; Email: ${escapeHTML(myvaultEmail)}</div>
+                            <div style="color: #64748b; font-size: 0.75rem; margin-top: 1px;">Date: ${escapeHTML(propDate)}</div>
                         </div>
 
                         <div>
@@ -3837,7 +3840,7 @@
                 </div>
 
                 <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 0.72rem; color: #94a3b8;">
-                    MyVault Emergency Response &bull; RC 7329481 &bull; Strictly Confidential Clinical Integration Proposal &bull; Page 1 of 1
+                    MyVault Emergency Response &bull; RC 7329481 &bull; Direct Line: ${escapeHTML(myvaultPhone)} &bull; ${escapeHTML(myvaultEmail)} &bull; Strictly Confidential Clinical Integration Proposal &bull; Page 1 of 1
                 </div>
             `;
 
@@ -4013,6 +4016,8 @@
             const hospPhone = (document.getElementById('propHospPhone').value || '0800-MYVAULT').trim();
             const senderName = (document.getElementById('propSenderName').value || 'Dr. Olumide Adeleke').trim();
             const senderTitle = (document.getElementById('propSenderTitle').value || 'Director of Clinical Partnerships').trim();
+            const myvaultEmail = (document.getElementById('propMyvaultEmail')?.value || 'myvaultng@gmail.com').trim();
+            const myvaultPhone = (document.getElementById('propMyvaultPhone')?.value || '09079131502').trim();
 
             const text = 
 `SUBJECT: Strategic Clinical Partnership & Zero-CapEx Emergency Triage Integration - MyVault / ${hospName}
@@ -4052,7 +4057,8 @@ ${senderName}
 ${senderTitle}
 MyVault Emergency Response Network
 Website: https://myvault.com.ng
-Email: clinical@myvault.com.ng`;
+Direct Line: ${myvaultPhone}
+Email: ${myvaultEmail}`;
 
             navigator.clipboard.writeText(text).then(() => {
                 alert(`✅ Executive proposal text for "${hospName}" has been copied to your clipboard!\n\nYou can now paste it directly into an email to the hospital CMD or clinical board.`);
@@ -4464,6 +4470,17 @@ Email: clinical@myvault.com.ng`;
                     <div>
                         <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">MyVault Signatory Title</label>
                         <input type="text" id="propSenderTitle" class="proposal-input-field" value="Director of Clinical Partnerships &amp; Operations">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">MyVault Official Email</label>
+                        <input type="email" id="propMyvaultEmail" class="proposal-input-field" value="myvaultng@gmail.com">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">MyVault Direct Phone Number</label>
+                        <input type="tel" id="propMyvaultPhone" class="proposal-input-field" value="09079131502">
                     </div>
                 </div>
 
