@@ -313,7 +313,12 @@
                         <img id="passportImg" crossorigin="anonymous" src="assets/default-avatar.png" alt="Passport" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: var(--surface);">
                     </div>
                     <div id="namePlateContainer" style="text-align: center; z-index: 1;">
-                        <h2 id="riderName" style="margin-bottom: 0.6rem; font-size: 1.6rem; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; transition: all 0.3s ease; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">Citizen Name</h2>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 0.6rem; flex-wrap: wrap;">
+                            <h2 id="riderName" style="margin: 0; font-size: 1.6rem; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; transition: all 0.3s ease; text-shadow: 0 2px 10px rgba(0,0,0,0.5); cursor: pointer;" onclick="openAdminQuickNameModal()" title="Click to edit legal name">Citizen Name</h2>
+                            <button id="adminQuickEditNameBtn" type="button" onclick="openAdminQuickNameModal()" title="Edit Legal Name" style="display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(56, 189, 248, 0.2); border: 1.5px solid #38bdf8; color: #38bdf8; border-radius: 8px; padding: 4px 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);">
+                                ✏️ Edit Name
+                            </button>
+                        </div>
                         <div style="display: inline-block; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.25); padding: 0.4rem 1.2rem; border-radius: 2rem; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.2);">
                             <p id="riderPlate" style="color: #93c5fd; font-weight: 700; font-size: 1.05rem; letter-spacing: 1.5px; margin: 0; transition: all 0.3s ease;">PLATE: ---</p>
                         </div>
@@ -990,17 +995,140 @@
             circle.style.strokeDashoffset = offset;
         }
 
+        function applyUnlockedProfileData(rider) {
+            if (!rider) return;
+            isUnlocked = true;
+            window.globalRiderData = rider;
+
+            // Reveal unmasked phone number
+            if (rider.phone && document.getElementById('riderPhone')) {
+                document.getElementById('riderPhone').textContent = rider.phone;
+            }
+
+            // Populate hidden medical data
+            if (rider.medical) {
+                document.getElementById('iceGenotype').textContent = rider.medical.genotype || '---';
+                if (document.getElementById('iceAllergies')) document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None';
+                document.getElementById('iceConditions').textContent = rider.medical.conditions || 'None reported';
+                document.getElementById('iceMedications').textContent = rider.medical.medications || 'None reported';
+                document.getElementById('iceDateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
+                document.getElementById('iceNationality').textContent = rider.nationality || 'Not specified';
+                document.getElementById('iceImmunizations').textContent = rider.medical.immunizations || 'None reported';
+                
+                const bodyArr = [];
+                if (rider.medical.height) bodyArr.push(`H: ${rider.medical.height}`);
+                if (rider.medical.weight) bodyArr.push(`W: ${rider.medical.weight}`);
+                if (rider.medical.gender) bodyArr.push(`Sex: ${rider.medical.gender}`);
+                document.getElementById('iceBodyMetrics').textContent = bodyArr.length > 0 ? bodyArr.join(' | ') : 'Not specified';
+                
+                document.getElementById('iceIdentifyingMarks').textContent = rider.medical.identifyingMarks || 'None';
+                
+                // Directives
+                document.getElementById('iceOrganDonation').textContent = rider.medical.organDonor ? '✅ Yes' : '❌ No';
+                document.getElementById('iceDonorRestrictions').textContent = rider.medical.donorRestrictions || 'None';
+                
+                // Clinical
+                document.getElementById('iceSurgeries').textContent = rider.medical.surgeries || 'None reported';
+                document.getElementById('iceRecentVitals').textContent = rider.medical.recentVitals || 'None reported';
+                
+                // Accessibility
+                document.getElementById('iceCommunicationNeeds').textContent = rider.medical.communicationNeeds || 'None reported';
+                const docStr = [rider.medical.primaryDoctorName, rider.medical.primaryDoctorPhone].filter(Boolean).join(' - ');
+                document.getElementById('icePrimaryDoctor').textContent = docStr || 'Not specified';
+                document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
+                
+                const insStr = [rider.medical.healthInsuranceProvider, rider.medical.healthInsurancePolicy].filter(Boolean).join(' | No: ');
+                document.getElementById('iceHealthInsurance').textContent = insStr || 'Not specified';
+
+                if (rider.documents && rider.documents.healthInsuranceDoc) {
+                    document.getElementById('iceHealthInsuranceDocBlock').style.display = 'block';
+                    document.getElementById('iceHealthInsuranceDocBtn').href = rider.documents.healthInsuranceDoc.url;
+                }
+
+                if (rider.medical.advanceDirectiveStatement) {
+                    document.getElementById('iceMedicalStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
+                    document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
+                } else {
+                    document.getElementById('iceMedicalStatement').style.display = 'none';
+                }
+                
+                if (rider.documents && rider.documents.advanceDirectiveDoc) {
+                    document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
+                    document.getElementById('iceMedicalDirectiveBtn').href = rider.documents.advanceDirectiveDoc.url;
+                    document.getElementById('iceMedicalDirectiveBtn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('iceMedicalDirectiveBtn').style.display = 'none';
+                }
+            }
+            
+            // Update print data with full info
+            if (typeof _printRiderData !== 'undefined') {
+                _printRiderData.dob = (rider.medical && rider.medical.dateOfBirth) || rider.dob || '';
+                if (document.getElementById('pvcPreviewId')) {
+                    document.getElementById('pvcPreviewId').textContent = `DOB: ${_printRiderData.dob || '---'} | ID: ${rider.riderId}`;
+                }
+            }
+            if (typeof initPrintData === 'function') {
+                initPrintData(rider, window.globalVehicleInfo || (rider.vehicle || rider.bike || {}));
+            }
+
+            // Populate documents
+            if (typeof window.populateDocuments === 'function') {
+                window.populateDocuments(rider);
+            }
+            
+            // Show hidden elements
+            document.querySelectorAll('.level-2-data').forEach(el => {
+                const showDirective = (rider.medical && rider.medical.advanceDirectiveStatement) || (rider.documents && rider.documents.advanceDirectiveDoc);
+                el.style.display = el.id === 'iceMedicalDirectiveBlock' && !showDirective ? 'none' : 'block';
+            });
+            
+            // Update button state / hide unlock box
+            const unlockBox = document.getElementById('unlockLevel2Box');
+            if (unlockBox) unlockBox.style.display = 'none';
+
+            // Show admin quick edit name button if admin
+            if (window.isAdminUser || localStorage.getItem('adminToken')) {
+                const qBtn = document.getElementById('adminQuickEditNameBtn');
+                if (qBtn) qBtn.style.display = 'inline-flex';
+                const nameEl = document.getElementById('riderName');
+                if (nameEl) {
+                    nameEl.style.cursor = 'pointer';
+                    nameEl.title = 'Click to edit name (Admin)';
+                    nameEl.onclick = openAdminQuickNameModal;
+                }
+            }
+
+            // Display owner/admin actions (Edit Profile)
+            const ownerActions = document.getElementById('ownerActions');
+            if (ownerActions) {
+                ownerActions.style.display = 'flex';
+                if (window.isAdminUser || localStorage.getItem('adminToken')) {
+                    const editBtn = document.querySelector('#ownerActions button:first-child');
+                    if (editBtn) editBtn.innerHTML = '✏️ Edit Profile (Admin)';
+                }
+            }
+        }
+
         async function unlockLevel2() {
             if (isUnlocked || !currentRiderId) return;
+
+            // If already fully populated from server payload, directly apply
+            if (window.globalRiderData && (!window.globalRiderData.isLevel1 || window.isAdminUser)) {
+                applyUnlockedProfileData(window.globalRiderData);
+                return;
+            }
+
             isUnlocked = true;
             document.getElementById('unlockHelpText').textContent = 'UNLOCKING...';
             document.getElementById('unlockHelpText').style.color = 'var(--primary-light)';
             unlockBtn.innerHTML = '🔄';
 
             try {
-                let token = localStorage.getItem('riderToken') || localStorage.getItem('adminToken');
+                // Prioritize adminToken over any stale riderToken
+                let token = localStorage.getItem('adminToken') || localStorage.getItem('riderToken');
                 let pin = null;
-                if (!token) {
+                if (!token && !window.isAdminUser) {
                     pin = prompt("Enter 4-Digit Security PIN to unlock full profile:");
                     if (!pin) {
                         isUnlocked = false;
@@ -1021,100 +1149,18 @@
                 }
                 const data = await res.json();
                 if (data.success) {
-                    const rider = data.rider;
-                    window.globalRiderData = rider; // Update global data for full profile edit
-
-                    // Reveal unmasked phone number
-                    if (rider.phone && document.getElementById('riderPhone')) {
-                        document.getElementById('riderPhone').textContent = rider.phone;
-                    }
-
-                    // Populate hidden data
-                    if (rider.medical) {
-                        document.getElementById('iceGenotype').textContent = rider.medical.genotype || '---';
-                        if (document.getElementById('iceAllergies')) document.getElementById('iceAllergies').textContent = rider.medical.allergies || 'None';
-                        document.getElementById('iceConditions').textContent = rider.medical.conditions || 'None reported';
-                        document.getElementById('iceMedications').textContent = rider.medical.medications || 'None reported';
-                        document.getElementById('iceDateOfBirth').textContent = rider.medical.dateOfBirth || rider.dob || 'Not specified';
-                        document.getElementById('iceNationality').textContent = rider.nationality || 'Not specified';
-                        document.getElementById('iceImmunizations').textContent = rider.medical.immunizations || 'None reported';
-                        
-                        const bodyArr = [];
-                        if (rider.medical.height) bodyArr.push(`H: ${rider.medical.height}`);
-                        if (rider.medical.weight) bodyArr.push(`W: ${rider.medical.weight}`);
-                        if (rider.medical.gender) bodyArr.push(`Sex: ${rider.medical.gender}`);
-                        document.getElementById('iceBodyMetrics').textContent = bodyArr.length > 0 ? bodyArr.join(' | ') : 'Not specified';
-                        
-                        document.getElementById('iceIdentifyingMarks').textContent = rider.medical.identifyingMarks || 'None';
-                        
-                        // Directives
-                        document.getElementById('iceOrganDonation').textContent = rider.medical.organDonor ? '✅ Yes' : '❌ No';
-                        document.getElementById('iceDonorRestrictions').textContent = rider.medical.donorRestrictions || 'None';
-                        
-                        // Clinical
-                        document.getElementById('iceSurgeries').textContent = rider.medical.surgeries || 'None reported';
-                        document.getElementById('iceRecentVitals').textContent = rider.medical.recentVitals || 'None reported';
-                        
-                        // Accessibility
-                        document.getElementById('iceCommunicationNeeds').textContent = rider.medical.communicationNeeds || 'None reported';
-                        const docStr = [rider.medical.primaryDoctorName, rider.medical.primaryDoctorPhone].filter(Boolean).join(' - ');
-                        document.getElementById('icePrimaryDoctor').textContent = docStr || 'Not specified';
-                        document.getElementById('iceHospital').textContent = rider.medical.hospitalPreference || 'Not specified';
-                        
-                        const insStr = [rider.medical.healthInsuranceProvider, rider.medical.healthInsurancePolicy].filter(Boolean).join(' | No: ');
-                        document.getElementById('iceHealthInsurance').textContent = insStr || 'Not specified';
-
-                        if (rider.documents && rider.documents.healthInsuranceDoc) {
-                            document.getElementById('iceHealthInsuranceDocBlock').style.display = 'block';
-                            document.getElementById('iceHealthInsuranceDocBtn').href = rider.documents.healthInsuranceDoc.url;
-                        }
-
-                        if (rider.medical.advanceDirectiveStatement) {
-                            document.getElementById('iceMedicalStatement').textContent = '"' + rider.medical.advanceDirectiveStatement + '"';
-                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
-                        } else {
-                            document.getElementById('iceMedicalStatement').style.display = 'none';
-                        }
-                        
-                        if (rider.documents && rider.documents.advanceDirectiveDoc) {
-                            document.getElementById('iceMedicalDirectiveBlock').style.display = 'block';
-                            document.getElementById('iceMedicalDirectiveBtn').href = rider.documents.advanceDirectiveDoc.url;
-                            document.getElementById('iceMedicalDirectiveBtn').style.display = 'inline-block';
-                        } else {
-                            document.getElementById('iceMedicalDirectiveBtn').style.display = 'none';
-                        }
-                    }
-                    
-                    // Update print data with full info
-                    if (typeof _printRiderData !== 'undefined') {
-                        _printRiderData.dob = (rider.medical && rider.medical.dateOfBirth) || rider.dob || '';
-                        if (document.getElementById('pvcPreviewId')) {
-                            document.getElementById('pvcPreviewId').textContent = `DOB: ${_printRiderData.dob || '---'} | ID: ${rider.riderId}`;
-                        }
-                    }
-                    if (typeof initPrintData === 'function') {
-                        initPrintData(rider, window.globalVehicleInfo || (rider.vehicle || rider.bike || {}));
-                    }
-
-                    // Populate documents
-                    window.populateDocuments(rider);
-                    
-                    // Show hidden elements
-                    document.querySelectorAll('.level-2-data').forEach(el => {
-                        const showDirective = rider.medical.advanceDirectiveStatement || (rider.documents && rider.documents.advanceDirectiveDoc);
-                        el.style.display = el.id === 'iceMedicalDirectiveBlock' && !showDirective ? 'none' : 'block';
-                    });
-                    
-                    // Update button state
-                    document.getElementById('unlockLevel2Box').style.display = 'none';
+                    applyUnlockedProfileData(data.rider);
                 } else {
                     throw new Error(data.message || 'Unlock failed: User not found or unauthorized');
                 }
             } catch (err) {
                 console.error(err);
                 isUnlocked = false;
-                alert("Failed to unlock profile: " + (err.message || err));
                 resetUnlock();
+                // Never show failed auth alert to an authenticated admin
+                if (!window.isAdminUser && !localStorage.getItem('adminToken')) {
+                    alert("Failed to unlock profile: " + (err.message || err));
+                }
             }
         }
 
@@ -1209,8 +1255,12 @@
                 try {
                     const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18&addressdetails=1`);
                     const geoData = await geoRes.json();
-                    if (geoData && geoData.display_name) {
-                        locName = geoData.display_name.split(',').slice(0, 3).join(',').trim();
+                    if (geoData && geoData.address) {
+                        const a = geoData.address;
+                        const parts = [a.road || a.pedestrian || a.street, a.suburb || a.neighbourhood || a.residential, a.city || a.town || a.county, a.state, a.country].filter(Boolean);
+                        locName = parts.length > 0 ? parts.join(', ') : (geoData.display_name ? geoData.display_name.split(',').slice(0, 4).join(',').trim() : 'GPS Location');
+                    } else if (geoData && geoData.display_name) {
+                        locName = geoData.display_name.split(',').slice(0, 4).join(',').trim();
                     }
                 } catch(e) { console.error('Geocode err', e); }
 
@@ -1246,38 +1296,47 @@
                     document.getElementById('modalPlate').textContent = currentPlate || '---';
                     document.getElementById('modalTime').textContent = timeStr;
 
-                    if (locationPayload && locationPayload.latitude) {
-                        document.getElementById('modalLocation').textContent =
-                            locationPayload.latitude.toFixed(4) + ', ' + locationPayload.longitude.toFixed(4);
-                    } else {
-                        document.getElementById('modalLocation').textContent = 'Location not shared';
-                    }
+                    const resolvedLocName = locationPayload?.name || (data.location && data.location.name) || '';
+                    const locDisplay = resolvedLocName
+                        ? (locationPayload?.latitude 
+                            ? `${resolvedLocName} (${locationPayload.latitude.toFixed(4)}, ${locationPayload.longitude.toFixed(4)})`
+                            : resolvedLocName)
+                        : (locationPayload?.latitude ? `${locationPayload.latitude.toFixed(4)}, ${locationPayload.longitude.toFixed(4)}` : 'Traced via Network IP');
+                    document.getElementById('modalLocation').textContent = locDisplay;
 
                     document.getElementById('modalLink').textContent = data.sessionUrl;
                     document.getElementById('modalOpenBtn').href = data.sessionUrl;
 
                     // WhatsApp share
+                    const waLoc = resolvedLocName 
+                        ? `📍 *Location:* ${resolvedLocName}${locationPayload?.latitude ? ` (${locationPayload.latitude.toFixed(4)}, ${locationPayload.longitude.toFixed(4)})` : ''}\n`
+                        : (locationPayload?.latitude ? `📍 *Location:* ${locationPayload.latitude.toFixed(4)}, ${locationPayload.longitude.toFixed(4)}\n` : '');
+
                     const waText = encodeURIComponent(
                         '🚨 *EMERGENCY ALERT — MyVault SOS*\n\n' +
                         'A rider may need immediate assistance!\n\n' +
                         '👤 *Name:* ' + (currentRiderName || '---') + '\n' +
                         '🏍️ *Plate:* ' + (currentPlate || '---') + '\n' +
-                        (locationPayload ? '📍 *Location:* ' + locationPayload.latitude.toFixed(4) + ', ' + locationPayload.longitude.toFixed(4) + '\n' : '') +
+                        waLoc +
                         '🕐 *Time:* ' + timeStr + '\n\n' +
                         'View full emergency profile:\n' + data.sessionUrl
                     );
                     
                     let waPhone = '';
                     if (window.globalRiderData && window.globalRiderData.emergencyContact && window.globalRiderData.emergencyContact.phone) {
-                        waPhone = 'phone=' + window.globalRiderData.emergencyContact.phone.replace(/\\D/g,'') + '&';
+                        waPhone = 'phone=' + window.globalRiderData.emergencyContact.phone.replace(/\D/g,'') + '&';
                     }
                     document.getElementById('modalWaBtn').href = 'https://api.whatsapp.com/send?' + waPhone + 'text=' + waText;
+
+                    const smsLoc = resolvedLocName 
+                        ? `Location: ${resolvedLocName}${locationPayload?.latitude ? ` (${locationPayload.latitude.toFixed(4)}, ${locationPayload.longitude.toFixed(4)})` : ''}\n`
+                        : (locationPayload?.latitude ? `Location: ${locationPayload.latitude.toFixed(4)}, ${locationPayload.longitude.toFixed(4)}\n` : '');
 
                     const smsText = encodeURIComponent(
                         '🚨 MYVAULT EMERGENCY ALERT 🚨\n' +
                         'Rider: ' + (currentRiderName || '---') + '\n' +
                         'Plate: ' + (currentPlate || '---') + '\n' +
-                        (locationPayload ? 'Location: ' + locationPayload.latitude.toFixed(4) + ', ' + locationPayload.longitude.toFixed(4) + '\n' : '') +
+                        smsLoc +
                         'Time: ' + timeStr + '\n\n' +
                         'View profile:\n' + data.sessionUrl
                     );
@@ -1322,11 +1381,17 @@
 
                 const fetchHeaders = {};
                 const adminToken = localStorage.getItem('adminToken');
-                if (adminToken) fetchHeaders['Authorization'] = `Bearer ${adminToken}`;
-                const response = await fetch(`/api/verify/${query}`, { headers: fetchHeaders });
+                const riderToken = localStorage.getItem('riderToken');
+                const activeToken = adminToken || riderToken;
+                if (activeToken && activeToken !== 'null' && activeToken !== 'undefined') fetchHeaders['Authorization'] = `Bearer ${activeToken}`;
+                const response = await fetch(`/api/verify/${query}`, { 
+                    headers: fetchHeaders,
+                    credentials: 'include'
+                });
                 const data = await response.json();
 
                 if (data.isAdmin) {
+                    window.isAdminUser = true;
                     document.body.classList.add('admin');
                     const style = document.createElement('style');
                     style.innerHTML = '@media print { .admin .no-print { display: block !important; } }';
@@ -1366,6 +1431,11 @@
                     const isCar = rider.vehicleType === 'car';
                     const isNonDriver = rider.userType === 'non-driver';
 
+                    // If profile is already unlocked by server (Admin or Owner)
+                    if (data.isAdmin || !data.isLevel1) {
+                        applyUnlockedProfileData(rider);
+                    }
+
                     document.getElementById('profileContent').style.display = 'block';
                     document.getElementById('profileStatusText').textContent = 'Verification Active';
                     document.getElementById('liveStatusBar').style.display = 'flex';
@@ -1401,14 +1471,31 @@
                     }
                     
                     if ((localStorage.getItem('riderToken') || data.isAdmin) && !isEmergencyView) {
-                        if (localStorage.getItem('riderToken')) {
-                            document.getElementById('ownerActions').style.display = 'flex';
+                        document.getElementById('ownerActions').style.display = 'flex';
+                        if (data.isAdmin) {
+                            const editBtn = document.querySelector('#ownerActions button:first-child');
+                            if (editBtn) editBtn.innerHTML = '✏️ Edit Profile (Admin)';
+                            const logoutBtn = document.querySelector('#ownerActions button:last-child');
+                            if (logoutBtn) {
+                                logoutBtn.innerHTML = '⬅️ Return to Admin Dashboard';
+                                logoutBtn.onclick = () => window.location.href = 'admin.html';
+                            }
+                            const quickBtn = document.getElementById('adminQuickEditNameBtn');
+                            if (quickBtn) quickBtn.style.display = 'inline-flex';
+                            const nameEl = document.getElementById('riderName');
+                            if (nameEl) {
+                                nameEl.style.cursor = 'pointer';
+                                nameEl.title = 'Click to edit name (Admin)';
+                                nameEl.onclick = openAdminQuickNameModal;
+                            }
                         }
                         if (document.getElementById('backToSearchBtn')) {
                             document.getElementById('backToSearchBtn').style.display = 'none';
                         }
-                        // Auto-unlock full emergency details for owner or authenticated admin
-                        unlockLevel2();
+                        // Auto-unlock full emergency details only if not already unlocked
+                        if (!isUnlocked) {
+                            unlockLevel2();
+                        }
                     }
                     
                     document.getElementById('riderName').textContent = rider.name;
@@ -1680,15 +1767,40 @@ let hasExpired = false;
 
 
 
+<!-- ============================================================
+     ADMIN QUICK NAME EDIT MODAL
+     ============================================================ -->
+<div id="adminQuickNameModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:var(--surface, #1e293b);border:1px solid rgba(56, 189, 248, 0.4);border-radius:1.25rem;padding:1.75rem;max-width:480px;width:100%;box-shadow:0 25px 60px rgba(0,0,0,0.6);position:relative;">
+        <button type="button" onclick="closeAdminQuickNameModal()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#8892a4;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">✕</button>
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.4rem;">
+            <span style="font-size:1.3rem;">✏️</span>
+            <h3 style="margin:0;color:#38bdf8;font-size:1.2rem;font-weight:800;">Edit Citizen Legal Name</h3>
+        </div>
+        <p id="adminQuickNameSub" style="color:#94a3b8;font-size:0.8rem;margin:0 0 1.25rem 0;">Admin Override for <strong id="adminQuickNameRiderId">---</strong></p>
+
+        <form id="adminQuickNameForm" onsubmit="saveAdminQuickName(event)">
+            <div class="input-group" style="margin-bottom:1.25rem;">
+                <label style="display:block;font-size:0.82rem;font-weight:700;color:#e2e8f0;margin-bottom:0.4rem;">Legal Full Name *</label>
+                <input type="text" id="adminQuickNameInput" required placeholder="Enter full legal name" style="width:100%;box-sizing:border-box;padding:0.75rem 0.9rem;border-radius:0.6rem;border:1px solid rgba(56, 189, 248, 0.4);background:rgba(0,0,0,0.5);color:#fff;font-size:1rem;font-weight:600;">
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:0.75rem;">
+                <button type="button" onclick="closeAdminQuickNameModal()" class="btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#cbd5e1;padding:0.65rem 1.2rem;border-radius:0.5rem;font-weight:600;cursor:pointer;">Cancel</button>
+                <button type="submit" id="adminQuickNameSaveBtn" class="btn btn-primary" style="background:#0284c7;border-color:#0284c7;color:#fff;padding:0.65rem 1.4rem;border-radius:0.5rem;font-weight:700;cursor:pointer;">Save Name</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="editProfileModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:1rem;">
     <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:1.25rem;padding:1.5rem;max-width:800px;width:100%;box-shadow:0 0 40px rgba(0,0,0,0.4);position:relative;max-height:90vh;overflow-y:auto;">
         <button onclick="closeEditProfileModal()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#8892a4;width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
         <h3 style="margin-bottom:1.5rem;color:var(--text);font-size:1.25rem;">✏️ Edit Profile</h3>
         
         <form id="editProfileForm">
-            <div class="input-group" id="editNameGroup" style="display: none;">
-                <label>Full Name</label>
-                <input type="text" id="editName" name="name" placeholder="Enter Full Name">
+            <div class="input-group" id="editNameGroup" style="display: block; margin-bottom: 1rem;">
+                <label style="display:block; font-weight:700; margin-bottom:0.4rem;">Full Legal Name</label>
+                <input type="text" id="editName" name="name" required placeholder="Enter Full Legal Name" style="width: 100%;">
             </div>
             <div class="input-group">
                 <label>Upload New Profile Picture</label>
@@ -1890,15 +2002,133 @@ let hasExpired = false;
 </div>
 
 <script>
+    function openAdminQuickNameModal() {
+        const rId = currentRiderId || (window.globalRiderData && window.globalRiderData.riderId) || '---';
+        const currentName = (window.globalRiderData && window.globalRiderData.name) || document.getElementById('riderName').textContent || '';
+        document.getElementById('adminQuickNameRiderId').textContent = rId;
+        document.getElementById('adminQuickNameInput').value = currentName;
+        document.getElementById('adminQuickNameModal').style.display = 'flex';
+        setTimeout(() => {
+            const inp = document.getElementById('adminQuickNameInput');
+            if (inp) {
+                inp.focus();
+                inp.select();
+            }
+        }, 50);
+    }
+
+    function closeAdminQuickNameModal() {
+        document.getElementById('adminQuickNameModal').style.display = 'none';
+    }
+
+    async function saveAdminQuickName(e) {
+        if (e) e.preventDefault();
+        const btn = document.getElementById('adminQuickNameSaveBtn');
+        const newName = document.getElementById('adminQuickNameInput').value.trim();
+        const rId = currentRiderId || (window.globalRiderData && window.globalRiderData.riderId);
+
+        if (!newName) {
+            alert('Full legal name cannot be empty.');
+            return;
+        }
+        if (!rId) {
+            alert('Citizen ID not detected.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        try {
+            const adminToken = localStorage.getItem('adminToken');
+            const riderToken = localStorage.getItem('riderToken');
+            
+            let updateSuccess = false;
+            let responseMsg = '';
+
+            // 1. Try Admin endpoint if admin token is present
+            if (adminToken && adminToken !== 'null' && adminToken !== 'undefined') {
+                try {
+                    const res = await fetch('/api/admin/rider/update', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + adminToken
+                        },
+                        body: JSON.stringify({ riderId: rId, name: newName })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        updateSuccess = true;
+                    } else {
+                        responseMsg = data.message;
+                    }
+                } catch(_) {}
+            }
+
+            // 2. If not saved via admin, try profile update endpoint
+            if (!updateSuccess) {
+                const activeToken = adminToken || riderToken;
+                const headers = {};
+                if (activeToken && activeToken !== 'null' && activeToken !== 'undefined') {
+                    headers['Authorization'] = 'Bearer ' + activeToken;
+                }
+                const formData = new FormData();
+                formData.append('name', newName);
+
+                const res = await fetch('/api/profile/update/' + rId, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: headers,
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    updateSuccess = true;
+                } else {
+                    responseMsg = data.message || responseMsg;
+                }
+            }
+
+            if (updateSuccess) {
+                document.getElementById('riderName').textContent = newName;
+                currentRiderName = newName;
+                if (window.globalRiderData) {
+                    window.globalRiderData.name = newName;
+                    if (typeof initPrintData === 'function') {
+                        initPrintData(window.globalRiderData);
+                    }
+                }
+                const editNameInp = document.getElementById('editName');
+                if (editNameInp) editNameInp.value = newName;
+                closeAdminQuickNameModal();
+                alert(`✅ Legal name successfully updated to "${newName}"!`);
+            } else {
+                alert(`Failed to update name: ${responseMsg || 'Authentication required'}`);
+            }
+        } catch (err) {
+            console.error('Save name error:', err);
+            alert('Network connection error while saving user name.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save Name';
+        }
+    }
+
     function openEditProfileModal() {
         document.getElementById('editProfileModal').style.display = 'flex';
         
-        // Handle special case for RID-71447
-        if (currentRiderId === 'RID-71447' || currentRiderId === 'SID-71447' || currentRiderId === '71447') {
-            document.getElementById('editNameGroup').style.display = 'block';
-            document.getElementById('editName').value = document.getElementById('riderName').textContent;
-        } else {
-            document.getElementById('editNameGroup').style.display = 'none';
+        // Full Name editing is always enabled and visible
+        const isAdmin = Boolean(window.isAdminUser || localStorage.getItem('adminToken'));
+        document.getElementById('editNameGroup').style.display = 'block';
+        const currentName = (window.globalRiderData && window.globalRiderData.name) || document.getElementById('riderName').textContent.trim() || '';
+        document.getElementById('editName').value = currentName;
+        const nameLabel = document.querySelector('#editNameGroup label');
+        if (nameLabel) {
+            nameLabel.innerHTML = isAdmin 
+                ? 'Full Legal Name <span style="font-size: 0.72rem; color: #f59e0b; font-weight: 700; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Admin Override</span>'
+                : 'Full Legal Name';
         }
 
         // Pre-fill
@@ -2844,15 +3074,25 @@ let hasExpired = false;
         const formData = new FormData(e.target);
         
         try {
+            const authToken = localStorage.getItem('adminToken') || localStorage.getItem('riderToken');
+            const headers = {};
+            if (authToken && authToken !== 'null' && authToken !== 'undefined') {
+                headers['Authorization'] = 'Bearer ' + authToken;
+            }
             const res = await fetch('/api/profile/update/' + currentRiderId, {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('riderToken') },
+                credentials: 'include',
+                headers: headers,
                 body: formData
             });
             if (res.status === 401 || res.status === 403) {
-                const isMultiDevice = res.status === 401;
-                alert(isMultiDevice ? 'Session expired. You have logged in from another device.' : 'Your session has expired. Please log in again.');
-                logoutRider();
+                if (!window.isAdminUser && !localStorage.getItem('adminToken')) {
+                    const isMultiDevice = res.status === 401;
+                    alert(isMultiDevice ? 'Session expired. You have logged in from another device.' : 'Your session has expired. Please log in again.');
+                    logoutRider();
+                } else {
+                    alert('Admin authorization check failed. Please check your admin session.');
+                }
                 return;
             }
             const result = await res.json();

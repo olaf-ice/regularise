@@ -365,8 +365,8 @@ const dbHelpers = {
         stmt.run(rider.riderId, rider.phone, rider.pin, encryptData(JSON.stringify(rider)));
     },
     updateRider: (riderId, riderData) => {
-        const stmt = db.prepare('UPDATE riders SET data = ?, pin = ? WHERE riderId = ?');
-        stmt.run(encryptData(JSON.stringify(riderData)), riderData.pin, riderId);
+        const stmt = db.prepare('UPDATE riders SET data = ?, pin = ?, phone = ? WHERE riderId = ?');
+        stmt.run(encryptData(JSON.stringify(riderData)), riderData.pin, riderData.phone || '', riderId);
     },
     insertWaitlist: (entry) => {
         const stmt = db.prepare('INSERT INTO waitlist (email, phone, wantsWhatsapp, timestamp) VALUES (?, ?, ?, ?)');

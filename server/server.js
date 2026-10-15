@@ -80,6 +80,100 @@ function generateCardCvv(riderId) {
                        .toUpperCase();
     return `SEC-${hash.substring(0, 3)}`;
 }
+
+// ── IP & Geolocation Tracing Helpers ────────────────────────────────────────
+const ipLocationCache = new Map();
+const coordLocationCache = new Map();
+
+async function traceIpToLocation(ip) {
+    if (!ip) return 'Unknown Location';
+    const cleanIp = String(ip).trim().replace(/^::ffff:/, '');
+    
+    if (['127.0.0.1', '::1', 'localhost'].includes(cleanIp) || 
+        cleanIp.startsWith('192.168.') || 
+        cleanIp.startsWith('10.') || 
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(cleanIp)) {
+        return 'Local Network (Dev / Internal)';
+    }
+
+    if (ipLocationCache.has(cleanIp)) {
+        return ipLocationCache.get(cleanIp);
+    }
+
+    try {
+        const response = await axios.get(`http://ip-api.com/json/${cleanIp}?fields=status,message,country,regionName,city,district,zip,lat,lon`, {
+            timeout: 3000,
+            headers: { 'User-Agent': 'MyVault-Emergency-Service/1.0' }
+        });
+
+        if (response.data && response.data.status === 'success') {
+            const parts = [
+                response.data.district,
+                response.data.city,
+                response.data.regionName,
+                response.data.country
+            ].filter(Boolean);
+            const locationName = parts.length > 0 ? parts.join(', ') : `${response.data.city || 'Unknown'}, ${response.data.country || ''}`;
+            ipLocationCache.set(cleanIp, locationName);
+            return locationName;
+        }
+    } catch (_) {}
+
+    try {
+        const fbRes = await axios.get(`https://ipwho.is/${cleanIp}`, {
+            timeout: 3000,
+            headers: { 'User-Agent': 'MyVault-Emergency-Service/1.0' }
+        });
+        if (fbRes.data && fbRes.data.success) {
+            const parts = [
+                fbRes.data.city,
+                fbRes.data.region,
+                fbRes.data.country
+            ].filter(Boolean);
+            const locName = parts.join(', ');
+            ipLocationCache.set(cleanIp, locName);
+            return locName;
+        }
+    } catch (_) {}
+
+    return 'Traced Network Location';
+}
+
+async function reverseGeocodeCoords(lat, lng) {
+    if (!lat || !lng) return null;
+    const key = `${Number(lat).toFixed(4)},${Number(lng).toFixed(4)}`;
+    if (coordLocationCache.has(key)) {
+        return coordLocationCache.get(key);
+    }
+
+    try {
+        const response = await axios.get(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+                timeout: 4000,
+                headers: { 'User-Agent': 'MyVault-Emergency-Service/1.0 (emergency@myvault.com.ng)' }
+            }
+        );
+        if (response.data && response.data.address) {
+            const addr = response.data.address;
+            const road = addr.road || addr.pedestrian || addr.street || '';
+            const neighbourhood = addr.neighbourhood || addr.suburb || addr.residential || '';
+            const city = addr.city || addr.town || addr.municipality || addr.county || '';
+            const state = addr.state || '';
+            const country = addr.country || '';
+
+            const parts = [road, neighbourhood, city, state, country].filter(Boolean);
+            const exactName = parts.length > 0 ? parts.join(', ') : (response.data.display_name ? response.data.display_name.split(',').slice(0, 4).join(',').trim() : `${lat}, ${lng}`);
+            coordLocationCache.set(key, exactName);
+            return exactName;
+        }
+    } catch (e) {
+        console.warn('[GEOCODE] Reverse geocode error:', e.message);
+    }
+
+    return null;
+}
+
 const PORT = process.env.PORT || 3001;
 let adminTokenVersion = 0;
 
@@ -116,20 +210,16 @@ app.use(helmet({
                 "https://js.paystack.co",
                 "https://cdn.jsdelivr.net",
                 "https://cdn.tailwindcss.com",
-                "https://cdnjs.cloudflare.com",
-                "https://embed.tawk.to",
-                "https://*.tawk.to"
+                "https://cdnjs.cloudflare.com"
             ],
             scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: [
                 "'self'",
                 "'unsafe-inline'",
-                "https://cdnjs.cloudflare.com",
-                "https://*.tawk.to"
+                "https://cdnjs.cloudflare.com"
             ],
             fontSrc: [
                 "'self'",
-                "https://*.tawk.to",
                 "data:"
             ],
             imgSrc: [
@@ -141,8 +231,6 @@ app.use(helmet({
             connectSrc: [
                 "'self'",
                 "https://api.paystack.co",
-                "https://*.tawk.to",
-                "wss://*.tawk.to",
                 "https://nominatim.openstreetmap.org",
                 "https://api.allorigins.win",
                 "https://overpass-api.de",
@@ -152,8 +240,6 @@ app.use(helmet({
             frameSrc: [
                 "'self'",
                 "https://js.paystack.co",
-                "https://embed.tawk.to",
-                "https://*.tawk.to",
                 "https://docs.google.com",
                 "https://forms.gle"
             ],
@@ -386,9 +472,30 @@ function clearAuthCookies(res) {
 function extractToken(req, preferredCookie = 'auth_token') {
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
-        return authHeader.split(' ')[1];
+        const hToken = authHeader.split(' ')[1];
+        if (hToken && hToken !== 'null' && hToken !== 'undefined' && hToken.trim() !== '') {
+            return hToken;
+        }
     }
-    return getCookie(req, preferredCookie) || getCookie(req, 'auth_token') || getCookie(req, 'admin_token');
+    return getCookie(req, preferredCookie) || getCookie(req, 'admin_token') || getCookie(req, 'auth_token');
+}
+
+function getAuthTokens(req, preferredCookie = 'auth_token') {
+    const tokens = [];
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const hToken = authHeader.split(' ')[1];
+        if (hToken && hToken !== 'null' && hToken !== 'undefined' && hToken.trim() !== '') {
+            tokens.push(hToken);
+        }
+    }
+    const pref = getCookie(req, preferredCookie);
+    if (pref && !tokens.includes(pref)) tokens.push(pref);
+    const adminCook = getCookie(req, 'admin_token');
+    if (adminCook && !tokens.includes(adminCook)) tokens.push(adminCook);
+    const authCook = getCookie(req, 'auth_token');
+    if (authCook && !tokens.includes(authCook)) tokens.push(authCook);
+    return tokens;
 }
 
 // ── Granular Rate Limiters (Bound to Real Client IP) ────────────────────────
@@ -463,45 +570,75 @@ app.use('/api/', apiLimiter);
 
 // ── Authentication & Authorization Middlewares ──────────────────────────────
 function authenticateToken(req, res, next) {
-    const token = extractToken(req, 'auth_token');
-    if (!token) return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
+    const tokens = getAuthTokens(req, 'auth_token');
+    if (!tokens || tokens.length === 0) return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
 
-    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
-        if (err) {
-            console.warn('[AUTH] Token verification failed:', err.message);
-            return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
-        }
-        
-        // Ensure single active session via tokenVersion for riders
-        if (user.riderId) {
-            const dbRider = dbHelpers.getRiderById(user.riderId);
-            if (!dbRider) return res.status(401).json({ success: false, message: 'User not found.' });
-            
-            if (dbRider.tokenVersion && dbRider.tokenVersion !== user.tokenVersion) {
-                return res.status(401).json({ success: false, message: 'Session expired. You have logged in from another device.' });
+    let verifiedUser = null;
+    let sessionError = null;
+
+    for (const token of tokens) {
+        try {
+            const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+            if (user.role === 'admin') {
+                if (user.tokenVersion && user.tokenVersion !== adminTokenVersion) {
+                    sessionError = 'Admin session invalidated or logged in elsewhere.';
+                    continue;
+                }
+                verifiedUser = user;
+                break;
+            } else if (user.riderId) {
+                const dbRider = dbHelpers.getRiderById(user.riderId);
+                if (!dbRider) continue;
+                if (dbRider.tokenVersion && dbRider.tokenVersion !== user.tokenVersion) {
+                    sessionError = 'Session expired. You have logged in from another device.';
+                    continue;
+                }
+                verifiedUser = user;
+                break;
+            } else if (user.role === 'agent') {
+                verifiedUser = user;
+                break;
             }
-        }
+        } catch (_) {}
+    }
 
-        req.user = user;
-        next();
-    });
+    if (!verifiedUser) {
+        console.warn('[AUTH] Token verification failed');
+        return res.status(sessionError ? 401 : 403).json({ success: false, message: sessionError || 'Invalid or expired token.' });
+    }
+
+    req.user = verifiedUser;
+    next();
 }
 
 function authenticateAdminToken(req, res, next) {
-    const token = extractToken(req, 'admin_token');
-    if (!token) return res.status(401).json({ success: false, message: 'Admin access denied. No token provided.' });
+    const tokens = getAuthTokens(req, 'admin_token');
+    if (!tokens || tokens.length === 0) return res.status(401).json({ success: false, message: 'Admin access denied. No token provided.' });
 
-    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, (err, user) => {
-        if (err || user.role !== 'admin') {
-            console.warn('[AUTH] Admin role authorization rejected');
-            return res.status(403).json({ success: false, message: 'Invalid or expired admin token.' });
-        }
-        if (user.tokenVersion && user.tokenVersion !== adminTokenVersion) {
-            return res.status(401).json({ success: false, message: 'Admin session invalidated or logged in elsewhere.' });
-        }
-        req.user = user;
-        next();
-    });
+    let verifiedUser = null;
+    let authError = null;
+
+    for (const token of tokens) {
+        try {
+            const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+            if (user && user.role === 'admin') {
+                if (user.tokenVersion && user.tokenVersion !== adminTokenVersion) {
+                    authError = 'Admin session invalidated or logged in elsewhere.';
+                    continue;
+                }
+                verifiedUser = user;
+                break;
+            }
+        } catch (_) {}
+    }
+
+    if (!verifiedUser) {
+        console.warn('[AUTH] Admin role authorization rejected');
+        return res.status(authError ? 401 : 403).json({ success: false, message: authError || 'Invalid or expired admin token.' });
+    }
+
+    req.user = verifiedUser;
+    next();
 }
 
 function authenticateAgentToken(req, res, next) {
@@ -947,6 +1084,42 @@ app.post('/api/admin/rider/status', authenticateAdminToken, (req, res) => {
         res.json({ success: true, message: `Rider ${riderId} status updated to ${status}`, expiryDate: rider.expiryDate });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Failed to update status' });
+    }
+});
+
+// Admin Direct Edit Rider (Name, Phone, Plate, Status)
+app.post('/api/admin/rider/update', authenticateAdminToken, (req, res) => {
+    const { riderId, name, fullName, phone, plateNumber, status } = req.body;
+    if (!riderId) return res.status(400).json({ success: false, message: 'User ID is required' });
+
+    try {
+        const rider = dbHelpers.getRiderById(riderId);
+        if (!rider) return res.status(404).json({ success: false, message: 'Rider not found' });
+
+        const targetName = name !== undefined ? name : fullName;
+        if (targetName && typeof targetName === 'string' && targetName.trim()) {
+            rider.name = targetName.trim();
+        }
+        if (phone && typeof phone === 'string' && phone.trim()) {
+            rider.phone = phone.trim();
+        }
+        if (plateNumber !== undefined) {
+            rider.plateNumber = String(plateNumber).trim();
+            if (rider.vehicle) rider.vehicle.plateNumber = rider.plateNumber;
+            if (rider.bike) rider.bike.plateNumber = rider.plateNumber;
+        }
+        if (status && ['Active', 'Suspended', 'Pending'].includes(status)) {
+            rider.status = status;
+        }
+
+        dbHelpers.updateRider(rider.riderId, rider);
+        saveToGoogleSheets(rider);
+
+        console.log(`[ADMIN] Updated rider details for ${rider.riderId} - Name: "${rider.name}"`);
+        res.json({ success: true, message: `Rider ${riderId} details updated successfully`, rider });
+    } catch (error) {
+        console.error('Admin update rider error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update rider details' });
     }
 });
 
@@ -1470,6 +1643,16 @@ app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
         const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
         const sessionUrl = `${baseUrl}/emergency/${numericId}`;
 
+        const clientIp = getClientIp(req);
+        let location = req.body.location || null;
+        if (location && location.latitude && location.longitude) {
+            const resolvedName = await reverseGeocodeCoords(location.latitude, location.longitude);
+            if (resolvedName) location.name = resolvedName;
+        } else if (!location || !location.name) {
+            const ipLocation = await traceIpToLocation(clientIp);
+            location = { name: ipLocation, ip: clientIp, type: 'ip_traced' };
+        }
+
         // Safe rider snapshot (strip PIN)
         const { pin, ...safeRider } = rider;
 
@@ -1479,7 +1662,7 @@ app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
             riderId,
             sessionUrl,
             createdAt: new Date().toISOString(),
-            location: req.body.location || null,
+            location,
             rider: safeRider
         };
 
@@ -1501,7 +1684,7 @@ app.post('/api/emergency/create/:riderId', authLimiter, async (req, res) => {
         });
 
         console.log(`[SOS] Emergency session created: ${sessionId} for rider ${riderId}`);
-        res.json({ success: true, sessionId, numericId, sessionUrl });
+        res.json({ success: true, sessionId, numericId, sessionUrl, location: session.location });
     } catch (err) {
         console.error('Emergency Create Error:', err);
         res.status(500).json({ success: false, message: 'Failed to create emergency session' });
@@ -1618,13 +1801,17 @@ app.get('/scan/:riderId', async (req, res) => {
         // Safe rider snapshot
         const { pin, ...safeRider } = rider;
 
+        const clientIp = getClientIp(req);
+        const userAgent = req.get('user-agent') || '';
+        const ipLocation = await traceIpToLocation(clientIp);
+
         const session = {
             sessionId,
             numericId,
             riderId,
             sessionUrl,
             createdAt: new Date().toISOString(),
-            location: null,
+            location: { name: ipLocation, ip: clientIp, type: 'ip_traced' },
             rider: safeRider,
             scanDetails
         };
@@ -1632,10 +1819,8 @@ app.get('/scan/:riderId', async (req, res) => {
         emergencySessions.set(sessionId, session);
         emergencySessions.set(numericId, session);
 
-        // Audit Trail: Log QR scan event
-        const clientIp = getClientIp(req);
-        const userAgent = req.get('user-agent') || '';
-        dbHelpers.logAccess(riderId, clientIp, userAgent, '', {
+        // Audit Trail: Log QR scan event with exact traced location
+        dbHelpers.logAccess(riderId, clientIp, userAgent, ipLocation, {
             accessType: scanDetails.scanType || 'public_scan',
             reason: scanDetails.message || 'QR Code Scan'
         });
@@ -1652,7 +1837,8 @@ app.get('/scan/:riderId', async (req, res) => {
                 } else if (scanDetails.isPhysical) {
                     alertHeader = `🚨 PHYSICAL ${scanDetails.tagLabel ? scanDetails.tagLabel.toUpperCase() : 'TAG'} SCAN`;
                 }
-                const msg = `${alertHeader}: ${rider.name}'s MyVault ID was just scanned. ` +
+                const locNote = ipLocation && !ipLocation.startsWith('Local Network') ? ` near ${ipLocation}` : '';
+                const msg = `${alertHeader}: ${rider.name}'s MyVault ID was just scanned${locNote}. ` +
                             `View emergency profile: ${sessionUrl}`;
                 sendSMS(contact.phone, msg).catch(() => {});
             }
@@ -1852,9 +2038,15 @@ app.post(['/api/emergency/:sessionId/unlock', '/api/emergency/:sessionId/breakgl
 
         const clientIp = getClientIp(req);
         const userAgent = req.get('user-agent') || '';
+        let locName = session.location?.name;
+        if (!locName || locName === 'Unknown Location') {
+            locName = await traceIpToLocation(clientIp);
+            if (session.location) session.location.name = locName;
+            else session.location = { name: locName, ip: clientIp, type: 'ip_traced' };
+        }
 
-        // 1. Immutable Audit Logging
-        const logResult = dbHelpers.logAccess(riderId, clientIp, userAgent, session.location?.name || '', auditMeta);
+        // 1. Immutable Audit Logging with exact location name
+        const logResult = dbHelpers.logAccess(riderId, clientIp, userAgent, locName, auditMeta);
 
         // 2. Automated Alert to Next of Kin
         const contacts = rider.emergencyContacts || [];
@@ -1862,7 +2054,8 @@ app.post(['/api/emergency/:sessionId/unlock', '/api/emergency/:sessionId/breakgl
 
         contacts.forEach(contact => {
             if (contact && contact.phone) {
-                const alertMsg = `🚨 MyVault Notice: Emergency Clinical Access was requested for ${rider.name} at ${auditMeta.facility} by ${auditMeta.accessorName} (${auditMeta.role}). Reason: ${auditMeta.reason}.`;
+                const locNote = locName && !locName.startsWith('Local Network') ? ` near ${locName}` : '';
+                const alertMsg = `🚨 MyVault Notice: Emergency Clinical Access was requested for ${rider.name} at ${auditMeta.facility}${locNote} by ${auditMeta.accessorName} (${auditMeta.role}). Reason: ${auditMeta.reason}.`;
                 sendSMS(contact.phone, alertMsg).catch(() => {});
             }
         });
@@ -1956,17 +2149,19 @@ app.post('/api/profile/update/:riderId', authenticateToken, upload.fields([
 ]), async (req, res) => {
     try {
         const riderId = req.params.riderId;
-        // Verify user is updating their own profile or is admin
-        if (req.user.riderId !== riderId && req.user.role !== 'admin') {
+        const targetRider = dbHelpers.getRiderById(riderId) || dbHelpers.findRiderByQuery(riderId);
+        if (!targetRider) return res.status(404).json({ success: false, message: 'Profile not found' });
+        
+        const userRiderId = String(req.user.riderId || '').trim().toUpperCase();
+        const targetRiderId = String(targetRider.riderId || riderId).trim().toUpperCase();
+        if (req.user.role !== 'admin' && req.user.role !== 'agent' && userRiderId !== targetRiderId) {
             return res.status(403).json({ success: false, message: 'Unauthorized profile update' });
         }
-        
-        const rider = dbHelpers.getRiderById(riderId);
-        if (!rider) return res.status(404).json({ success: false, message: 'Profile not found' });
+        const rider = targetRider;
         
         const { name, bloodType, allergies, emergencyContactName, emergencyContactPhone, licenseNumber, licenseExpiry, insuranceNumber, insuranceExpiry, ninNumber, bikeBrand, bikeModel, bikeColor, ownershipType, plateNumber, refusesBloodTransfusion, advanceDirectiveStatement, conditions, medications, immunizations, height, weight, gender, dateOfBirth, identifyingMarks, primaryDoctorName, primaryDoctorPhone, hospitalPreference, surgeries, recentVitals, communicationNeeds, healthInsuranceProvider, healthInsurancePolicy, organDonor, donorRestrictions } = req.body;
         
-        if (name && name.trim() !== '' && (riderId === 'RID-71447' || riderId === 'SID-71447' || riderId === '71447')) {
+        if (name && typeof name === 'string' && name.trim() !== '') {
             rider.name = name.trim();
         }
         
@@ -2082,16 +2277,18 @@ app.get('/api/verify/:query', verifyLimiter, (req, res) => {
     // Check if caller is authenticated owner or admin
     let isOwnerOrAdmin = false;
     let isAdmin = false;
-    const token = extractToken(req, 'auth_token');
-    if (token) {
+    const candidateTokens = getAuthTokens(req, 'admin_token');
+    for (const tok of candidateTokens) {
         try {
-            const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+            const user = jwt.verify(tok, JWT_SECRET, { algorithms: ['HS256'] });
             if (user) {
                 if (user.role === 'admin') {
                     isAdmin = true;
                     isOwnerOrAdmin = true;
+                    break;
                 } else if (user.role === 'agent' || user.riderId === rider.riderId) {
                     isOwnerOrAdmin = true;
+                    break;
                 }
             }
         } catch (e) {}
@@ -2150,13 +2347,14 @@ app.post('/api/verify/:query/unlock', authLimiter, async (req, res) => {
     }
 
     // Check if caller is authenticated owner or admin via token
-    const token = extractToken(req, 'auth_token');
     let isAuthorized = false;
-    if (token) {
+    const unlockTokens = getAuthTokens(req, 'admin_token');
+    for (const tok of unlockTokens) {
         try {
-            const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+            const user = jwt.verify(tok, JWT_SECRET, { algorithms: ['HS256'] });
             if (user && (user.riderId === rider.riderId || user.role === 'admin' || user.role === 'agent')) {
                 isAuthorized = true;
+                break;
             }
         } catch (e) {}
     }
@@ -2189,7 +2387,9 @@ app.post('/api/verify/:query/unlock', authLimiter, async (req, res) => {
         };
     }
     safeRiderData.allergies = (safeRiderData.medical && safeRiderData.medical.allergies) || rider.allergies || rider.riderAllergies || 'None';
-    dbHelpers.logAccess(rider.riderId, getClientIp(req), req.headers['user-agent'] || '', 'Level 2 Authenticated Unlock');
+    const unlockIp = getClientIp(req);
+    const unlockLoc = await traceIpToLocation(unlockIp);
+    dbHelpers.logAccess(rider.riderId, unlockIp, req.headers['user-agent'] || '', unlockLoc, { accessType: 'level2_unlock', reason: 'Level 2 Authenticated Unlock' });
     res.json({ success: true, rider: safeRiderData });
 });
 
@@ -2316,7 +2516,9 @@ app.post('/api/rider/login', authLimiter, async (req, res) => {
             dbHelpers.updateRider(rider.riderId, rider);
 
             // Log login
-            dbHelpers.logAccess(rider.riderId, getClientIp(req), req.headers['user-agent'] || '', 'Owner Login');
+            const loginIp = getClientIp(req);
+            const loginLoc = await traceIpToLocation(loginIp);
+            dbHelpers.logAccess(rider.riderId, loginIp, req.headers['user-agent'] || '', loginLoc, { accessType: 'owner_login', reason: 'Owner Login' });
 
             const token = jwt.sign({ riderId: rider.riderId, tokenVersion: rider.tokenVersion }, JWT_SECRET, { expiresIn: '24h' });
             setAuthCookie(res, 'auth_token', token, 24 * 60 * 60 * 1000);
@@ -2702,10 +2904,12 @@ app.post('/api/riders/:id/emergency-link', authenticateToken, (req, res) => {
     }
 });
 
-app.get('/api/emergency/onetime/:linkId', (req, res) => {
+app.get('/api/emergency/onetime/:linkId', async (req, res) => {
     const link = dbHelpers.consumeEmergencyLink(req.params.linkId);
     if (link) {
-        dbHelpers.logAccess(link.riderId, getClientIp(req), req.headers['user-agent'] || '', 'One-Time Emergency Link');
+        const linkIp = getClientIp(req);
+        const linkLoc = await traceIpToLocation(linkIp);
+        dbHelpers.logAccess(link.riderId, linkIp, req.headers['user-agent'] || '', linkLoc, { accessType: 'emergency_link_view', reason: 'One-Time Emergency Link' });
         
         const sessionId = generateSessionId();
         const numericId = sessionId.split('-')[2];
@@ -2895,8 +3099,12 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running at http://127.0.0.1:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running at http://127.0.0.1:${PORT}`);
+    });
+}
+
+module.exports = { app, traceIpToLocation, reverseGeocodeCoords };
 
 

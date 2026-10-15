@@ -1418,19 +1418,33 @@
             }
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     
-                    // Update the location card display to show we got it from the browser
+                    let exactName = 'Current Scanner Location';
+                    try {
+                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                        const geoData = await geoRes.json();
+                        if (geoData && geoData.address) {
+                            const a = geoData.address;
+                            const parts = [a.road || a.pedestrian || a.street, a.suburb || a.neighbourhood || a.residential, a.city || a.town || a.county, a.state, a.country].filter(Boolean);
+                            if (parts.length > 0) exactName = parts.join(', ');
+                        } else if (geoData && geoData.display_name) {
+                            exactName = geoData.display_name.split(',').slice(0, 4).join(',').trim();
+                        }
+                    } catch (_) {}
+
                     const locNameEl = document.getElementById('locationName');
-                    if (locNameEl && locNameEl.textContent === 'Location not shared') {
-                        locNameEl.textContent = 'Current Scanner Location';
-                        document.getElementById('locationCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+                    if (locNameEl) {
+                        locNameEl.textContent = exactName;
+                        document.getElementById('locationCoords').textContent = exactName + ' (' + lat.toFixed(5) + ', ' + lng.toFixed(5) + ')';
                         document.getElementById('locationTime').textContent = '⏱ Captured: Just now';
                         const ml = document.getElementById('mapsLink');
-                        ml.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
-                        ml.style.display = 'inline-flex';
+                        if (ml) {
+                            ml.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+                            ml.style.display = 'inline-flex';
+                        }
                     }
 
                     renderHelpNetwork(lat, lng);
@@ -1617,7 +1631,7 @@
                     const loc = s.location;
                     safeSetText('locationName', loc.name || 'Unknown Location');
                     if (loc.latitude && loc.longitude) {
-                        safeSetText('locationCoords', loc.latitude.toFixed(6) + ', ' + loc.longitude.toFixed(6));
+                        safeSetText('locationCoords', (loc.name ? loc.name + ' • ' : '') + loc.latitude.toFixed(6) + ', ' + loc.longitude.toFixed(6));
                         const ml = document.getElementById('mapsLink');
                         if (ml) {
                             ml.href = 'https://www.google.com/maps?q=' + loc.latitude + ',' + loc.longitude;
@@ -1630,10 +1644,12 @@
                 }
 
                 // WhatsApp share
+                const locDesc = (s.location && s.location.name) ? s.location.name : 'Unknown Location';
                 const shareText = encodeURIComponent(
                     '🚨 *EMERGENCY ALERT — MyVault SOS*\n\n' +
                     'A rider may need immediate assistance!\n\n' +
                     '👤 *Name:* ' + (rider.name || '---') + '\n' +
+                    '📍 *Location:* ' + locDesc + '\n' +
                     '🕐 *Time:* ' + fmt(s.createdAt) + '\n\n' +
                     'View full emergency profile:\n' + currentUrl
                 );
