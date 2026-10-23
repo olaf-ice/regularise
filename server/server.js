@@ -309,11 +309,70 @@ function getClientIp(req) {
     return req.ip || req.socket?.remoteAddress || '';
 }
 
-// ── Ironclad Sensitive File & Environment Shield ────────────────────────────
-// Completely denies HTTP/HTTPS requests probing .env, dotfiles, internal configs, databases, or source code
-const SENSITIVE_FILE_PATTERN = /(\.env|\.git|\.sqlite|\.db|package\.json|package-lock\.json|riders\.json|\.backup|\.bak|\.pem|\.key|\.cert|dockerfile|server\.js|build\.js)/i;
+// ── Ironclad Sensitive File & Environment Shield with Automated Attacker Ban ──
+// Completely denies HTTP/HTTPS requests probing .env, dotfiles, internal configs, databases, or source code.
+// Automatically tracks malicious reconnaissance attempts and bans repeat offenders.
+const probeStrikeTracker = new Map();
+const bannedProbeIps = new Map();
+const BAN_DURATION_MS = 60 * 60 * 1000; // 1-hour ban for repeat probe attempts
+const STRIKE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes strike tracking window
+
+// Purge expired strikes and bans periodically (every 10 minutes)
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, expiry] of bannedProbeIps.entries()) {
+        if (now > expiry) bannedProbeIps.delete(ip);
+    }
+    for (const [ip, data] of probeStrikeTracker.entries()) {
+        if (now - data.firstStrike > STRIKE_WINDOW_MS) probeStrikeTracker.delete(ip);
+    }
+}, 10 * 60 * 1000);
+
+// 1. Any dotfile probe (e.g. /.env, /.git, /.aws, /.ssh, /.svn, /.vscode, /.DS_Store)
+//    Exempts only standard /.well-known/ endpoints (e.g. security.txt)
+const DOTFILE_PROBE_PATTERN = /(?:^|[\\/])\.(?!well-known(?:[\\/]|$))[a-zA-Z0-9_.-]+/i;
+
+// 2. Sensitive configuration files, databases, source files, and archives
+const SENSITIVE_FILE_PATTERN = /(\.env|\.git|\.sqlite|\.db|package\.json|package-lock\.json|riders\.json|database\.json|tsconfig\.json|composer\.(json|lock)|dockerfile|docker-compose|render\.ya?ml|server\.js|build\.js|\.(sqlite3?|db|sql|backup|bak|pem|key|cert|crt|pfx|p12|conf|cfg|ini|yaml|yml|toml|log|tar|gz|tgz|zip|7z|rar))$/i;
+
+// 3. Automated CMS / vulnerability scanners targeting non-existent PHP/ASP/JSP backends
+const BOT_EXPLOIT_PATTERN = /(\b(wp-admin|wp-content|wp-includes|wp-login|xmlrpc|phpmyadmin|pma|adminer|actuator|_profiler|telescope)\b|\.(php|asp|aspx|jsp|cgi)$)/i;
+
+function recordProbeStrike(clientIp, targetUrl) {
+    if (!clientIp) return;
+    const now = Date.now();
+    let tracker = probeStrikeTracker.get(clientIp);
+    if (!tracker || (now - tracker.firstStrike > STRIKE_WINDOW_MS)) {
+        tracker = { count: 1, firstStrike: now };
+    } else {
+        tracker.count += 1;
+    }
+    probeStrikeTracker.set(clientIp, tracker);
+
+    // Enact temporary ban after 2 suspicious reconnaissance attempts
+    if (tracker.count >= 2) {
+        bannedProbeIps.set(clientIp, now + BAN_DURATION_MS);
+        probeStrikeTracker.delete(clientIp);
+        console.warn(`[SECURITY SHIELD] Enacted 1-hour automated ban for IP=${clientIp} after repeated reconnaissance probes (last target: "${targetUrl}").`);
+    }
+}
 
 app.use((req, res, next) => {
+    const clientIp = getClientIp(req);
+
+    // 0. Drop requests from currently banned scanner IPs immediately
+    const banExpiry = bannedProbeIps.get(clientIp);
+    if (banExpiry) {
+        if (Date.now() < banExpiry) {
+            return res.status(403).json({
+                success: false,
+                code: 'IP_TEMPORARILY_BLOCKED',
+                message: 'Access Denied: Suspicious automated scanning detected from this network.'
+            });
+        }
+        bannedProbeIps.delete(clientIp);
+    }
+
     let rawPath = '';
     let origUrl = '';
     try {
@@ -327,9 +386,12 @@ app.use((req, res, next) => {
     const pathOnly = rawPath.split('?')[0];
     const origPathOnly = origUrl.split('?')[0];
 
-    // 1. Immediately block any request attempting to query .env or sensitive config
-    if (SENSITIVE_FILE_PATTERN.test(pathOnly) || SENSITIVE_FILE_PATTERN.test(origPathOnly)) {
-        console.warn(`[SECURITY ALERT] Blocked probe for sensitive configuration file: "${req.originalUrl}" IP=${getClientIp(req)}`);
+    // 1. Immediately block any request attempting to probe dotfiles, .env, or sensitive configuration
+    if (DOTFILE_PROBE_PATTERN.test(pathOnly) || DOTFILE_PROBE_PATTERN.test(origPathOnly) ||
+        SENSITIVE_FILE_PATTERN.test(pathOnly) || SENSITIVE_FILE_PATTERN.test(origPathOnly) ||
+        BOT_EXPLOIT_PATTERN.test(pathOnly) || BOT_EXPLOIT_PATTERN.test(origPathOnly)) {
+        console.warn(`[SECURITY ALERT] Blocked probe for sensitive configuration file: "${req.originalUrl}" IP=${clientIp}`);
+        recordProbeStrike(clientIp, req.originalUrl);
         return res.status(403).json({
             success: false,
             code: 'FORBIDDEN_FILE_ACCESS',
@@ -339,7 +401,8 @@ app.use((req, res, next) => {
 
     // 2. Reject directory traversal attempts (../, ..\, %2e%2e)
     if (/\.\.[\/\\]/.test(pathOnly) || /\.\.[\/\\]/.test(origPathOnly) || req.url.includes('..')) {
-        console.warn(`[SECURITY ALERT] Blocked directory traversal attempt: "${req.url}" IP=${getClientIp(req)}`);
+        console.warn(`[SECURITY ALERT] Blocked directory traversal attempt: "${req.url}" IP=${clientIp}`);
+        recordProbeStrike(clientIp, req.url);
         return res.status(403).json({
             success: false,
             code: 'TRAVERSAL_DETECTED',
@@ -353,7 +416,7 @@ app.use((req, res, next) => {
 // ── Anti-Automation & Direct Script Blocker ("Anti-Bot / Anti-CLI Shield") ──
 // Strictly blocks command-line tools (curl, wget, python, etc.), headless scrapers,
 // automated Linux/CLI scripts, and unauthorized raw API mutations.
-const SCRIPT_USER_AGENT_PATTERN = /(curl|wget|python|aiohttp|httpx|httpie|go-http-client|libwww-perl|node-fetch|axios|urllib|postmanruntime|insomnia|scrapy|phantomjs|headlesschrome|zgrab|censys|shodan|nmap|nikto|sqlmap|masscan|powershell)/i;
+const SCRIPT_USER_AGENT_PATTERN = /(curl|wget|python|aiohttp|httpx|httpie|go-http-client|libwww-perl|node-fetch|axios|urllib|postmanruntime|insomnia|scrapy|phantomjs|headlesschrome|zgrab|censys|shodan|nmap|nikto|sqlmap|masscan|powershell|dirbuster|gobuster|ffuf|nuclei|wpscan|hydra)/i;
 
 app.use((req, res, next) => {
     // 1. Webhook exemption: Paystack webhooks use server-to-server POST with HMAC signature
