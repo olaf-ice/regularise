@@ -300,14 +300,40 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 
-// ── Real Client IP Extraction Helper ─────────────────────────────────────────
+// ── Real Client IP Extraction Helper (Cloudflare + Reverse Proxy Aware) ─────
 function getClientIp(req) {
+    const cf = req.headers['cf-connecting-ip'];
+    if (cf) return String(cf).trim();
     const xff = req.headers['x-forwarded-for'];
     if (xff) {
         return xff.split(',')[0].trim();
     }
     return req.ip || req.socket?.remoteAddress || '';
 }
+
+// ── Global Flood Shield (L7 DDoS & Rapid Flooding Mitigation) ───────────────
+// Protects ALL routes (including root /, HTML templates, static files, and APIs) from traffic storms
+const globalFloodLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1-minute window
+    max: 120, // Max 120 requests/min per IP (2 req/sec avg is plenty for human navigation)
+    keyGenerator: (req) => getClientIp(req),
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Exempt Paystack webhook callbacks from rate limiting
+        return req.path.startsWith('/api/webhook/') || req.path === '/api/payment/webhook';
+    },
+    handler: (req, res) => {
+        const clientIp = getClientIp(req);
+        console.warn(`[DDoS SHIELD] IP=${clientIp} exceeded global flood limit on "${req.originalUrl}". Throttling.`);
+        recordProbeStrike(clientIp, `FLOOD: ${req.originalUrl}`);
+        res.status(429).json({
+            success: false,
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Too many requests. Traffic rate limit exceeded. Please wait a minute.'
+        });
+    }
+});
 
 // ── Ironclad Sensitive File & Environment Shield with Automated Attacker Ban ──
 // Completely denies HTTP/HTTPS requests probing .env, dotfiles, internal configs, databases, or source code.
@@ -349,26 +375,26 @@ function recordProbeStrike(clientIp, targetUrl) {
     }
     probeStrikeTracker.set(clientIp, tracker);
 
-    // Enact temporary ban after 2 suspicious reconnaissance attempts
+    // Enact temporary ban after 2 suspicious reconnaissance/flood attempts
     if (tracker.count >= 2) {
         bannedProbeIps.set(clientIp, now + BAN_DURATION_MS);
         probeStrikeTracker.delete(clientIp);
-        console.warn(`[SECURITY SHIELD] Enacted 1-hour automated ban for IP=${clientIp} after repeated reconnaissance probes (last target: "${targetUrl}").`);
+        console.warn(`[SECURITY SHIELD] Enacted 1-hour automated ban for IP=${clientIp} after repeated reconnaissance/flood spikes (last target: "${targetUrl}").`);
     }
 }
+
+// Apply Global Flood Shield across all incoming requests
+app.use(globalFloodLimiter);
 
 app.use((req, res, next) => {
     const clientIp = getClientIp(req);
 
-    // 0. Drop requests from currently banned scanner IPs immediately
+    // 0. Sever connections from currently banned scanner/flood IPs immediately to preserve server memory & CPU
     const banExpiry = bannedProbeIps.get(clientIp);
     if (banExpiry) {
         if (Date.now() < banExpiry) {
-            return res.status(403).json({
-                success: false,
-                code: 'IP_TEMPORARILY_BLOCKED',
-                message: 'Access Denied: Suspicious automated scanning detected from this network.'
-            });
+            req.socket?.destroy();
+            return;
         }
         bannedProbeIps.delete(clientIp);
     }
