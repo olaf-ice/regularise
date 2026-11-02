@@ -88,10 +88,13 @@
         <h1>User Registration Intake</h1>
         <p>Please fill out the form below securely. Your information will be encrypted and added to the MyVault emergency registry.</p>
         
-        <div>
-            <button onclick="downloadIntakeFormPDF(event)" class="btn-download-pdf" id="downloadPdfBtn">
+        <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+            <button onclick="downloadIntakeFormPDF(event)" class="btn-download-pdf" id="downloadPdfBtn" style="margin-top: 0;">
                 📥 Download Registration Form (PDF)
             </button>
+            <a href="consent.html" class="btn-download-pdf" style="margin-top: 0; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: var(--text-main); text-decoration: none;">
+                📜 Consent Notice &amp; Disclaimer
+            </a>
         </div>
     </div>
 
@@ -101,7 +104,10 @@
     </div>
 
     <footer style="margin-top: 2rem; padding: 2rem 0; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
-        &copy; 2026 MyVault Verification Ecosystem. All rights reserved.
+        &copy; 2026 MyVault Verification Ecosystem. All rights reserved. &middot; 
+        <a href="terms.html" style="color: var(--text-muted);">Terms</a> &middot; 
+        <a href="privacy.html" style="color: var(--text-muted);">Privacy</a> &middot; 
+        <a href="consent.html" style="color: var(--text-muted);">Consent Notice &amp; Disclaimer</a>
     </footer>
 
     <script>

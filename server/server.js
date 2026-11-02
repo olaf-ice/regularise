@@ -2195,6 +2195,10 @@ app.get('/terms', (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, 'terms.html'));
 });
 
+app.get(['/consent', '/disclaimer'], (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'consent.html'));
+});
+
 // ── Legacy SOS Endpoint (kept for ICE hub compatibility) ─────────────────────
 // POST /api/sos/:riderId  — alerts next of kin via SMS
 app.post('/api/sos/:riderId', authLimiter, async (req, res) => {

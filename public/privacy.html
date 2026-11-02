@@ -127,54 +127,75 @@
             <p>To generate your verified rider identity and emergency medical profile, we collect the following categories of data during registration or agent verification:</p>
             <ul>
                 <li><strong>Identity Data:</strong> Full legal name, date of birth, residential address, passport photograph, and government ID (NIN/Voter's Card/Driver's License).</li>
-                <li><strong>Vehicle & Operator Data:</strong> Vehicle category (Motorcycle/Tricycle/Car), license plate number, engine number, and registration status.</li>
-                <li><strong>Vital Medical & Emergency Data:</strong> Blood group, genotype, known severe allergies, existing medical conditions, and Next-of-Kin (ICE) contact details.</li>
-                <li><strong>Technical & Access Logs:</strong> IP address, device user-agent strings, timestamp, and location data captured when a QR code or emergency profile is scanned.</li>
+                <li><strong>Vehicle &amp; Operator Data:</strong> Vehicle category (Motorcycle/Tricycle/Car), license plate number, engine number, and registration status.</li>
+                <li><strong>Vital Medical &amp; Emergency Data:</strong> Blood group, genotype, known severe allergies, existing medical conditions, advance directives ("No Blood" directives), and Next-of-Kin (ICE) contact details.</li>
+                <li><strong>Technical &amp; Access Logs:</strong> IP address, device user-agent strings, timestamp, and location data captured when a QR code or emergency profile is scanned.</li>
             </ul>
 
-            <h2>2. Purpose of Processing & Emergency "Break-Glass" Access</h2>
-            <p>Your data is processed strictly for legitimate health, safety, and identification purposes:</p>
+            <h2>2. Legal Bases for Sensitive Medical Data Processing (NDPA 2023)</h2>
+            <p>Under <strong>Section 25 and Section 26 of the Nigeria Data Protection Act 2023</strong>, processing of personal and sensitive category medical data is conducted strictly under the following statutory grounds:</p>
             <ul>
-                <li>Displaying vital medical details (blood group, allergies, emergency contacts) to first responders upon QR scan during a medical emergency.</li>
-                <li>Allowing accredited clinical and healthcare personnel to perform authorized "Break-Glass" access to full emergency records.</li>
-                <li>Maintaining statutory audit trails to prevent identity theft, fraudulent verification, or unauthorized profile scraping.</li>
+                <li><strong>Explicit Informed Consent:</strong> You provide explicit consent upon account registration, credential activation, or execution of our <a href="consent.html" style="color: var(--primary);">Statutory Consent Notice &amp; Disclaimer</a> to encrypt, process, and make your vital medical data accessible for emergency triage.</li>
+                <li><strong>Protection of Vital Interests:</strong> In life-threatening emergencies, road accidents, or unconscious collapses, processing and disclosing triage data is necessary to protect your vital life and health interests when you are physically or legally incapable of giving immediate verbal consent.</li>
+                <li><strong>Legitimate Healthcare Verification:</strong> Facilitating immediate recognition by licensed healthcare practitioners, verified trauma hospitals, and first responders to prevent fatal mis-transfusion, adverse drug interactions, and unidentified casualty delays.</li>
             </ul>
 
-            <h2>3. Real-Time Audit Surveillance & Notifications</h2>
+            <h2>3. Standalone Consent Notice &amp; Advance Directives Disclaimer</h2>
+            <p>Our comprehensive <a href="consent.html" style="color: var(--primary); font-weight: 700;">Statutory Consent Notice &amp; Disclaimer (MV-NDPA-CNS-2026)</a> is incorporated herein by reference. It details emergency break-glass authorization protocols, Good Samaritan triage immunity, and our advance medical directive disclaimer (clarifying that while directives like "No Blood" cards are securely displayed, attending hospital clinicians operate under emergency medical triage discretion under Nigerian laws).</p>
+            <div style="margin: 1.25rem 0;">
+                <a href="consent.html" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.7rem 1.4rem; border-radius: 8px; font-weight: 700; text-decoration: none; border: 1px solid rgba(52, 211, 153, 0.4); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
+                    ✅ Download Certificate (All Conditions Satisfied) &rarr;
+                </a>
+            </div>
+
+            <h2>4. Next-of-Kin Telecommunications &amp; SMS Dispatch Disclosures</h2>
+            <p>When an emergency QR scan or hospital break-glass access event occurs, MyVault automatically transmits high-priority notifications to your registered Next-of-Kin:</p>
+            <ul>
+                <li>Emergency SMS messages and dispatch alerts contain your identifier, approximate GPS coordinates of the scan event, and timestamp.</li>
+                <li>Recipient phone numbers are shared strictly with licensed Nigerian telecommunications gateway aggregators for the sole purpose of immediate emergency dispatch delivery.</li>
+                <li>Emergency contact numbers are never sold, rented, or repurposed for commercial marketing.</li>
+            </ul>
+
+            <h2>5. Real-Time Audit Surveillance &amp; Notifications</h2>
             <p>Under NDPA 2023 accountability principles, every access event to your emergency profile triggers:</p>
             <ul>
                 <li>An immediate SMS / push notification to your designated Next-of-Kin detailing the scan event.</li>
                 <li>A permanent, tamper-proof audit log recording the accessor's IP address, timestamp, facility name, and clinical justification.</li>
             </ul>
 
-            <h2>4. Data Storage & Security Measures</h2>
+            <h2>6. Data Storage &amp; Security Measures</h2>
             <p>We implement bank-grade technical and organizational safeguards to protect your personal data:</p>
             <ul>
-                <li>All sensitive data in transit is encrypted using TLS 1.3 encryption.</li>
+                <li>All sensitive data in transit is encrypted using TLS 1.3 encryption, and sensitive health directives are encrypted at rest using AES-256-GCM cryptography.</li>
                 <li>Access control is enforced via JWT authentication tokens and mandatory multi-factor validation for admin operations.</li>
                 <li>We do not sell, rent, or trade your personal or medical data to third-party advertisers or marketers under any circumstances.</li>
             </ul>
 
-            <h2>5. Your Statutory Rights Under NDPA 2023</h2>
+            <h2>7. Your Statutory Rights &amp; Consent Revocation Under NDPA 2023</h2>
             <p>As a data subject registered on MyVault, you possess the right to:</p>
             <ul>
-                <li><strong>Access:</strong> Request a copy of your personal data held on our systems.</li>
+                <li><strong>Access:</strong> Request a copy of your personal data and emergency access logs held on our systems.</li>
                 <li><strong>Rectification:</strong> Correct inaccurate or outdated medical and emergency contact information via your user profile.</li>
-                <li><strong>Erasure / Deletion:</strong> Request full deactivation and erasure of your emergency profile, subject to statutory record-retention requirements.</li>
-                <li><strong>Objection:</strong> Object to automated processing or withdraw consent for optional third-party integrations.</li>
+                <li><strong>Consent Withdrawal / Erasure:</strong> Revoke consent and deactivate your emergency profile at any time by contacting our Data Protection Officer. Deactivation immediately halts public QR code resolution. Note that historical clinical audit trail records are retained in encrypted cold storage strictly to satisfy statutory healthcare and criminal defense record retention laws.</li>
+                <li><strong>Objection &amp; Data Portability:</strong> Object to automated processing or request digital portability of your compliance records.</li>
             </ul>
 
-            <h2>6. Cookies & Local Storage</h2>
+            <h2>8. Cookies &amp; Local Storage</h2>
             <p>MyVault utilizes browser local storage and essential cookies strictly to manage active authentication sessions, remember theme preferences, and maintain NDPR consent choices. No third-party tracking cookies are placed prior to explicit consent.</p>
 
-            <h2>7. Contact Information</h2>
+            <h2>9. Contact Information &amp; Data Protection Officer</h2>
             <p>For data protection inquiries, privacy requests, or to exercise your NDPA rights, contact our Data Protection Officer:</p>
             <p><strong>Email:</strong> privacy@myvault.com.ng<br>
-            <strong>Emergency Command Center:</strong> Support & Statutory Audit Office, Lagos, Nigeria</p>
+            <strong>Emergency Command Center:</strong> Support &amp; Statutory Audit Office, Lagos, Nigeria<br>
+            <strong>Hotline:</strong> 0800 MYVAULT</p>
         </section>
 
         <footer class="footer">
-            <p>&copy; 2026 MyVault Technologies. All rights reserved. &middot; <a href="terms.html" style="color: var(--primary);">Terms of Service</a> &middot; <a href="privacy.html" style="color: var(--primary);">Privacy Policy</a></p>
+            <p>&copy; 2026 MyVault Technologies. All rights reserved. &middot; 
+                <a href="terms.html" style="color: var(--primary);">Terms of Service</a> &middot; 
+                <a href="privacy.html" style="color: var(--primary);">Privacy Policy</a> &middot; 
+                <a href="consent.html" style="color: var(--primary);">Consent Notice &amp; Disclaimer</a>
+            </p>
         </footer>
     </div>
 </body>

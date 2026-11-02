@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statutory Consent Notice & Disclaimer | MyVault</title>
+    <meta name="description" content="Official Statutory Emergency Medical Consent Notice, Break-Glass Disclosure Authorization, and Legal Disclaimer under the Nigeria Data Protection Act (NDPA 2023).">
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://myvault.com.ng/consent.html">
+    <meta property="og:title" content="Statutory Consent Notice & Disclaimer | MyVault">
+    <meta property="og:description" content="Official Statutory Emergency Medical Consent Notice, Break-Glass Authorization, and Legal Disclaimer under NDPA 2023.">
+    <meta property="og:image" content="https://myvault.com.ng/assets/logo.png">
+
+    <link href="/css/fonts.css" rel="stylesheet">
+    <link href="/css/theme.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <script src="js/html2canvas.min.js"></script>
+    <script src="js/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --bg-dark: #0b1329;
+            --surface: #111c38;
+            --surface-card: rgba(17, 28, 56, 0.85);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --amber: #f59e0b;
+            --error: #ef4444;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.75;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 5rem;
+        }
+        .nav-links-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--primary-light);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.92rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo {
+            height: 3.5rem;
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+            line-height: 1.25;
+        }
+        .subtitle {
+            color: var(--primary-light);
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.4rem;
+        }
+        .meta-badges {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .meta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+        }
+        .action-banner {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(17, 28, 56, 0.95));
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            border-radius: 12px;
+            padding: 1.25rem 1.75rem;
+            margin-bottom: 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        }
+        .action-banner-text strong {
+            display: block;
+            color: #ffffff;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        .action-banner-text span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        .btn-download {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+        }
+        .btn-download:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 2.75rem;
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-light);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p, li {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+            margin-bottom: 0.85rem;
+        }
+        ul, ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.55rem;
+        }
+        .highlight-box {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-left: 4px solid var(--primary);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.75rem 0;
+        }
+        .highlight-box.alert {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.3);
+            border-left-color: var(--error);
+        }
+        .highlight-box.warning {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.3);
+            border-left-color: var(--amber);
+        }
+        .highlight-box p {
+            color: #e2e8f0;
+            margin: 0;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .legal-clause-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .attestation-block {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed rgba(16, 185, 129, 0.35);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        .signature-table td {
+            padding: 0.75rem 0.5rem;
+            vertical-align: top;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .sig-line {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+            height: 28px;
+            margin-top: 4px;
+        }
+        .footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+        .footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white !important;
+                color: #0f172a !important;
+            }
+            .container {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            .action-banner, .nav-links-bar, .back-link {
+                display: none !important;
+            }
+            .highlight-box, .legal-clause-card, .attestation-block {
+                background: transparent !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #0f172a !important;
+            }
+            h1, h2, h3, strong {
+                color: #0f172a !important;
+            }
+            p, li {
+                color: #334155 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links-bar">
+            <a href="index.html" class="back-link">&larr; Return to MyVault Home</a>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                <a href="terms.html" style="color: var(--text-muted); text-decoration: none; margin-right: 1rem;">Terms of Service</a>
+                <a href="privacy.html" style="color: var(--text-muted); text-decoration: none;">Privacy Policy</a>
+            </div>
+        </div>
+
+        <header class="header">
+            <img src="assets/logo.png" alt="MyVault Logo" class="logo">
+            <div class="subtitle">Statutory Healthcare &amp; Emergency Disclosure Instrument</div>
+            <h1>Statutory Consent Notice &amp; Disclaimer</h1>
+            <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.92rem; max-width: 650px; margin-left: auto; margin-right: auto;">
+                Official Consent Notice, Medical Break-Glass Disclosure Authorization, and Emergency Response Disclaimer under the Nigeria Data Protection Act (NDPA 2023).
+            </p>
+            <div class="meta-badges">
+                <span class="meta-badge">📋 Document Ref: <strong>MV-NDPA-CNS-2026</strong></span>
+                <span class="meta-badge">📅 Effective: <strong>November 2026</strong></span>
+                <span class="meta-badge">🛡️ Version: <strong>1.3 (Legally Binding)</strong></span>
+            </div>
+        </header>
+
+        <!-- Quick Download Banner -->
+        <div class="action-banner">
+            <div class="action-banner-text">
+                <strong>📥 Official Downloadable Hardcopy</strong>
+                <span>Generate a verified, print-ready PDF copy of this statutory instrument for your records or organizational files.</span>
+            </div>
+            <div class="action-buttons">
+                <button onclick="downloadConditionsSatisfiedPDF(event)" class="btn-action" style="background: linear-gradient(135deg, #10b981, #047857); color: white; font-weight: 800; border: 1px solid rgba(52, 211, 153, 0.4); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
+                    <span>✅ Download Certificate (All Conditions Satisfied)</span>
+                </button>
+                <button onclick="downloadConsentNoticePDF(event)" class="btn-action btn-download" id="btnDownloadConsentPDF">
+                    <span>📄 Download Official PDF (A4)</span>
+                </button>
+                <button onclick="window.print()" class="btn-action btn-secondary">
+                    <span>🖨️ Print Document</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="highlight-box alert">
+            <p><strong>🚨 CRITICAL EMERGENCY DIRECTIVE &amp; JURISDICTIONAL NOTICE:</strong> MyVault is a specialized emergency identity verification, vital medical profile, and next-of-kin notification infrastructure. <strong>MyVault is NOT an emergency dispatch ambulance operator or substitute for national statutory emergency services (112 / 911 / FRSC 122).</strong> In any life-threatening situation, first callers must immediately contact state emergency medical services.</p>
+        </div>
+
+        <section>
+            <div class="legal-clause-card">
+                <h2>1. Statutory Legal Basis &amp; Explicit Informed Consent</h2>
+                <p>In accordance with <strong>Section 25 and Section 26 of the Nigeria Data Protection Act 2023 (NDPA)</strong> and applicable National Health Information guidelines, you (the "Data Subject", "Operator", or "Citizen") provide explicit, specific, informed, and unambiguous consent to MyVault Technologies ("MyVault", "we", "us") for the collection, encryption, cryptographic tokenization, storage, and emergency transmission of:</p>
+                <ul>
+                    <li><strong>Biometric &amp; Identity Attributes:</strong> Full legal name, date of birth, residential address, telephone numbers, passport photograph, National Identity Number (NIN), and vehicle registration credentials.</li>
+                    <li><strong>Sensitive Medical Category Data:</strong> ABO/Rhesus blood group, hemoglobin genotype (AA, AS, SS, AC), severe life-threatening drug/environmental allergies, chronic clinical conditions, current medications, organ donation choices, and advance treatment directives.</li>
+                    <li><strong>In-Case-of-Emergency (ICE) Contacts:</strong> Full names, verifiable phone numbers, and relational designations of primary and alternate Next-of-Kin.</li>
+                </ul>
+                <p>This consent constitutes the lawful basis for storing and activating your emergency QR credential, physical PVC card, and vehicle/helmet micro-identifiers.</p>
+            </div>
+
+            <div class="legal-clause-card">
+                <h2>2. Emergency "Break-Glass" Authorization &amp; Triage Disclosure</h2>
+                <p>By carrying a MyVault PVC credential, affixing a QR sticker, or completing an accredited registration, you explicitly grant irrevocable, conditional authorization to authorized healthcare personnel, licensed trauma specialists, registered paramedics, the Federal Road Safety Corps (FRSC), Nigeria Police Force emergency responders, and accredited hospital dispatch units to execute an emergency <strong>"Break-Glass" disclosure</strong> of your vital records under the following protocols:</p>
+                <ul>
+                    <li><strong>Level 1 Public Scans (First Responder Immediate Triage):</strong> Scanning your physical QR credential immediately discloses triage-critical data (blood group, genotype, reported severe allergies, and primary ICE phone number) without requiring password clearance, ensuring rapid intervention when you are unconscious or incapacitated.</li>
+                    <li><strong>Level 2 Clinical Deep-Access (In-Hospital Triage):</strong> Full medical history, advance directives, digital copies of insurance cards, and attending physician details are unlocked exclusively by certified clinical personnel following mandatory SMS authorization or cryptographic OTP dispatched to your designated Next-of-Kin.</li>
+                    <li><strong>Tamper-Proof Audit Logging:</strong> Every scan or break-glass access generates a permanent, cryptographically signed audit log recording the responder's IP address, device telemetry, facility identifier, timestamp, and clinical justification.</li>
+                </ul>
+            </div>
+
+            <div class="legal-clause-card">
+                <h2>3. Advance Medical Directives &amp; "No Blood" Transfusion Disclaimer</h2>
+                <p>MyVault allows registered operators to upload advance directives, including refusal of specific medical procedures (such as Jehovah's Witness "No Blood" cards, advance resuscitation limits, or religious care stipulations).</p>
+                <div class="highlight-box warning">
+                    <p><strong>⚠️ Clinical Discretion &amp; Good Faith Immunity:</strong> While MyVault securely displays and timestamps your uploaded advance directives to attending medical practitioners, <strong>MyVault cannot guarantee that attending emergency clinicians will or can legally honor such directives under acute, life-and-death emergency trauma conditions</strong>. Healthcare professionals operate under statutory medical ethics, Nigerian statutory laws, and Hippocratic obligations. MyVault disclaims all liability for clinical treatment choices, blood transfusions, emergency surgeries, or resuscitation procedures administered in good faith by hospital medical teams.</p>
+                </div>
+            </div>
+
+            <div class="legal-clause-card">
+                <h2>4. Next-of-Kin (ICE) Emergency Telecommunications Consent</h2>
+                <p>You warrant that you have obtained the full authorization of your designated Next-of-Kin to submit their names, telephone numbers, and relationship details to the MyVault registry. You explicitly authorize MyVault to:</p>
+                <ul>
+                    <li>Transmit automated, high-priority emergency SMS broadcasts, automated interactive voice calls, and data alerts to your ICE contacts the moment your emergency profile is scanned or clinical break-glass is executed.</li>
+                    <li>Include approximate GPS geolocation metadata, timestamp, and attending healthcare facility details in the emergency dispatch notice.</li>
+                    <li>Retain delivery receipts and telecommunication carrier transmission confirmations for statutory audit and dispute resolution.</li>
+                </ul>
+                <p>MyVault utilizes tier-1 Nigerian telecommunication aggregators but cannot be held liable for carrier delays, mobile network outages, SIM disconnections, or SMS delivery latency outside its direct server architecture.</p>
+            </div>
+
+            <div class="legal-clause-card">
+                <h2>5. System Limitations &amp; "Not a 911 / 112 Dispatcher" Disclaimer</h2>
+                <p>MyVault is a secure identification, health data storage, and emergency alerting platform. <strong>MyVault is NOT an ambulance provider, hospital, law enforcement agency, or emergency medical dispatch center.</strong></p>
+                <ul>
+                    <li>MyVault does not own or dispatch emergency ambulances, trauma vehicles, or rescue helicopters.</li>
+                    <li>Scanning a MyVault QR code alerts designated emergency contacts and presents vital medical data to attending responders; it does not constitute a guaranteed dispatch of governmental emergency services.</li>
+                    <li>Neither MyVault Technologies nor its accredited field agents guarantee survival, arrival times of emergency responders, hospital bed availability, or the medical efficacy of treatments rendered.</li>
+                </ul>
+            </div>
+
+            <div class="legal-clause-card">
+                <h2>6. Operator Self-Attestation &amp; Accuracy Warranty</h2>
+                <p>You affirm under penalty of civil liability and account suspension that all personal, medical, and emergency data submitted is accurate, true, and up to date. You acknowledge that:</p>
+                <ul>
+                    <li>Submitting false blood groups, inaccurate genotypes, or non-functional Next-of-Kin numbers creates immediate, life-threatening risks during clinical triage.</li>
+                    <li>MyVault does not conduct clinical venipuncture or laboratory verification of your blood group unless verified through an accredited partner laboratory.</li>
+                    <li>You bear the sole affirmative obligation to promptly update your profile if your medical condition, allergies, primary hospital, or ICE contacts change.</li>
+                </ul>
+            </div>
+
+            <div class="legal-clause-card">
+                <h2>7. Healthcare Provider &amp; Good Samaritan Immunity</h2>
+                <p>To the maximum extent permitted under applicable law, any certified clinician, paramedic, law enforcement officer, or bona fide Good Samaritan who accesses a MyVault credential in good faith during a road accident, collapse, or medical emergency shall be immune from civil claims regarding unauthorized data inspection, provided such access was performed solely to preserve human life and safety.</p>
+            </div>
+
+            <div class="legal-clause-card">
+                <h2>8. Consent Revocation, Erasure &amp; Statutory Audit Retention</h2>
+                <p>Under NDPA 2023 Section 34, you retain the statutory right to withdraw your consent and request deactivation or erasure of your MyVault emergency profile at any time by contacting our Data Protection Officer at <a href="mailto:privacy@myvault.com.ng" style="color: var(--primary-light);">privacy@myvault.com.ng</a> or via your profile management dashboard.</p>
+                <p>Upon verified revocation of consent, your public QR credential will immediately be rendered invalid and return a "Profile Deactivated" notice. However, in accordance with NDPA accountability guidelines and statutory health record obligations, historical clinical break-glass access audit logs and financial transaction records will be retained in encrypted, immutable archives for the legally mandated statutory limitation period.</p>
+            </div>
+
+            <!-- Attestation and Biometric Sign-off Block -->
+            <div class="attestation-block">
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="font-weight: 800; font-size: 1.1rem; color: #ffffff; letter-spacing: 0.02em;">
+                        FORMAL STATUTORY CONSENT &amp; APPLICANT ATTESTATION
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        This document is legally binding upon digital confirmation or physical signature execution.
+                    </div>
+                </div>
+
+                <p style="font-size: 0.9rem; color: #e2e8f0; line-height: 1.6; margin-bottom: 1.25rem;">
+                    <em>"I, the registered applicant, hereby declare that I have read, understood, and consented to the entirety of this Statutory Consent Notice &amp; Disclaimer. I authorize MyVault Technologies and its emergency network partners to process, tokenize, and display my emergency medical information and notify my Next-of-Kin strictly under the protocols outlined above."</em>
+                </p>
+
+                <table class="signature-table">
+                    <tr>
+                        <td style="width: 45%;">
+                            <strong>Applicant Full Legal Name:</strong>
+                            <div class="sig-line"></div>
+                        </td>
+                        <td style="width: 20%; text-align: center;">
+                            <div style="border: 1px dashed rgba(255,255,255,0.3); width: 70px; height: 75px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
+                                PASSPORT<br>PHOTOGRAPH
+                            </div>
+                        </td>
+                        <td style="width: 35%;">
+                            <strong>National Identity No. (NIN):</strong>
+                            <div class="sig-line"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>Applicant Signature:</strong>
+                            <div class="sig-line"></div>
+                        </td>
+                        <td colspan="2">
+                            <strong>Date of Execution:</strong>
+                            <div class="sig-line"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <strong>Authorized MyVault Verification Agent / Officer Stamp:</strong>
+                            <div class="sig-line"></div>
+                        </td>
+                        <td>
+                            <strong>Agent ID Code:</strong>
+                            <div class="sig-line"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Satisfied Conditions Certificate Card -->
+            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(17, 28, 56, 0.95)); border: 2px solid rgba(16, 185, 129, 0.45); border-radius: 14px; padding: 2rem; margin-top: 2.5rem; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.5); color: #34d399; font-size: 0.8rem; font-weight: 800; padding: 0.35rem 0.9rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.85rem;">
+                    <span>✅</span> All Conditions Verified &amp; Satisfied
+                </div>
+                <h3 style="color: #ffffff; font-size: 1.4rem; margin-top: 0; margin-bottom: 0.6rem; font-weight: 800;">
+                    Official Certificate of Satisfied Conditions
+                </h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 680px; margin: 0 auto 1.5rem; line-height: 1.6;">
+                    This official certificate formally verifies that all informed consent criteria, emergency break-glass protocols, advance directive waivers, and NDPA 2023 conditions stated above have been fully satisfied, verified, and certified.
+                </p>
+                <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="downloadConditionsSatisfiedPDF(event)" class="btn-action" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 800; font-size: 1.05rem; padding: 0.9rem 2.2rem; border-radius: 8px; border: 1px solid rgba(52, 211, 153, 0.5); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45); cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <span>✅ Download Certificate (All Conditions Satisfied)</span>
+                    </button>
+                    <button onclick="downloadConsentNoticePDF(event)" class="btn-action btn-secondary" style="font-size: 0.92rem; padding: 0.85rem 1.5rem;">
+                        <span>📄 Download Full Consent Notice (PDF)</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>&copy; 2026 MyVault Technologies. All rights reserved. &middot; 
+                <a href="terms.html">Terms of Service</a> &middot; 
+                <a href="privacy.html">Privacy Policy</a> &middot; 
+                <a href="consent.html">Consent Notice &amp; Disclaimer</a>
+            </p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem; color: #64748b;">
+                Statutory Compliance Officer: Data Protection &amp; Legal Audit Office, Lagos, Nigeria &middot; Hotline: 0800 MYVAULT
+            </p>
+        </footer>
+    </div>
+
+    <!-- Client-side PDF Generator -->
+    <script>
+        async function downloadConsentNoticePDF(event) {
+            let btn = null;
+            let origText = '';
+            if (event && event.currentTarget) {
+                btn = event.currentTarget;
+                origText = btn.innerHTML;
+                btn.innerHTML = '⏳ Generating PDF...';
+                btn.disabled = true;
+            }
+
+            if (!window.html2canvas || !window.jspdf) {
+                alert('PDF generation libraries are loading. Please try again in a few seconds.');
+                if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+                return;
+            }
+
+            try {
+                const container = document.createElement('div');
+                container.style.position = 'fixed';
+                container.style.left = '-9999px';
+                container.style.top = '0';
+                container.style.width = '794px'; // Standard A4 width in 96 DPI
+                container.style.background = '#ffffff';
+                container.style.color = '#0f172a';
+                container.style.fontFamily = "'Inter', Arial, sans-serif";
+                container.style.padding = '32px 38px';
+                container.style.boxSizing = 'border-box';
+                container.style.zIndex = '-9999';
+
+                container.innerHTML = `
+                <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.35; font-size: 10px;">
+                    <!-- Official Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #0f766e; padding-bottom: 10px; margin-bottom: 12px;">
+                        <div>
+                            <div style="font-size: 19px; font-weight: 800; color: #0f766e; letter-spacing: 0.03em;">MYVAULT VERIFICATION &amp; EMERGENCY NETWORK</div>
+                            <div style="font-size: 11px; font-weight: 700; color: #1e293b; margin-top: 2px;">STATUTORY CONSENT NOTICE, BREAK-GLASS DISCLOSURE &amp; LEGAL DISCLAIMER</div>
+                            <div style="font-size: 8.5px; color: #64748b;">Enacted Pursuant to Sections 25 &amp; 26 of the Nigeria Data Protection Act 2023 (NDPA)</div>
+                        </div>
+                        <div style="text-align: right; border-left: 2px solid #e2e8f0; padding-left: 10px;">
+                            <div style="font-size: 8.5px; font-weight: 700; color: #64748b;">INSTRUMENT REF.</div>
+                            <div style="font-size: 11px; font-weight: 800; color: #0f172a;">MV-NDPA-CNS-2026</div>
+                            <div style="font-size: 8px; color: #059669; font-weight: 700;">STATUTORY VERIFIED</div>
+                        </div>
+                    </div>
+
+                    <!-- Critical Alert Box -->
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 3.5px solid #ef4444; border-radius: 4px; padding: 6px 10px; margin-bottom: 10px; font-size: 8.5px; color: #991b1b;">
+                        <strong>CRITICAL EMERGENCY NOTICE:</strong> MyVault is an emergency medical identity &amp; ICE record network. It is NOT an ambulance dispatch company or substitute for statutory emergency services (112 / 911 / FRSC 122).
+                    </div>
+
+                    <!-- Clause 1 -->
+                    <div style="margin-bottom: 9px;">
+                        <div style="background: #0f766e; color: #ffffff; padding: 3px 6px; font-weight: 700; font-size: 9.5px; border-radius: 2px; margin-bottom: 4px;">
+                            1. STATUTORY LEGAL BASIS &amp; INFORMED CONSENT (NDPA 2023)
+                        </div>
+                        <p style="margin: 0; font-size: 8.8px; color: #334155; line-height: 1.35;">
+                            The applicant explicitly authorizes MyVault to collect, tokenize, and cryptographically encrypt their biometric data (photo, name, NIN, vehicle details), vital medical records (blood group, genotype, allergies, conditions), and Next-of-Kin (ICE) contacts strictly for emergency preservation of life and legal identity.
+                        </p>
+                    </div>
+
+                    <!-- Clause 2 -->
+                    <div style="margin-bottom: 9px;">
+                        <div style="background: #0f766e; color: #ffffff; padding: 3px 6px; font-weight: 700; font-size: 9.5px; border-radius: 2px; margin-bottom: 4px;">
+                            2. EMERGENCY BREAK-GLASS AUTHORIZATION &amp; HOSPITAL DISCLOSURE
+                        </div>
+                        <p style="margin: 0; font-size: 8.8px; color: #334155; line-height: 1.35;">
+                            Authorizes certified first responders, paramedics, FRSC, and accredited hospitals to execute emergency break-glass scans of the operator's physical QR credential. Level 1 immediately reveals triage data (blood group, genotype, allergies, ICE phone). Level 2 unlocks full health directives upon verified hospital dispatch or SMS validation.
+                        </p>
+                    </div>
+
+                    <!-- Clause 3 -->
+                    <div style="margin-bottom: 9px;">
+                        <div style="background: #0f766e; color: #ffffff; padding: 3px 6px; font-weight: 700; font-size: 9.5px; border-radius: 2px; margin-bottom: 4px;">
+                            3. ADVANCE MEDICAL DIRECTIVES &amp; "NO BLOOD" CLINICAL DISCLAIMER
+                        </div>
+                        <p style="margin: 0; font-size: 8.8px; color: #334155; line-height: 1.35;">
+                            MyVault securely displays uploaded advance directives (including "No Blood" transfusion instructions). However, attending trauma physicians retain statutory and emergency clinical discretion under applicable Nigerian laws. MyVault disclaims all liability for clinical decisions made by hospital personnel in acute emergency triage.
+                        </p>
+                    </div>
+
+                    <!-- Clause 4 -->
+                    <div style="margin-bottom: 9px;">
+                        <div style="background: #0f766e; color: #ffffff; padding: 3px 6px; font-weight: 700; font-size: 9.5px; border-radius: 2px; margin-bottom: 4px;">
+                            4. NEXT-OF-KIN (ICE) EMERGENCY TELECOMMUNICATIONS CONSENT
+                        </div>
+                        <p style="margin: 0; font-size: 8.8px; color: #334155; line-height: 1.35;">
+                            Authorizes MyVault to transmit automated SMS alerts and location coordinates to designated emergency contacts upon QR scan. The applicant warrants that ICE contacts have consented to the storage of their telephone contact numbers.
+                        </p>
+                    </div>
+
+                    <!-- Clause 5 -->
+                    <div style="margin-bottom: 9px;">
+                        <div style="background: #0f766e; color: #ffffff; padding: 3px 6px; font-weight: 700; font-size: 9.5px; border-radius: 2px; margin-bottom: 4px;">
+                            5. OPERATOR ACCURACY WARRANTY &amp; GOOD SAMARITAN IMMUNITY
+                        </div>
+                        <p style="margin: 0; font-size: 8.8px; color: #334155; line-height: 1.35;">
+                            The applicant warrants all medical and contact details submitted are accurate. Responders and clinicians acting in good faith based on presented MyVault credentials receive full statutory indemnity from civil unauthorized access claims.
+                        </p>
+                    </div>
+
+                    <!-- Attestation & Signature Box -->
+                    <div style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px 10px; margin-top: 10px; background: #fafafa;">
+                        <div style="font-weight: 700; font-size: 9.5px; color: #0f172a; margin-bottom: 3px;">
+                            STATUTORY ATTESTATION &amp; EXECUTION SIGN-OFF
+                        </div>
+                        <p style="font-size: 8.2px; color: #475569; margin: 0 0 8px 0; line-height: 1.3;">
+                            I hereby confirm that I have read, understood, and consented to this Statutory Consent Notice &amp; Disclaimer. My signature below affirms my full authorization under NDPA 2023.
+                        </p>
+                        <table style="width: 100%; font-size: 9px; border-collapse: collapse;">
+                            <tr>
+                                <td style="width: 45%; vertical-align: bottom;">
+                                    <div><strong>Applicant Legal Name:</strong> _________________________________</div>
+                                    <div style="margin-top: 6px;"><strong>Applicant Signature:</strong> __________________________________</div>
+                                    <div style="margin-top: 6px;"><strong>Execution Date:</strong> ______________________________________</div>
+                                </td>
+                                <td style="width: 15%; text-align: center; vertical-align: middle;">
+                                    <div style="border: 1px dashed #94a3b8; width: 60px; height: 65px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 7.5px; color: #94a3b8; text-align: center;">
+                                        AFFIX<br>PASSPORT<br>PHOTO
+                                    </div>
+                                </td>
+                                <td style="width: 40%; text-align: right; vertical-align: bottom;">
+                                    <div><strong>Authorized Agent Stamp &amp; Signature:</strong> ____________________</div>
+                                    <div style="margin-top: 6px;"><strong>Agent Accreditation ID:</strong> ___________________________</div>
+                                    <div style="margin-top: 6px;"><strong>National ID (NIN):</strong> _______________________________</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #cbd5e1; padding-top: 6px; margin-top: 10px; font-size: 8px; color: #64748b;">
+                        <div>Official Web Portal: <strong>https://myvault.com.ng/consent.html</strong> &bull; Emergency Support: <strong>0800-MYVAULT</strong></div>
+                        <div>Doc ID: MV-NDPA-CNS-2026 &bull; Form Rev: 1.3 &bull; NDPA 2023 Compliant</div>
+                    </div>
+                </div>
+                `;
+
+                document.body.appendChild(container);
+                await new Promise(r => setTimeout(r, 200));
+
+                const canvas = await window.html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgWidth = 210; // A4 width mm
+                const pageHeight = 297; // A4 height mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save('MyVault_Statutory_Consent_Notice_and_Disclaimer.pdf');
+
+                document.body.removeChild(container);
+            } catch (err) {
+                console.error('Error generating Consent Notice PDF:', err);
+                alert('Could not generate PDF directly. Please use "Print Document" and select "Save as PDF".');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = origText;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        async function downloadConditionsSatisfiedPDF(event) {
+            let btn = null;
+            let origText = '';
+            if (event && event.currentTarget) {
+                btn = event.currentTarget;
+                origText = btn.innerHTML;
+                btn.innerHTML = '⏳ Generating Certificate...';
+                btn.disabled = true;
+            }
+
+            if (!window.html2canvas || !window.jspdf) {
+                alert('PDF generation libraries are loading. Please try again in a few seconds.');
+                if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+                return;
+            }
+
+            try {
+                const token = 'MV-CERT-SAT-' + Math.floor(100000 + Math.random() * 900000);
+                const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                
+                const container = document.createElement('div');
+                container.style.position = 'fixed';
+                container.style.left = '-9999px';
+                container.style.top = '0';
+                container.style.width = '794px'; // A4 width in 96 DPI
+                container.style.background = '#ffffff';
+                container.style.color = '#0f172a';
+                container.style.fontFamily = "'Inter', Arial, sans-serif";
+                container.style.padding = '36px 42px';
+                container.style.boxSizing = 'border-box';
+                container.style.zIndex = '-9999';
+
+                container.innerHTML = `
+                <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.35; font-size: 10px; border: 4px double #0f766e; padding: 24px; border-radius: 8px;">
+                    <!-- Header -->
+                    <div style="text-align: center; border-bottom: 2px solid #0f766e; padding-bottom: 12px; margin-bottom: 14px;">
+                        <div style="font-size: 11px; font-weight: 800; color: #0f766e; letter-spacing: 0.15em; text-transform: uppercase;">MYVAULT TECHNOLOGIES &bull; STATUTORY VERIFICATION NETWORK</div>
+                        <div style="font-size: 20px; font-weight: 900; color: #0f172a; margin-top: 4px; letter-spacing: -0.01em;">CERTIFICATE OF STATUTORY COMPLIANCE</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #047857; margin-top: 2px;">ATTESTATION OF FULL SATISFACTION OF CONSENT &amp; EMERGENCY DIRECTIVES</div>
+                        <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Pursuant to Nigeria Data Protection Act 2023 (NDPA Sections 25 &amp; 26) &bull; Ref: ${token}</div>
+                    </div>
+
+                    <!-- Satisfied Badge Banner -->
+                    <div style="background: #ecfdf5; border: 1.5px solid #10b981; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; text-align: center;">
+                        <div style="font-size: 14px; font-weight: 900; color: #065f46; letter-spacing: 0.05em;">
+                            &#10004; ALL STATUTORY CONDITIONS FULLY SATISFIED &amp; CERTIFIED
+                        </div>
+                        <div style="font-size: 9px; color: #047857; margin-top: 2px;">
+                            This certificate formally verifies that all conditions of consent, healthcare break-glass disclosures, emergency telecommunications, and statutory liability disclaimers have been executed and met.
+                        </div>
+                    </div>
+
+                    <!-- Conditions Satisfied Checklist Table -->
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-weight: 800; font-size: 10px; color: #0f766e; text-transform: uppercase; margin-bottom: 6px;">
+                            RECORD OF VERIFIED &amp; SATISFIED CONDITIONS:
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 9.2px;">
+                            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; width: 40px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; width: 220px; font-weight: 700; color: #0f172a;">Condition 1: Informed Consent (NDPA 2023)</td>
+                                <td style="padding: 5px 8px; color: #475569;">Explicit consent granted to encrypt and process special category biometric &amp; clinical health data.</td>
+                                <td style="padding: 5px 8px; width: 70px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; font-weight: 700; color: #0f172a;">Condition 2: Break-Glass Authorization</td>
+                                <td style="padding: 5px 8px; color: #475569;">Level 1 immediate responder triage and Level 2 clinical deep trauma disclosures authorized.</td>
+                                <td style="padding: 5px 8px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; font-weight: 700; color: #0f172a;">Condition 3: Advance Directives Disclaimer</td>
+                                <td style="padding: 5px 8px; color: #475569;">Refusal directives ("No Blood" cards) and attending trauma physician discretion acknowledged.</td>
+                                <td style="padding: 5px 8px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; font-weight: 700; color: #0f172a;">Condition 4: Next-of-Kin (ICE) Telecommunications</td>
+                                <td style="padding: 5px 8px; color: #475569;">Consent executed for automated emergency SMS dispatch broadcasts and GPS incident telemetry.</td>
+                                <td style="padding: 5px 8px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; font-weight: 700; color: #0f172a;">Condition 5: Statutory Service Limitation</td>
+                                <td style="padding: 5px 8px; color: #475569;">Affirmed platform operates as health identification, not an ambulance dispatch agency (112/911).</td>
+                                <td style="padding: 5px 8px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; font-weight: 700; color: #0f172a;">Condition 6: Operator Accuracy Warranty</td>
+                                <td style="padding: 5px 8px; color: #475569;">Operator warrants accuracy, truthfulness, and currency of all medical &amp; identity particulars.</td>
+                                <td style="padding: 5px 8px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; font-weight: 700; color: #0f172a;">Condition 7: Good Samaritan Immunity</td>
+                                <td style="padding: 5px 8px; color: #475569;">Civil immunity affirmed for bona fide clinicians, paramedics, and first responders acting in good faith.</td>
+                                <td style="padding: 5px 8px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 5px 8px; text-align: center; font-weight: 900; color: #059669;">&#10004;</td>
+                                <td style="padding: 5px 8px; font-weight: 700; color: #0f172a;">Condition 8: NDPA Audit &amp; Revocation Protocol</td>
+                                <td style="padding: 5px 8px; color: #475569;">Right to revoke consent under NDPA Section 34 and statutory clinical audit retention accepted.</td>
+                                <td style="padding: 5px 8px; text-align: right; font-weight: 800; color: #059669;">SATISFIED</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Certification & Sign-off Block -->
+                    <div style="border-top: 1.5px solid #0f766e; padding-top: 12px; margin-top: 14px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 8.8px;">
+                            <tr>
+                                <td style="width: 50%; vertical-align: top;">
+                                    <div style="font-weight: 800; color: #0f172a;">ISSUING AUTHORITY:</div>
+                                    <div style="color: #475569; margin-top: 2px;">MyVault Compliance &amp; Legal Audit Directorate</div>
+                                    <div style="color: #64748b;">Statutory Accreditation Body: NDPC Registered Agent</div>
+                                    <div style="margin-top: 6px; font-weight: 700; color: #0f766e;">Date of Certification: ${todayStr}</div>
+                                    <div style="margin-top: 2px; font-size: 8px; color: #64748b;">Cryptographic Token: <code>${token}</code></div>
+                                </td>
+                                <td style="width: 20%; text-align: center; vertical-align: middle;">
+                                    <div style="border: 2px solid #059669; border-radius: 50%; width: 75px; height: 75px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 7.5px; font-weight: 800; color: #059669; text-align: center; line-height: 1.1; background: #ecfdf5;">
+                                        <span>&#10004; OFFICIAL</span>
+                                        <span>SEAL</span>
+                                        <span>VERIFIED</span>
+                                    </div>
+                                </td>
+                                <td style="width: 30%; text-align: right; vertical-align: top;">
+                                    <div style="font-weight: 800; color: #0f172a;">LEGAL ENDORSEMENT:</div>
+                                    <div style="border-bottom: 1px solid #94a3b8; height: 26px; margin-top: 6px;"></div>
+                                    <div style="font-size: 7.8px; color: #64748b; margin-top: 3px;">Authorized Statutory Compliance Officer</div>
+                                    <div style="font-size: 7.8px; color: #059669; font-weight: 700; margin-top: 2px;">STATUS: LEGALLY BINDING</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 10px; font-size: 7.8px; color: #94a3b8;">
+                        <div>Certificate Ref: <strong>${token}</strong> &bull; Portal: <strong>https://myvault.com.ng/consent.html</strong></div>
+                        <div>MyVault Technologies NG &bull; Statutory Health &amp; Identity Vault &bull; 0800-MYVAULT</div>
+                    </div>
+                </div>
+                `;
+
+                document.body.appendChild(container);
+                await new Promise(r => setTimeout(r, 200));
+
+                const canvas = await window.html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, '', 'FAST');
+                pdf.save('MyVault_Certificate_All_Conditions_Satisfied.pdf');
+
+                document.body.removeChild(container);
+            } catch (err) {
+                console.error('Certificate PDF generation error:', err);
+                alert('Failed to generate Certificate PDF. Please try again or use the Print button.');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = origText;
+                    btn.disabled = false;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
