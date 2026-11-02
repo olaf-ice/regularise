@@ -517,8 +517,8 @@
         async function downloadConsentNoticePDF(event) {
             let btn = null;
             let origText = '';
-            if (event && event.currentTarget) {
-                btn = event.currentTarget;
+            if (event && event.target) {
+                btn = event.target;
                 origText = btn.innerHTML;
                 btn.innerHTML = '⏳ Generating PDF...';
                 btn.disabled = true;
@@ -690,8 +690,8 @@
         async function downloadConditionsSatisfiedPDF(event) {
             let btn = null;
             let origText = '';
-            if (event && event.currentTarget) {
-                btn = event.currentTarget;
+            if (event && event.target) {
+                btn = event.target;
                 origText = btn.innerHTML;
                 btn.innerHTML = '⏳ Generating Certificate...';
                 btn.disabled = true;
